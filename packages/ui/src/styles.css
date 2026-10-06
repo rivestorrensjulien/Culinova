@@ -1,0 +1,172 @@
+/*
+ * CULINOVA — jetons du système de design.
+ *
+ * À importer APRÈS `@import "tailwindcss";` dans la feuille de style de l'application.
+ * Les couleurs sont des variables CSS : le thème clair est le défaut, le thème
+ * sombre s'applique selon la préférence du système, ou de force via
+ * `<html data-theme="dark">` / `data-theme="light"`.
+ *
+ * Palette : ivoire chaud, encre profonde, cuivre (accent principal),
+ * sauge (accent secondaire) et or pâle pour les touches premium.
+ */
+
+:root {
+  color-scheme: light;
+
+  --cn-background: #faf6ef;
+  --cn-surface: #ffffff;
+  --cn-raised: #f3ece1;
+  --cn-foreground: #1f1a16;
+  --cn-muted: #6e6359;
+  --cn-border: #e5dbcd;
+  --cn-border-strong: #cbbba6;
+
+  --cn-primary: #a84a24;
+  --cn-primary-hover: #8f3d1c;
+  --cn-primary-foreground: #fffaf4;
+  --cn-soft: #f6e5d8;
+  --cn-soft-foreground: #7a3519;
+
+  --cn-sage: #55634a;
+  --cn-sage-foreground: #f7f6f0;
+  --cn-gold: #b08a3e;
+
+  --cn-ring: #c8673d;
+  --cn-success: #3f7a4f;
+  --cn-warning: #b7791f;
+  --cn-danger: #b4322f;
+  --cn-danger-foreground: #fff7f6;
+
+  --cn-shadow-color: 32 20 10;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --cn-background: #13100e;
+    --cn-surface: #1c1815;
+    --cn-raised: #262019;
+    --cn-foreground: #f3ece2;
+    --cn-muted: #a99d90;
+    --cn-border: #352d26;
+    --cn-border-strong: #4d4238;
+
+    --cn-primary: #e08a5e;
+    --cn-primary-hover: #eaa17b;
+    --cn-primary-foreground: #1a0e08;
+    --cn-soft: #3a2419;
+    --cn-soft-foreground: #f2b896;
+
+    --cn-sage: #9fb08f;
+    --cn-sage-foreground: #141a10;
+    --cn-gold: #d4b26a;
+
+    --cn-ring: #e08a5e;
+    --cn-success: #7cc08f;
+    --cn-warning: #e3b05c;
+    --cn-danger: #ef7d78;
+    --cn-danger-foreground: #1f0807;
+
+    --cn-shadow-color: 0 0 0;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --cn-background: #13100e;
+  --cn-surface: #1c1815;
+  --cn-raised: #262019;
+  --cn-foreground: #f3ece2;
+  --cn-muted: #a99d90;
+  --cn-border: #352d26;
+  --cn-border-strong: #4d4238;
+
+  --cn-primary: #e08a5e;
+  --cn-primary-hover: #eaa17b;
+  --cn-primary-foreground: #1a0e08;
+  --cn-soft: #3a2419;
+  --cn-soft-foreground: #f2b896;
+
+  --cn-sage: #9fb08f;
+  --cn-sage-foreground: #141a10;
+  --cn-gold: #d4b26a;
+
+  --cn-ring: #e08a5e;
+  --cn-success: #7cc08f;
+  --cn-warning: #e3b05c;
+  --cn-danger: #ef7d78;
+  --cn-danger-foreground: #1f0807;
+
+  --cn-shadow-color: 0 0 0;
+}
+
+@theme inline {
+  --color-background: var(--cn-background);
+  --color-surface: var(--cn-surface);
+  --color-raised: var(--cn-raised);
+  --color-foreground: var(--cn-foreground);
+  --color-muted: var(--cn-muted);
+  --color-border: var(--cn-border);
+  --color-border-strong: var(--cn-border-strong);
+  --color-primary: var(--cn-primary);
+  --color-primary-hover: var(--cn-primary-hover);
+  --color-primary-foreground: var(--cn-primary-foreground);
+  --color-soft: var(--cn-soft);
+  --color-soft-foreground: var(--cn-soft-foreground);
+  --color-sage: var(--cn-sage);
+  --color-sage-foreground: var(--cn-sage-foreground);
+  --color-gold: var(--cn-gold);
+  --color-ring: var(--cn-ring);
+  --color-success: var(--cn-success);
+  --color-warning: var(--cn-warning);
+  --color-danger: var(--cn-danger);
+  --color-danger-foreground: var(--cn-danger-foreground);
+
+  /* Les polices sont fournies par l'application (next/font) via ces variables. */
+  --font-display: var(--cn-font-display, "Iowan Old Style", "Palatino Linotype", Georgia, serif);
+  --font-sans: var(--cn-font-sans, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  --shadow-soft: 0 1px 2px rgb(var(--cn-shadow-color) / 0.06), 0 4px 16px rgb(var(--cn-shadow-color) / 0.06);
+  --shadow-lifted:
+    0 2px 4px rgb(var(--cn-shadow-color) / 0.08), 0 12px 32px rgb(var(--cn-shadow-color) / 0.12);
+}
+
+@layer base {
+  html {
+    background-color: var(--cn-background);
+    color: var(--cn-foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--cn-background);
+  }
+
+  ::selection {
+    background-color: var(--cn-soft);
+    color: var(--cn-soft-foreground);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--cn-ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

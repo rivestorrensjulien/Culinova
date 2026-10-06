@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Paquets autorisés à exécuter un script d'installation (binaires natifs).
+onlyBuiltDependencies:
+  - esbuild
+  - unrs-resolver

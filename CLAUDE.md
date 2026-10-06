@@ -42,7 +42,7 @@ packages/ui         Système de design (clair / sombre)
 
 ## Jalons (V1)
 
-- [ ] **J0 · Socle technique** : monorepo, CI GitHub Actions (lint, types, tests, build), `.env.example`, système de design (thèmes clair et sombre, typographie, composants de base), page vitrine du design.
+- [x] **J0 · Socle technique** : monorepo, CI GitHub Actions (lint, types, tests, build), `.env.example`, système de design (thèmes clair et sombre, typographie, composants de base), page vitrine du design.
 - [ ] **J1 · Fondations et accès sur invitation** : schéma V1, seeds, auth lien magique + 2FA admin, rôles, codes d'invitation et révocation, compteurs de quotas, i18n, journal d'audit, consentements.
 - [ ] **J2 · Moteur de recette et wizard** (12 étapes, sauvegarde auto, quotas appliqués, coût IA mesuré).
 - [ ] **J3 · Ingrédients, prix, coûts, marges** (Mes bases, main-d'œuvre, énergie, HT/TTC, nutrition).

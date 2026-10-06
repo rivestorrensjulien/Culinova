@@ -2,8 +2,8 @@
  * Argent.
  *
  * Règle du projet : les montants sont stockés en centimes entiers (`*_cents`).
- * Les prix au kilo (ou au litre) sont stockés en base dans une colonne
- * `numeric(12,4)` exprimée en centimes : « 1234.5678 » = 12,345678 €/kg.
+ * Les prix au kilo (ou au litre, ou à la pièce) sont stockés en base dans une
+ * colonne `numeric(12,4)` exprimée en euros : « 9.8000 » = 9,80 €/kg.
  *
  * Pour éviter les erreurs d'arrondi des nombres à virgule, les calculs
  * intermédiaires utilisent des entiers exacts (`bigint`) exprimés en
@@ -13,12 +13,18 @@
 /** Nombre de dix-millièmes de centime dans un centime. */
 export const PRICE_SCALE = 10_000n;
 
+/** Nombre de dix-millièmes de centime dans un euro. */
+const EURO_SCALE = 100n * PRICE_SCALE;
+
+/** Nombre de dix-millièmes de centime dans un dix-millième d'euro (dernière décimale d'un prix). */
+const PRICE_DECIMAL_STEP = EURO_SCALE / 10_000n;
+
 /** Montant exact, en dix-millièmes de centime. */
 export type ExactAmount = bigint;
 
 /**
- * Lit un prix au format `numeric(12,4)` (chaîne renvoyée par PostgreSQL,
- * ex. "1234.5" ou "0.0042") et le convertit en dix-millièmes de centime.
+ * Lit un prix en euros au format `numeric(12,4)` (chaîne renvoyée par PostgreSQL,
+ * ex. "9.8" ou "0.0042") et le convertit en montant exact.
  */
 export function parsePrice(value: string | number): ExactAmount {
   const text = typeof value === "number" ? value.toFixed(4) : value.trim();
@@ -26,16 +32,20 @@ export function parsePrice(value: string | number): ExactAmount {
   if (!match) {
     throw new RangeError(`Prix invalide : « ${value} » (attendu : nombre positif, 4 décimales au plus)`);
   }
-  const [, units = "0", decimals = ""] = match;
-  return BigInt(units) * PRICE_SCALE + BigInt(decimals.padEnd(4, "0"));
+  const [, euros = "0", decimals = ""] = match;
+  return BigInt(euros) * EURO_SCALE + BigInt(decimals.padEnd(4, "0")) * PRICE_DECIMAL_STEP;
 }
 
-/** Convertit un montant exact en chaîne `numeric(12,4)` (pour l'écriture en base). */
+/**
+ * Convertit un montant exact en prix en euros au format `numeric(12,4)`
+ * (pour l'écriture en base), arrondi au dix-millième d'euro.
+ */
 export function formatPrice(amount: ExactAmount): string {
   if (amount < 0n) throw new RangeError("Un prix ne peut pas être négatif");
-  const units = amount / PRICE_SCALE;
-  const decimals = (amount % PRICE_SCALE).toString().padStart(4, "0");
-  return `${units}.${decimals}`;
+  const steps = divRound(amount, PRICE_DECIMAL_STEP);
+  const euros = steps / 10_000n;
+  const decimals = (steps % 10_000n).toString().padStart(4, "0");
+  return `${euros}.${decimals}`;
 }
 
 /**

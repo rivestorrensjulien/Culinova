@@ -3,32 +3,32 @@ import { energyCostCents, laborCostCents, lineCost, materialCost, type CostLine 
 import { parsePrice, toCents } from "./money";
 import { toBase } from "./units";
 
-const perKg = (cents: string) => ({ dimension: "mass" as const, amount: parsePrice(cents) });
-const perPiece = (cents: string) => ({ dimension: "count" as const, amount: parsePrice(cents) });
+const perKg = (euros: string) => ({ dimension: "mass" as const, amount: parsePrice(euros) });
+const perPiece = (euros: string) => ({ dimension: "count" as const, amount: parsePrice(euros) });
 
 describe("coût d'une ligne", () => {
   it("multiplie la quantité par le prix au kilo", () => {
     // 250 g de farine à 1,20 €/kg = 0,30 €
-    expect(toCents(lineCost({ quantity: toBase(250, "g"), price: perKg("120") }))).toBe(30);
+    expect(toCents(lineCost({ quantity: toBase(250, "g"), price: perKg("1.20") }))).toBe(30);
   });
 
   it("gère le prix à la pièce", () => {
     // 3 œufs à 0,35 € = 1,05 €
-    expect(toCents(lineCost({ quantity: toBase(3, "piece"), price: perPiece("35") }))).toBe(105);
+    expect(toCents(lineCost({ quantity: toBase(3, "piece"), price: perPiece("0.35") }))).toBe(105);
   });
 
   it("gère le prix au litre", () => {
     // 50 cl de crème à 4,80 €/l = 2,40 €
     const line: CostLine = {
       quantity: toBase(50, "cl"),
-      price: { dimension: "volume", amount: parsePrice("480") },
+      price: { dimension: "volume", amount: parsePrice("4.80") },
     };
     expect(toCents(lineCost(line))).toBe(240);
   });
 
   it("convertit volume → masse avec la densité", () => {
     // 100 ml de lait (1,03 g/ml) à 1,10 €/kg = 103 g → 0,1133 €
-    const exact = lineCost({ quantity: toBase(100, "ml"), price: perKg("110"), densityGramsPerMl: 1.03 });
+    const exact = lineCost({ quantity: toBase(100, "ml"), price: perKg("1.10"), densityGramsPerMl: 1.03 });
     expect(exact).toBe(113_300n);
     expect(toCents(exact)).toBe(11);
   });
@@ -37,25 +37,27 @@ describe("coût d'une ligne", () => {
     // 206 g de lait (1,03 g/ml) = 200 ml, à 1,00 €/l = 0,20 €
     const line: CostLine = {
       quantity: toBase(206, "g"),
-      price: { dimension: "volume", amount: parsePrice("100") },
+      price: { dimension: "volume", amount: parsePrice("1.00") },
       densityGramsPerMl: 1.03,
     };
     expect(toCents(lineCost(line))).toBe(20);
   });
 
   it("refuse des dimensions incompatibles sans densité", () => {
-    expect(() => lineCost({ quantity: toBase(100, "ml"), price: perKg("110") })).toThrow(/densité manquante/);
+    expect(() => lineCost({ quantity: toBase(100, "ml"), price: perKg("1.10") })).toThrow(
+      /densité manquante/,
+    );
     expect(() =>
-      lineCost({ quantity: toBase(2, "piece"), price: perKg("110"), densityGramsPerMl: 1 }),
+      lineCost({ quantity: toBase(2, "piece"), price: perKg("1.10"), densityGramsPerMl: 1 }),
     ).toThrow(TypeError);
   });
 });
 
 describe("coût matière d'une recette", () => {
   const lines: CostLine[] = [
-    { quantity: toBase(250, "g"), price: perKg("120") }, // 30 c
-    { quantity: toBase(3, "piece"), price: perPiece("35") }, // 105 c
-    { quantity: toBase(125, "g"), price: perKg("980") }, // 122,5 c
+    { quantity: toBase(250, "g"), price: perKg("1.20") }, // 30 c
+    { quantity: toBase(3, "piece"), price: perPiece("0.35") }, // 105 c
+    { quantity: toBase(125, "g"), price: perKg("9.80") }, // 122,5 c
   ];
 
   it("additionne les lignes et calcule le coût par portion", () => {
@@ -68,7 +70,7 @@ describe("coût matière d'une recette", () => {
 
   it("n'arrondit qu'à la fin (pas d'erreur cumulée)", () => {
     // 3 × 0,6 centime = 1,8 → 2 centimes (et non 1 + 1 + 1 = 3)
-    const small: CostLine = { quantity: toBase(6, "g"), price: perKg("100") };
+    const small: CostLine = { quantity: toBase(6, "g"), price: perKg("1.00") };
     expect(materialCost([small, small, small], 1).totalCents).toBe(2);
   });
 

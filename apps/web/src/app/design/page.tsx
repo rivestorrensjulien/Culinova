@@ -41,10 +41,10 @@ const swatches = [
 /** Exemple de chiffrage calculé par @culinova/core (jamais saisi à la main). */
 const demoCost = materialCost(
   [
-    { quantity: toBase(800, "g"), price: { dimension: "mass", amount: parsePrice("280") } }, // potimarron
-    { quantity: toBase(20, "cl"), price: { dimension: "volume", amount: parsePrice("480") } }, // crème
-    { quantity: toBase(40, "g"), price: { dimension: "mass", amount: parsePrice("980") } }, // beurre
-    { quantity: toBase(1, "piece"), price: { dimension: "count", amount: parsePrice("45") } }, // oignon
+    { quantity: toBase(800, "g"), price: { dimension: "mass", amount: parsePrice("2.80") } }, // potimarron
+    { quantity: toBase(20, "cl"), price: { dimension: "volume", amount: parsePrice("4.80") } }, // crème
+    { quantity: toBase(40, "g"), price: { dimension: "mass", amount: parsePrice("9.80") } }, // beurre
+    { quantity: toBase(1, "piece"), price: { dimension: "count", amount: parsePrice("0.45") } }, // oignon
   ],
   4,
 );

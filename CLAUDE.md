@@ -33,7 +33,7 @@ packages/ui         Système de design (clair / sombre)
 
 ## Règles non négociables
 
-- Unités internes : grammes, millilitres, °C, secondes, centimes (`*_cents` entiers), prix au kilo en `numeric(12,4)`. La langue et les unités n'affectent que l'affichage.
+- Unités internes : grammes, millilitres, °C, secondes, centimes (`*_cents` entiers), prix au kilo en euros, `numeric(12,4)` (ex. `9.8000` = 9,80 €/kg). La langue et les unités n'affectent que l'affichage.
 - Le coût n'est jamais saisi : il est calculé (coût matière = Σ quantité × prix). Le seul coût stocké est un cache horodaté, invalidé à chaque changement de prix.
 - L'IA propose, l'utilisateur valide (prix, analyses, traductions).
 - Aucune clé en dur : tout passe par des variables d'environnement (`.env.example` documenté).

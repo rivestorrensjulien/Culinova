@@ -6,7 +6,7 @@
  * d'invitation, quotas, recettes, ingrédients, prix…) arrive au jalon J1.
  *
  * Conventions : montants en centimes (`*_cents`, entiers), prix au kilo en
- * `numeric(12,4)` exprimés en centimes, quantités en g / ml, durées en secondes.
+ * `numeric(12,4)` exprimés en euros, quantités en g / ml, durées en secondes.
  */
 import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 

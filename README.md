@@ -49,6 +49,6 @@ packages/ui         Système de design (thèmes clair et sombre)
 ## Règles de calcul
 
 Unités internes : grammes, millilitres, pièces, °C, secondes. Montants en centimes entiers.
-Prix au kilo / au litre / à la pièce stockés en `numeric(12,4)` **exprimés en centimes**
-(« 1234.5678 » = 12,345678 €/kg). Les calculs intermédiaires sont exacts (entiers) et
+Prix au kilo / au litre / à la pièce stockés en `numeric(12,4)` **exprimés en euros**
+(« 9.8000 » = 9,80 €/kg). Les calculs intermédiaires sont exacts (entiers) et
 l'arrondi au centime n'a lieu qu'à la fin.

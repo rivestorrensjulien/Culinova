@@ -1,5 +1,0 @@
-@import "tailwindcss";
-@import "@culinova/ui/styles.css";
-
-/* Les composants du système de design utilisent des classes Tailwind : on les fait analyser. */
-@source "../../../../packages/ui/src";

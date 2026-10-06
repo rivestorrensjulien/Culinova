@@ -10,7 +10,14 @@ const OPTIONS: Array<{ value: ThemePreference; label: string }> = [
   { value: "system", label: "Système" },
 ];
 
-export function ThemeSwitcher({ className }: { className?: string }) {
+export interface ThemeSwitcherLabels {
+  group: string;
+  light: string;
+  dark: string;
+  system: string;
+}
+
+export function ThemeSwitcher({ className, labels }: { className?: string; labels?: ThemeSwitcherLabels }) {
   const [theme, setTheme] = useState<ThemePreference>("system");
 
   useEffect(() => {
@@ -20,7 +27,7 @@ export function ThemeSwitcher({ className }: { className?: string }) {
   return (
     <div
       role="radiogroup"
-      aria-label="Thème"
+      aria-label={labels?.group ?? "Thème"}
       className={cx("inline-flex rounded-full border border-border bg-surface p-1", className)}
     >
       {OPTIONS.map((option) => (
@@ -38,7 +45,7 @@ export function ThemeSwitcher({ className }: { className?: string }) {
             theme === option.value ? "bg-foreground text-background" : "text-muted hover:text-foreground",
           )}
         >
-          {option.label}
+          {labels?.[option.value] ?? option.label}
         </button>
       ))}
     </div>

@@ -3,7 +3,7 @@ import postgres from "postgres";
 import * as schema from "./schema";
 
 export { schema };
-export type Database = PostgresJsDatabase<typeof schema>;
+export type Database = PostgresJsDatabase<typeof schema> & { $client: postgres.Sql };
 
 /**
  * Crée un client de base de données. L'URL vient de la variable d'environnement

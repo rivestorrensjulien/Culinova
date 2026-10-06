@@ -12,3 +12,6 @@ next-env.d.ts
 .DS_Store
 .vercel
 *.log
+.outbox/
+playwright-report/
+test-results/

@@ -1,7 +1,9 @@
 import { render } from "@react-email/render";
-import { MagicLinkEmail, type MagicLinkEmailProps } from "./templates/magic-link";
+import { InvitationEmail, type InvitationEmailProps, invitationSubject } from "./templates/invitation";
+import { MagicLinkEmail, type MagicLinkEmailProps, magicLinkSubject } from "./templates/magic-link";
 
-export { MagicLinkEmail, type MagicLinkEmailProps };
+export { InvitationEmail, type InvitationEmailProps, MagicLinkEmail, type MagicLinkEmailProps };
+export { sendEmail, type OutgoingEmail } from "./send";
 
 export interface RenderedEmail {
   subject: string;
@@ -12,7 +14,16 @@ export interface RenderedEmail {
 export async function renderMagicLinkEmail(props: MagicLinkEmailProps): Promise<RenderedEmail> {
   const element = <MagicLinkEmail {...props} />;
   return {
-    subject: "Votre lien de connexion à Culinova",
+    subject: magicLinkSubject(props.locale),
+    html: await render(element),
+    text: await render(element, { plainText: true }),
+  };
+}
+
+export async function renderInvitationEmail(props: InvitationEmailProps): Promise<RenderedEmail> {
+  const element = <InvitationEmail {...props} />;
+  return {
+    subject: invitationSubject(props.locale),
     html: await render(element),
     text: await render(element, { plainText: true }),
   };

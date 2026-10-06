@@ -1,18 +1,19 @@
 /**
- * Schéma de la base de données (Drizzle).
+ * Schéma de la base de données V1 (Drizzle), en 9 domaines.
  *
- * J0 : seule la table des paramètres applicatifs existe, pour valider la chaîne
- * schéma → migration → client. Le schéma V1 complet (utilisateurs, codes
- * d'invitation, quotas, recettes, ingrédients, prix…) arrive au jalon J1.
+ * Conventions : identifiants UUID ; created_at / updated_at partout ; montants
+ * en centimes (`*_cents`, entiers) ; prix au kilo en euros, `numeric(12,4)` ;
+ * quantités en g / ml ; durées en secondes ; coûts IA en micro-dollars.
  *
- * Conventions : montants en centimes (`*_cents`, entiers), prix au kilo en
- * `numeric(12,4)` exprimés en euros, quantités en g / ml, durées en secondes.
+ * Phase 2 (vente, organisations, Lab, catalogue) : ajout de tables, sans
+ * modification des tables existantes.
  */
-import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
-
-/** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */
-export const appSettings = pgTable("app_settings", {
-  key: text("key").primaryKey(),
-  value: jsonb("value").notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export * from "./access";
+export * from "./ai";
+export * from "./culinary";
+export * from "./identity";
+export * from "./ingredients";
+export * from "./kitchen";
+export * from "./legal";
+export * from "./recipes";
+export * from "./settings";

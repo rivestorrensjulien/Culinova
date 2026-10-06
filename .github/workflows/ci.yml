@@ -11,9 +11,33 @@ concurrency:
 
 jobs:
   verifications:
-    name: Lint, types, tests, build
+    name: Lint, types, tests, build, bout en bout
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: culinova
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      # Valeurs de test uniquement (aucune vraie clé).
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/culinova
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/culinova_test
+      DATABASE_URL_E2E: postgresql://postgres:postgres@localhost:5432/culinova_e2e_test
+      BETTER_AUTH_SECRET: ci-secret-0123456789abcdef0123456789abcdef
+      BETTER_AUTH_URL: http://localhost:3000
+      NEXT_TELEMETRY_DISABLED: 1
+
     steps:
       - uses: actions/checkout@v4
 
@@ -36,10 +60,30 @@ jobs:
       - name: Vérification des types
         run: pnpm typecheck
 
-      - name: Tests
+      - name: Bases de test
+        run: |
+          psql postgresql://postgres:postgres@localhost:5432/postgres -c "create database culinova_test;"
+          psql postgresql://postgres:postgres@localhost:5432/postgres -c "create database culinova_e2e_test;"
+
+      - name: Migrations et données de référence
+        run: pnpm db:migrate && pnpm db:seed
+
+      - name: Tests (unitaires et intégration)
         run: pnpm test
 
       - name: Build
         run: pnpm build
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Navigateur pour les tests de bout en bout
+        run: pnpm --filter @culinova/web exec playwright install --with-deps chromium
+
+      - name: Tests de bout en bout
+        run: pnpm test:e2e
+
+      - name: Rapport Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7

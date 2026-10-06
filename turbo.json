@@ -4,11 +4,20 @@
   "globalEnv": ["NODE_ENV"],
   "globalPassThroughEnv": [
     "DATABASE_URL",
+    "DATABASE_URL_TEST",
+    "DATABASE_URL_E2E",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "ADMIN_EMAIL",
+    "EMAIL_FROM",
+    "EMAIL_OUTBOX_DIR",
+    "RESEND_API_KEY",
     "ANTHROPIC_API_KEY",
     "FAL_KEY",
-    "RESEND_API_KEY",
     "INNGEST_*",
-    "NEXT_PUBLIC_*"
+    "NEXT_PUBLIC_*",
+    "CI",
+    "PLAYWRIGHT_BROWSERS_PATH"
   ],
   "tasks": {
     "build": {

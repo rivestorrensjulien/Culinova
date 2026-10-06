@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@culinova/ui/styles.css";
+
+/* Les composants du système de design utilisent des classes Tailwind : on les fait analyser. */
+@source "../../../../../packages/ui/src";
+
+/* Mise en forme des textes longs (documents juridiques). */
+.legal-prose {
+  @apply flex flex-col gap-3 leading-relaxed;
+}
+.legal-prose h2 {
+  @apply mt-4 font-display text-2xl;
+}
+.legal-prose blockquote {
+  @apply rounded-md border border-warning/40 bg-warning/10 px-4 py-3 text-sm;
+}
+.legal-prose ul {
+  @apply list-disc pl-6;
+}

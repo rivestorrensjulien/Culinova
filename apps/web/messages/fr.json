@@ -1,0 +1,131 @@
+{
+  "Common": {
+    "brand": "Culinova",
+    "tagline": "De l'idée à l'assiette, avec l'IA.",
+    "theme": { "group": "Thème", "light": "Clair", "dark": "Sombre", "system": "Système" },
+    "language": "Langue",
+    "languages": { "fr": "Français", "en": "English" },
+    "signOut": "Se déconnecter",
+    "backHome": "Retour à l'accueil",
+    "legal": {
+      "cgu": "Conditions d'utilisation",
+      "privacy": "Confidentialité"
+    }
+  },
+  "Home": {
+    "intro": "Créer, chiffrer, illustrer et gérer ses recettes. Accès gratuit, sur invitation, pendant cette première phase.",
+    "signIn": "Se connecter",
+    "haveCode": "J'ai un code d'invitation",
+    "openApp": "Ouvrir mon espace"
+  },
+  "SignIn": {
+    "title": "Connexion",
+    "intro": "Saisissez votre adresse e-mail : vous recevrez un lien de connexion valable 15 minutes, utilisable une seule fois. Aucun mot de passe.",
+    "email": "Adresse e-mail",
+    "submit": "Recevoir mon lien",
+    "sending": "Envoi…",
+    "sent": "Si un compte existe pour {email}, un lien de connexion vient de lui être envoyé. Pensez à vérifier les indésirables.",
+    "noAccount": "Pas encore de compte ? L'accès se fait sur invitation.",
+    "useCode": "J'ai un code d'invitation",
+    "errors": {
+      "email": "Adresse e-mail invalide.",
+      "rate": "Trop de demandes. Réessayez dans quelques minutes.",
+      "server": "Le lien n'a pas pu être envoyé. Réessayez dans un instant."
+    },
+    "reasons": {
+      "lien": "Ce lien de connexion n'est plus valable (expiré ou déjà utilisé). Demandez-en un nouveau.",
+      "session": "Votre session a été fermée. Reconnectez-vous.",
+      "invitation": "La création du compte a échoué : l'invitation n'est plus valable. Contactez la personne qui vous a invité·e."
+    }
+  },
+  "Verify": {
+    "title": "Confirmer la connexion",
+    "intro": "Cliquez sur le bouton pour terminer votre connexion.",
+    "submit": "Me connecter",
+    "invalid": "Ce lien est incomplet. Demandez un nouveau lien de connexion."
+  },
+  "Invitation": {
+    "title": "Créer mon compte",
+    "codeTitle": "Code d'invitation",
+    "codeIntro": "Saisissez le code personnel reçu avec votre invitation.",
+    "code": "Code",
+    "continue": "Continuer",
+    "intro": "Votre invitation est valable. Indiquez votre adresse e-mail : vous recevrez un lien pour activer votre compte.",
+    "email": "Adresse e-mail",
+    "emailLocked": "Cette invitation est réservée à cette adresse.",
+    "name": "Votre nom (facultatif)",
+    "acceptCgu": "J'accepte les {link}.",
+    "acceptPrivacy": "J'ai lu la {link}.",
+    "cguLink": "conditions générales d'utilisation",
+    "privacyLink": "politique de confidentialité",
+    "submit": "Créer mon compte",
+    "sending": "Envoi…",
+    "sent": "C'est presque fini : un lien d'activation vient d'être envoyé à {email}. Il est valable 15 minutes.",
+    "alreadyAccount": "Vous avez déjà un compte ?",
+    "signIn": "Se connecter",
+    "problems": {
+      "invalid": "Ce code d'invitation n'existe pas. Vérifiez sa saisie.",
+      "revoked": "Ce code d'invitation a été désactivé.",
+      "used": "Ce code d'invitation a déjà été utilisé.",
+      "expired": "Ce code d'invitation a expiré.",
+      "wrong_email": "Cette invitation est réservée à une autre adresse e-mail.",
+      "rate": "Trop de tentatives. Réessayez plus tard."
+    },
+    "errors": {
+      "email": "Adresse e-mail invalide.",
+      "consent": "Vous devez accepter les conditions d'utilisation et la politique de confidentialité.",
+      "account_exists": "Un compte existe déjà avec cette adresse : connectez-vous.",
+      "server": "L'inscription n'a pas pu aboutir. Réessayez dans un instant."
+    }
+  },
+  "Suspended": {
+    "title": "Accès suspendu",
+    "body": "L'accès à ce compte a été suspendu. Vos données sont conservées. Pour toute question, contactez la personne qui vous a invité·e."
+  },
+  "TwoFactor": {
+    "title": "Vérification en deux étapes",
+    "enrollIntro": "L'administration exige un second facteur. Scannez ce QR code avec une application d'authentification (Google Authenticator, 1Password, Microsoft Authenticator…), puis saisissez le code à 6 chiffres affiché.",
+    "manual": "Saisie manuelle de la clé",
+    "verifyIntro": "Saisissez le code à 6 chiffres de votre application d'authentification, ou un code de secours.",
+    "code": "Code",
+    "submit": "Valider",
+    "backupTitle": "Vos codes de secours",
+    "backupIntro": "Conservez ces codes en lieu sûr : chacun permet une connexion si vous perdez votre téléphone. Ils ne seront plus affichés.",
+    "continue": "Accéder à l'administration",
+    "errors": {
+      "invalid": "Code incorrect.",
+      "locked": "Trop d'erreurs : la saisie est bloquée pendant 15 minutes.",
+      "not_enrolled": "Le second facteur n'est pas configuré."
+    }
+  },
+  "App": {
+    "nav": { "dashboard": "Tableau de bord", "security": "Sécurité", "admin": "Administration" },
+    "welcome": "Bienvenue sur Culinova !",
+    "hello": "Bonjour {name}",
+    "helloAnonymous": "Bonjour",
+    "quotaTitle": "Votre solde du mois",
+    "recipes": "Recettes générées",
+    "images": "Images",
+    "unlimited": "illimité",
+    "usage": "{used} sur {limit}",
+    "usageUnlimited": "{used} · illimité",
+    "resets": "Remise à zéro le {date}.",
+    "regenerations": "Et jusqu'à {count} régénérations de texte par recette.",
+    "comingSoon": "Le créateur de recettes arrive très bientôt.",
+    "impersonating": "Vous êtes connecté·e en tant que {email} (administration)."
+  },
+  "Security": {
+    "title": "Sécurité",
+    "intro": "Les appareils actuellement connectés à votre compte.",
+    "current": "Cet appareil",
+    "since": "Connecté le {date}",
+    "unknownDevice": "Appareil inconnu",
+    "signOutEverywhere": "Se déconnecter partout",
+    "signOutEverywhereHint": "Ferme toutes les sessions, y compris celle-ci."
+  },
+  "Legal": {
+    "draft": "Document provisoire",
+    "version": "Version {version}",
+    "missing": "Ce document sera publié prochainement."
+  }
+}

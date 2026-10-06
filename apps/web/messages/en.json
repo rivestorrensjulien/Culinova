@@ -1,0 +1,131 @@
+{
+  "Common": {
+    "brand": "Culinova",
+    "tagline": "From idea to plate, with AI.",
+    "theme": { "group": "Theme", "light": "Light", "dark": "Dark", "system": "System" },
+    "language": "Language",
+    "languages": { "fr": "Français", "en": "English" },
+    "signOut": "Sign out",
+    "backHome": "Back to home",
+    "legal": {
+      "cgu": "Terms of use",
+      "privacy": "Privacy"
+    }
+  },
+  "Home": {
+    "intro": "Create, cost, illustrate and manage your recipes. Free access, by invitation, during this first phase.",
+    "signIn": "Sign in",
+    "haveCode": "I have an invitation code",
+    "openApp": "Open my space"
+  },
+  "SignIn": {
+    "title": "Sign in",
+    "intro": "Enter your email address: you will receive a sign-in link valid for 15 minutes, usable once. No password.",
+    "email": "Email address",
+    "submit": "Send me a link",
+    "sending": "Sending…",
+    "sent": "If an account exists for {email}, a sign-in link has just been sent. Remember to check your spam folder.",
+    "noAccount": "No account yet? Access is by invitation.",
+    "useCode": "I have an invitation code",
+    "errors": {
+      "email": "Invalid email address.",
+      "rate": "Too many requests. Please try again in a few minutes.",
+      "server": "The link could not be sent. Please try again shortly."
+    },
+    "reasons": {
+      "lien": "This sign-in link is no longer valid (expired or already used). Request a new one.",
+      "session": "Your session was closed. Please sign in again.",
+      "invitation": "Account creation failed: the invitation is no longer valid. Contact the person who invited you."
+    }
+  },
+  "Verify": {
+    "title": "Confirm sign-in",
+    "intro": "Click the button to complete your sign-in.",
+    "submit": "Sign in",
+    "invalid": "This link is incomplete. Request a new sign-in link."
+  },
+  "Invitation": {
+    "title": "Create my account",
+    "codeTitle": "Invitation code",
+    "codeIntro": "Enter the personal code you received with your invitation.",
+    "code": "Code",
+    "continue": "Continue",
+    "intro": "Your invitation is valid. Enter your email address: you will receive a link to activate your account.",
+    "email": "Email address",
+    "emailLocked": "This invitation is reserved for this address.",
+    "name": "Your name (optional)",
+    "acceptCgu": "I accept the {link}.",
+    "acceptPrivacy": "I have read the {link}.",
+    "cguLink": "terms of use",
+    "privacyLink": "privacy policy",
+    "submit": "Create my account",
+    "sending": "Sending…",
+    "sent": "Almost done: an activation link has been sent to {email}. It is valid for 15 minutes.",
+    "alreadyAccount": "Already have an account?",
+    "signIn": "Sign in",
+    "problems": {
+      "invalid": "This invitation code does not exist. Please check it.",
+      "revoked": "This invitation code has been disabled.",
+      "used": "This invitation code has already been used.",
+      "expired": "This invitation code has expired.",
+      "wrong_email": "This invitation is reserved for another email address.",
+      "rate": "Too many attempts. Please try again later."
+    },
+    "errors": {
+      "email": "Invalid email address.",
+      "consent": "You must accept the terms of use and the privacy policy.",
+      "account_exists": "An account already exists with this address: please sign in.",
+      "server": "Sign-up could not be completed. Please try again shortly."
+    }
+  },
+  "Suspended": {
+    "title": "Access suspended",
+    "body": "Access to this account has been suspended. Your data is kept. For any question, contact the person who invited you."
+  },
+  "TwoFactor": {
+    "title": "Two-step verification",
+    "enrollIntro": "Administration requires a second factor. Scan this QR code with an authenticator app (Google Authenticator, 1Password, Microsoft Authenticator…), then enter the 6-digit code shown.",
+    "manual": "Manual key entry",
+    "verifyIntro": "Enter the 6-digit code from your authenticator app, or a backup code.",
+    "code": "Code",
+    "submit": "Verify",
+    "backupTitle": "Your backup codes",
+    "backupIntro": "Keep these codes somewhere safe: each one lets you sign in if you lose your phone. They will not be shown again.",
+    "continue": "Go to administration",
+    "errors": {
+      "invalid": "Incorrect code.",
+      "locked": "Too many errors: entry is blocked for 15 minutes.",
+      "not_enrolled": "The second factor is not set up."
+    }
+  },
+  "App": {
+    "nav": { "dashboard": "Dashboard", "security": "Security", "admin": "Administration" },
+    "welcome": "Welcome to Culinova!",
+    "hello": "Hello {name}",
+    "helloAnonymous": "Hello",
+    "quotaTitle": "Your balance this month",
+    "recipes": "Generated recipes",
+    "images": "Images",
+    "unlimited": "unlimited",
+    "usage": "{used} of {limit}",
+    "usageUnlimited": "{used} · unlimited",
+    "resets": "Resets on {date}.",
+    "regenerations": "Plus up to {count} text regenerations per recipe.",
+    "comingSoon": "The recipe creator is coming very soon.",
+    "impersonating": "You are signed in as {email} (administration)."
+  },
+  "Security": {
+    "title": "Security",
+    "intro": "Devices currently signed in to your account.",
+    "current": "This device",
+    "since": "Signed in on {date}",
+    "unknownDevice": "Unknown device",
+    "signOutEverywhere": "Sign out everywhere",
+    "signOutEverywhereHint": "Closes every session, including this one."
+  },
+  "Legal": {
+    "draft": "Draft document",
+    "version": "Version {version}",
+    "missing": "This document will be published soon."
+  }
+}

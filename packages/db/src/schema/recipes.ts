@@ -48,18 +48,30 @@ export const recipes = pgTable(
   (t) => [index("recipes_owner_idx").on(t.ownerId)],
 );
 
-/** Brouillons du wizard (sauvegarde automatique). */
-export const recipeDrafts = pgTable("recipe_drafts", {
-  id: id(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  wizardStep: integer("wizard_step").notNull().default(1),
-  state: jsonb("state").$type<Record<string, unknown>>().notNull().default({}),
-  clientUpdatedAt: tz("client_updated_at"),
-  recipeId: uuid("recipe_id").references(() => recipes.id, { onDelete: "set null" }),
-  ...timestamps,
-});
+export const DRAFT_STATUSES = ["editing", "generating", "done", "failed", "archived"] as const;
+export type DraftStatus = (typeof DRAFT_STATUSES)[number];
+
+/** Brouillons du wizard (sauvegarde automatique, un brouillon ouvert par personne). */
+export const recipeDrafts = pgTable(
+  "recipe_drafts",
+  {
+    id: id(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    wizardStep: integer("wizard_step").notNull().default(1),
+    state: jsonb("state").$type<Record<string, unknown>>().notNull().default({}),
+    status: text("status").$type<DraftStatus>().notNull().default("editing"),
+    /** Génération en cours ou dernière génération lancée depuis ce brouillon. */
+    generationId: uuid("generation_id"),
+    error: text("error"),
+    /** Horodatage de la dernière modification côté navigateur (dernier écrit gagnant). */
+    clientUpdatedAt: tz("client_updated_at"),
+    recipeId: uuid("recipe_id").references(() => recipes.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [index("recipe_drafts_user_idx").on(t.userId, t.status)],
+);
 
 /** Paramètres transmis aux moteurs (recette, image, contenu social). */
 export const generationParams = pgTable("generation_params", {
@@ -78,6 +90,8 @@ export const generationParams = pgTable("generation_params", {
   availableQuantities: jsonb("available_quantities").$type<Record<string, unknown>>(),
   servings: integer("servings").notNull(),
   constraints: jsonb("constraints").$type<Record<string, unknown>>(),
+  /** Paramètres résolus (libellés, contexte des cuisines) tels que transmis au moteur. */
+  snapshot: jsonb("snapshot").$type<Record<string, unknown>>(),
   ...timestamps,
 });
 
@@ -90,6 +104,7 @@ export const recipeVersions = pgTable(
       .references(() => recipes.id, { onDelete: "cascade" }),
     versionNo: integer("version_no").notNull(),
     name: text("name").notNull(),
+    description: text("description"),
     momentId: uuid("moment_id").references(() => mealMoments.id),
     servings: integer("servings").notNull(),
     prepS: integer("prep_s"),
@@ -101,6 +116,10 @@ export const recipeVersions = pgTable(
     plating: jsonb("plating").$type<Record<string, unknown>>(),
     /** Mention explicite « fusion / interprétation créative » le cas échéant. */
     fusionLabel: text("fusion_label"),
+    cuisineLabel: text("cuisine_label"),
+    allergens: text("allergens").array().notNull().default(emptyTextArray),
+    diets: text("diets").array().notNull().default(emptyTextArray),
+    tips: text("tips").array().notNull().default(emptyTextArray),
     yieldG: integer("yield_g"),
     generationParamsId: uuid("generation_params_id").references(() => generationParams.id),
     changeNote: text("change_note"),
@@ -132,6 +151,8 @@ export const recipeIngredients = pgTable(
     /** Soit un ingrédient, soit une base (« Mes bases »). */
     ingredientId: uuid("ingredient_id").references(() => ingredients.id),
     baseRecipeId: uuid("base_recipe_id").references(() => baseRecipes.id),
+    /** Nom tel qu'écrit dans la recette (dans sa langue). */
+    label: text("label").notNull().default(""),
     quantityG: numeric("quantity_g", { precision: 12, scale: 3 }),
     quantityMl: numeric("quantity_ml", { precision: 12, scale: 3 }),
     quantityPiece: numeric("quantity_piece", { precision: 10, scale: 2 }),

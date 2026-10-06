@@ -2,9 +2,17 @@
   "Common": {
     "brand": "Culinova",
     "tagline": "From idea to plate, with AI.",
-    "theme": { "group": "Theme", "light": "Light", "dark": "Dark", "system": "System" },
+    "theme": {
+      "group": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
     "language": "Language",
-    "languages": { "fr": "Français", "en": "English" },
+    "languages": {
+      "fr": "Français",
+      "en": "English"
+    },
     "signOut": "Sign out",
     "backHome": "Back to home",
     "legal": {
@@ -99,7 +107,13 @@
     }
   },
   "App": {
-    "nav": { "dashboard": "Dashboard", "security": "Security", "admin": "Administration" },
+    "nav": {
+      "dashboard": "Dashboard",
+      "security": "Security",
+      "admin": "Administration",
+      "create": "Create",
+      "recipes": "My recipes"
+    },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
     "helloAnonymous": "Hello",
@@ -111,8 +125,9 @@
     "usageUnlimited": "{used} · unlimited",
     "resets": "Resets on {date}.",
     "regenerations": "Plus up to {count} text regenerations per recipe.",
-    "comingSoon": "The recipe creator is coming very soon.",
-    "impersonating": "You are signed in as {email} (administration)."
+    "impersonating": "You are signed in as {email} (administration).",
+    "createCta": "Create a recipe",
+    "recentRecipes": "Your latest recipes"
   },
   "Security": {
     "title": "Security",
@@ -127,5 +142,229 @@
     "draft": "Draft document",
     "version": "Version {version}",
     "missing": "This document will be published soon."
+  },
+  "Wizard": {
+    "title": "Create a recipe",
+    "steps": {
+      "moment": "Moment",
+      "influence": "Influence",
+      "precision": "Precision",
+      "style": "Style",
+      "language": "Language",
+      "mode": "Mode",
+      "input": "Input",
+      "servings": "Servings",
+      "generation": "Generation",
+      "result": "Result",
+      "social": "Social media",
+      "saved": "Saved"
+    },
+    "stepOf": "Step {current} of {total}",
+    "questions": {
+      "moment": "For which moment?",
+      "influence": "A culinary influence?",
+      "precision": "Narrow down the region, country or cuisine",
+      "style": "Which style?",
+      "language": "In which language?",
+      "mode": "How do you want to create?",
+      "servings": "For how many people?",
+      "generation": "All set",
+      "result": "Your recipe",
+      "social": "Social media content",
+      "saved": "Your recipe is saved"
+    },
+    "inputQuestion": {
+      "ingredients": "Which ingredients do you have?",
+      "name": "Which recipe do you want to make?",
+      "idea": "What is your idea?"
+    },
+    "inputPlaceholder": {
+      "ingredients": "One ingredient per line, with the available quantity if you know it.\ne.g. 400 g salmon\n1 lime\nrice",
+      "name": "e.g. Beef bourguignon, pad thai, lemon meringue pie…",
+      "idea": "e.g. an autumn dessert with pear and buckwheat, served warm."
+    },
+    "noInfluence": "None",
+    "noInfluenceHint": "Keep it open",
+    "precisionHint": "Optional: you can stop at the region or the country. Up to 3 cuisines for a fusion.",
+    "search": "Search a cuisine or a country…",
+    "favorites": "Favourites",
+    "recents": "Recent",
+    "regions": "Regions",
+    "countries": "Countries",
+    "cuisines": "Cuisines",
+    "allCuisines": "All cuisines",
+    "selection": "Your selection",
+    "none": "No precision",
+    "clear": "Clear",
+    "fusion": "Fusion — creative interpretation",
+    "maxCuisines": "3 cuisines at most.",
+    "favorite": "Add to favourites",
+    "unfavorite": "Remove from favourites",
+    "noResult": "No result.",
+    "traditionalDisabled": "A fusion cannot be presented as traditional.",
+    "modes": {
+      "ingredients": {
+        "title": "From ingredients",
+        "hint": "What you have at hand"
+      },
+      "name": {
+        "title": "From a name",
+        "hint": "A recipe you know"
+      },
+      "idea": {
+        "title": "From an idea",
+        "hint": "A craving, a mood, a constraint"
+      }
+    },
+    "languages": {
+      "fr": "French",
+      "en": "English"
+    },
+    "custom": "Other",
+    "back": "Back",
+    "next": "Continue",
+    "summary": {
+      "moment": "Moment",
+      "influence": "Influence",
+      "precision": "Precision",
+      "style": "Style",
+      "language": "Language",
+      "mode": "Mode",
+      "input": "Input",
+      "servings": "Servings",
+      "edit": "Edit"
+    },
+    "generate": "Generate the recipe",
+    "generating": "Creating your recipe…",
+    "generatingHint": "This usually takes less than a minute. You can leave the page: the recipe will be waiting for you.",
+    "remaining": "{count, plural, =0 {No recipes left this month} one {# recipe left this month} other {# recipes left this month}}",
+    "unlimited": "Unlimited recipes",
+    "errors": {
+      "quota": "You have used your {limit} recipes this month. The counter resets on {date}.",
+      "quotaRegen": "You have used the {limit} regenerations of this recipe.",
+      "budget": "Generations are paused until next month (monthly budget reached).",
+      "busy": "A generation is already running.",
+      "incomplete": "Some information is missing: go back to the previous steps.",
+      "not_found": "Draft not found: please reload the page.",
+      "invalid_output": "The proposed recipe was not valid. Your quota was not used: please try again.",
+      "refusal": "This request could not be processed. Rephrase your input (your quota was not used).",
+      "truncated": "The recipe was too long and got cut off. Try again (your quota was not used).",
+      "provider_error": "The AI service is temporarily unavailable. Try again shortly (your quota was not used).",
+      "unexpected": "Something went wrong. Your quota was not used: please try again.",
+      "start_failed": "Something went wrong. Your quota was not used: please try again."
+    },
+    "retry": "Try again",
+    "save": {
+      "saving": "Saving…",
+      "saved": "Saved",
+      "offline": "Offline — saved on this device",
+      "error": "Save pending…"
+    },
+    "newRecipe": "New recipe",
+    "savedBody": "It is saved in “My recipes” and will stay there, even if you close this page.",
+    "openRecipe": "Open the recipe",
+    "myRecipes": "My recipes",
+    "regenerate": "Regenerate the recipe",
+    "regenerateHint": "Optional: what you want to change (e.g. “lighter”, “no oven”)",
+    "regenerateRemaining": "{count, plural, =0 {No regenerations left} one {# regeneration left} other {# regenerations left}}",
+    "regenerating": "New version in progress…",
+    "regenerateImage": "Regenerate the image",
+    "imageSoon": "The recipe photo is coming soon.",
+    "noSocial": "Social media content could not be generated for this recipe."
+  },
+  "Recipe": {
+    "servings": "{count, plural, one {# person} other {# people}}",
+    "servingsLabel": "Number of people",
+    "less": "Fewer people",
+    "more": "More people",
+    "prep": "Prep",
+    "cook": "Cooking",
+    "rest": "Resting",
+    "total": "Total",
+    "difficulty": {
+      "easy": "Easy",
+      "medium": "Intermediate",
+      "hard": "Hard"
+    },
+    "miseEnPlace": "Mise en place",
+    "stepsTitle": "Step by step",
+    "phases": {
+      "mise_en_place": "Mise en place",
+      "cooking": "Cooking",
+      "plating": "Plating"
+    },
+    "plating": "Plating",
+    "platingFields": {
+      "plate": "Plate",
+      "positioning": "Positioning",
+      "quantities": "Quantities",
+      "sauce": "Sauce",
+      "garnish": "Garnish",
+      "finish": "Finish",
+      "decoration": "Decoration"
+    },
+    "equipment": "Equipment",
+    "allergens": "Allergens",
+    "diets": "Diets",
+    "tips": "Tips",
+    "season": "Season",
+    "optional": "optional",
+    "toConfirm": "to confirm",
+    "toConfirmHint": "Ingredient added to your base, to be confirmed",
+    "cost": "Cost",
+    "costSoon": "The cost will be calculated once ingredient prices are filled in.",
+    "photo": "Photo",
+    "expected": "Expected result",
+    "timer": "Timer",
+    "version": "Version {number}",
+    "versions": "{count, plural, one {# version} other {# versions}}",
+    "minutes": "{count} min",
+    "units": {
+      "mg": "mg",
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "cl": "cl",
+      "l": "l",
+      "piece": ""
+    },
+    "allergenNames": {
+      "gluten": "Gluten",
+      "crustaceans": "Crustaceans",
+      "eggs": "Eggs",
+      "fish": "Fish",
+      "peanuts": "Peanuts",
+      "soy": "Soy",
+      "milk": "Milk",
+      "nuts": "Tree nuts",
+      "celery": "Celery",
+      "mustard": "Mustard",
+      "sesame": "Sesame",
+      "sulphites": "Sulphites",
+      "lupin": "Lupin",
+      "molluscs": "Molluscs"
+    },
+    "dietNames": {
+      "vegan": "Vegan",
+      "vegetarian": "Vegetarian",
+      "gluten_free": "Gluten-free",
+      "lactose_free": "Lactose-free",
+      "halal": "Halal",
+      "kosher": "Kosher",
+      "keto": "Keto"
+    },
+    "platforms": {
+      "generic": "Overview",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "pinterest": "Pinterest",
+      "linkedin": "LinkedIn"
+    },
+    "copy": "Copy",
+    "copied": "Copied!",
+    "empty": "You don't have any recipes yet.",
+    "listTitle": "My recipes",
+    "createdOn": "Created on {date}",
+    "back": "My recipes"
   }
 }

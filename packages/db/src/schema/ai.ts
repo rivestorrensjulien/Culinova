@@ -36,6 +36,12 @@ export const aiGenerations = pgTable(
     status: text("status").$type<"queued" | "running" | "succeeded" | "failed">().notNull().default("queued"),
     /** Cible de la génération (recette, version, image…), sous forme « type:id ». */
     inputRef: text("input_ref"),
+    draftId: uuid("draft_id"),
+    recipeId: uuid("recipe_id"),
+    generationParamsId: uuid("generation_params_id"),
+    /** Consigne libre (régénération guidée, modification par instruction). */
+    instruction: text("instruction"),
+    attempts: integer("attempts").notNull().default(0),
     output: jsonb("output"),
     provider: text("provider"),
     model: text("model"),

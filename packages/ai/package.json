@@ -9,12 +9,16 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "try": "tsx src/try.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "tsx": "^4.23.15",
+    "@types/node": "^22.0.0"
   }
 }

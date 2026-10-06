@@ -43,6 +43,9 @@ export default defineConfig({
       BETTER_AUTH_SECRET: "e2e-secret-0123456789abcdef0123456789abcdef",
       EMAIL_OUTBOX_DIR: outbox,
       RESEND_API_KEY: "",
+      // IA factice : réponses déterministes, sans clé ni coût.
+      AI_PROVIDER: "fake",
+      AI_FAKE_DELAY_MS: "1500",
     },
   },
 });

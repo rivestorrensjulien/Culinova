@@ -17,7 +17,9 @@
     "INNGEST_*",
     "NEXT_PUBLIC_*",
     "CI",
-    "PLAYWRIGHT_BROWSERS_PATH"
+    "PLAYWRIGHT_BROWSERS_PATH",
+    "AI_*",
+    "INNGEST_DEV"
   ],
   "tasks": {
     "build": {

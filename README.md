@@ -20,6 +20,10 @@ pnpm db:seed                 # données de référence + compte administrateur (
 pnpm dev                     # http://localhost:3000
 ```
 
+Sans clé Claude (`ANTHROPIC_API_KEY`), une IA « factice » génère une recette d'exemple :
+tout le parcours fonctionne, sans coût. Avec la clé, `pnpm ai:essai "votre idée"` lance une
+vraie génération et affiche son coût.
+
 Sans clé Resend, les e-mails ne partent pas : le lien de connexion s'affiche dans le
 terminal et est enregistré dans `apps/web/.outbox/`.
 
@@ -33,17 +37,19 @@ terminal et est enregistré dans `apps/web/.outbox/`.
 
 ### Pages principales
 
-| Adresse                | Rôle                                                    |
-| ---------------------- | ------------------------------------------------------- |
-| `/connexion`           | Connexion par lien magique (15 min, usage unique)       |
-| `/invitation/[code]`   | Création du compte avec un code (CGU + confidentialité) |
-| `/app`                 | Espace connecté : solde du mois                         |
-| `/app/compte/securite` | Appareils connectés, déconnexion partout                |
-| `/2fa`                 | Second facteur des administrateurs                      |
-| `/admin`               | Tableau de bord, utilisateurs, invitations, journal     |
-| `/legal/cgu`           | Documents juridiques (versions provisoires)             |
-| `/design`              | Vitrine du système de design                            |
-| `/en/...`              | Version anglaise de chaque page                         |
+| Adresse                | Rôle                                                     |
+| ---------------------- | -------------------------------------------------------- |
+| `/connexion`           | Connexion par lien magique (15 min, usage unique)        |
+| `/invitation/[code]`   | Création du compte avec un code (CGU + confidentialité)  |
+| `/app`                 | Espace connecté : solde du mois                          |
+| `/app/creer`           | Wizard de création en 12 étapes (sauvegarde automatique) |
+| `/app/recettes`        | Mes recettes, et chaque recette avec ses versions        |
+| `/app/compte/securite` | Appareils connectés, déconnexion partout                 |
+| `/2fa`                 | Second facteur des administrateurs                       |
+| `/admin`               | Tableau de bord, utilisateurs, invitations, journal      |
+| `/legal/cgu`           | Documents juridiques (versions provisoires)              |
+| `/design`              | Vitrine du système de design                             |
+| `/en/...`              | Version anglaise de chaque page                          |
 
 ## Commandes
 
@@ -59,6 +65,7 @@ terminal et est enregistré dans `apps/web/.outbox/`.
 | `pnpm db:generate` | Génère une migration après modification du schéma             |
 | `pnpm db:migrate`  | Applique les migrations                                       |
 | `pnpm db:seed`     | Données de référence (relançable sans doublons)               |
+| `pnpm ai:essai`    | Une vraie génération avec Claude (nécessite la clé)           |
 | `pnpm format`      | Formate le code (Prettier)                                    |
 
 Les tests d'intégration et de bout en bout utilisent des bases dédiées

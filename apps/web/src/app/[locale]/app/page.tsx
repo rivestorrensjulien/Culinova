@@ -1,6 +1,9 @@
-import { Card, CardBody, CardTitle, Notice, Progress } from "@culinova/ui";
-import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
+import { buttonClasses, Card, CardBody, CardTitle, Notice, Progress } from "@culinova/ui";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { formatResetDate } from "@/lib/dates";
 import { getDb } from "@/server/db";
+import { listRecipes } from "@/server/generation/view";
 import { getMonthlyUsage } from "@/server/quotas";
 import { requireUser } from "@/server/session";
 
@@ -16,9 +19,10 @@ export default async function DashboardPage({
   const session = await requireUser(locale);
   const { bienvenue } = await searchParams;
   const t = await getTranslations("App");
-  const format = await getFormatter();
-  const usage = await getMonthlyUsage(getDb(), session.user.id);
-  const reset = new Date(Date.UTC(usage.resetsOn.year, usage.resetsOn.month - 1, usage.resetsOn.day, 12));
+  const [usage, recipes] = await Promise.all([
+    getMonthlyUsage(getDb(), session.user.id),
+    listRecipes(getDb(), session.user.id),
+  ]);
 
   const meters = [
     { key: "recipes" as const, label: t("recipes") },
@@ -28,9 +32,14 @@ export default async function DashboardPage({
   return (
     <div className="flex flex-col gap-8">
       {bienvenue ? <Notice tone="success">{t("welcome")}</Notice> : null}
-      <h1 className="font-display text-4xl">
-        {session.user.name ? t("hello", { name: session.user.name }) : t("helloAnonymous")}
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="font-display text-4xl">
+          {session.user.name ? t("hello", { name: session.user.name }) : t("helloAnonymous")}
+        </h1>
+        <Link href="/app/creer" className={buttonClasses("primary", "lg")}>
+          {t("createCta")}
+        </Link>
+      </div>
 
       <section className="flex flex-col gap-4">
         <h2 className="font-display text-2xl">{t("quotaTitle")}</h2>
@@ -54,20 +63,31 @@ export default async function DashboardPage({
           })}
         </div>
         <p className="text-sm text-muted">
-          {t("resets", {
-            // Le 1er du mois : « 1er novembre 2026 » en français, « November 1, 2026 » en anglais.
-            date:
-              locale === "fr"
-                ? `1er ${format.dateTime(reset, { month: "long", year: "numeric" })}`
-                : format.dateTime(reset, { day: "numeric", month: "long", year: "numeric" }),
-          })}{" "}
+          {t("resets", { date: formatResetDate(usage.resetsOn, locale) })}{" "}
           {usage.limits.regenerations !== null
             ? t("regenerations", { count: usage.limits.regenerations })
             : null}
         </p>
       </section>
 
-      <Notice>{t("comingSoon")}</Notice>
+      {recipes.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="font-display text-2xl">{t("recentRecipes")}</h2>
+          <ul className="flex flex-col divide-y divide-border rounded-lg border border-border bg-surface">
+            {recipes.slice(0, 5).map((recipe) => (
+              <li key={recipe.id}>
+                <Link
+                  href={`/app/recettes/${recipe.id}`}
+                  className="flex justify-between gap-3 px-4 py-3 hover:bg-raised"
+                >
+                  <span className="font-medium">{recipe.name}</span>
+                  <span className="text-sm text-muted">{recipe.cuisineLabel}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -2,9 +2,17 @@
   "Common": {
     "brand": "Culinova",
     "tagline": "De l'idée à l'assiette, avec l'IA.",
-    "theme": { "group": "Thème", "light": "Clair", "dark": "Sombre", "system": "Système" },
+    "theme": {
+      "group": "Thème",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système"
+    },
     "language": "Langue",
-    "languages": { "fr": "Français", "en": "English" },
+    "languages": {
+      "fr": "Français",
+      "en": "English"
+    },
     "signOut": "Se déconnecter",
     "backHome": "Retour à l'accueil",
     "legal": {
@@ -99,7 +107,13 @@
     }
   },
   "App": {
-    "nav": { "dashboard": "Tableau de bord", "security": "Sécurité", "admin": "Administration" },
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "security": "Sécurité",
+      "admin": "Administration",
+      "create": "Créer",
+      "recipes": "Mes recettes"
+    },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
     "helloAnonymous": "Bonjour",
@@ -111,8 +125,9 @@
     "usageUnlimited": "{used} · illimité",
     "resets": "Remise à zéro le {date}.",
     "regenerations": "Et jusqu'à {count} régénérations de texte par recette.",
-    "comingSoon": "Le créateur de recettes arrive très bientôt.",
-    "impersonating": "Vous êtes connecté·e en tant que {email} (administration)."
+    "impersonating": "Vous êtes connecté·e en tant que {email} (administration).",
+    "createCta": "Créer une recette",
+    "recentRecipes": "Vos dernières recettes"
   },
   "Security": {
     "title": "Sécurité",
@@ -127,5 +142,229 @@
     "draft": "Document provisoire",
     "version": "Version {version}",
     "missing": "Ce document sera publié prochainement."
+  },
+  "Wizard": {
+    "title": "Créer une recette",
+    "steps": {
+      "moment": "Moment",
+      "influence": "Influence",
+      "precision": "Précision",
+      "style": "Style",
+      "language": "Langue",
+      "mode": "Mode",
+      "input": "Saisie",
+      "servings": "Personnes",
+      "generation": "Génération",
+      "result": "Résultat",
+      "social": "Réseaux sociaux",
+      "saved": "Enregistrée"
+    },
+    "stepOf": "Étape {current} sur {total}",
+    "questions": {
+      "moment": "Pour quel moment ?",
+      "influence": "Une influence culinaire ?",
+      "precision": "Précisez la région, le pays ou la cuisine",
+      "style": "Quel style ?",
+      "language": "Dans quelle langue ?",
+      "mode": "Comment voulez-vous créer ?",
+      "servings": "Pour combien de personnes ?",
+      "generation": "Tout est prêt",
+      "result": "Votre recette",
+      "social": "Contenu pour les réseaux sociaux",
+      "saved": "Votre recette est enregistrée"
+    },
+    "inputQuestion": {
+      "ingredients": "Quels ingrédients avez-vous ?",
+      "name": "Quelle recette voulez-vous réaliser ?",
+      "idea": "Quelle est votre idée ?"
+    },
+    "inputPlaceholder": {
+      "ingredients": "Un ingrédient par ligne, avec la quantité disponible si vous la connaissez.\nEx. : 400 g de saumon\n1 citron vert\nriz",
+      "name": "Ex. : Bœuf bourguignon, pad thaï, tarte au citron meringuée…",
+      "idea": "Ex. : un dessert d'automne autour de la poire et du sarrasin, servi tiède."
+    },
+    "noInfluence": "Aucune",
+    "noInfluenceHint": "Laisser libre",
+    "precisionHint": "Facultatif : vous pouvez vous arrêter à la région ou au pays. Jusqu'à 3 cuisines pour une fusion.",
+    "search": "Rechercher une cuisine ou un pays…",
+    "favorites": "Favoris",
+    "recents": "Récentes",
+    "regions": "Régions",
+    "countries": "Pays",
+    "cuisines": "Cuisines",
+    "allCuisines": "Toutes les cuisines",
+    "selection": "Votre sélection",
+    "none": "Aucune précision",
+    "clear": "Effacer",
+    "fusion": "Fusion — interprétation créative",
+    "maxCuisines": "3 cuisines au maximum.",
+    "favorite": "Ajouter aux favoris",
+    "unfavorite": "Retirer des favoris",
+    "noResult": "Aucun résultat.",
+    "traditionalDisabled": "Une fusion ne peut pas être présentée comme traditionnelle.",
+    "modes": {
+      "ingredients": {
+        "title": "À partir d'ingrédients",
+        "hint": "Ce que vous avez sous la main"
+      },
+      "name": {
+        "title": "À partir d'un nom",
+        "hint": "Une recette que vous connaissez"
+      },
+      "idea": {
+        "title": "À partir d'une idée",
+        "hint": "Une envie, une ambiance, une contrainte"
+      }
+    },
+    "languages": {
+      "fr": "Français",
+      "en": "Anglais"
+    },
+    "custom": "Autre",
+    "back": "Retour",
+    "next": "Continuer",
+    "summary": {
+      "moment": "Moment",
+      "influence": "Influence",
+      "precision": "Précision",
+      "style": "Style",
+      "language": "Langue",
+      "mode": "Mode",
+      "input": "Saisie",
+      "servings": "Personnes",
+      "edit": "Modifier"
+    },
+    "generate": "Générer la recette",
+    "generating": "Création de votre recette…",
+    "generatingHint": "Cela prend généralement moins d'une minute. Vous pouvez quitter la page : la recette vous attendra.",
+    "remaining": "{count, plural, =0 {Plus aucune recette disponible ce mois-ci} one {# recette disponible ce mois-ci} other {# recettes disponibles ce mois-ci}}",
+    "unlimited": "Recettes illimitées",
+    "errors": {
+      "quota": "Vous avez utilisé vos {limit} recettes du mois. Le compteur repart à zéro le {date}.",
+      "quotaRegen": "Vous avez utilisé les {limit} régénérations de cette recette.",
+      "budget": "Les générations sont suspendues jusqu'au mois prochain (budget mensuel atteint).",
+      "busy": "Une génération est déjà en cours.",
+      "incomplete": "Il manque des informations : revenez aux étapes précédentes.",
+      "not_found": "Brouillon introuvable : rechargez la page.",
+      "invalid_output": "La recette proposée n'était pas valide. Votre quota n'a pas été décompté : réessayez.",
+      "refusal": "Cette demande n'a pas pu être traitée. Reformulez votre saisie (votre quota n'a pas été décompté).",
+      "truncated": "La recette était trop longue et a été coupée. Réessayez (votre quota n'a pas été décompté).",
+      "provider_error": "Le service d'IA est momentanément indisponible. Réessayez dans un instant (votre quota n'a pas été décompté).",
+      "unexpected": "Une erreur est survenue. Votre quota n'a pas été décompté : réessayez.",
+      "start_failed": "Une erreur est survenue. Votre quota n'a pas été décompté : réessayez."
+    },
+    "retry": "Réessayer",
+    "save": {
+      "saving": "Enregistrement…",
+      "saved": "Enregistré",
+      "offline": "Hors ligne — enregistré sur cet appareil",
+      "error": "Enregistrement en attente…"
+    },
+    "newRecipe": "Nouvelle recette",
+    "savedBody": "Elle est enregistrée dans « Mes recettes » et le restera, même si vous fermez cette page.",
+    "openRecipe": "Ouvrir la recette",
+    "myRecipes": "Mes recettes",
+    "regenerate": "Régénérer la recette",
+    "regenerateHint": "Facultatif : ce que vous voulez changer (ex. « plus léger », « sans four »)",
+    "regenerateRemaining": "{count, plural, =0 {Plus de régénération possible} one {# régénération restante} other {# régénérations restantes}}",
+    "regenerating": "Nouvelle version en cours…",
+    "regenerateImage": "Régénérer l'image",
+    "imageSoon": "La photo de la recette arrive bientôt.",
+    "noSocial": "Le contenu pour les réseaux sociaux n'a pas pu être généré pour cette recette."
+  },
+  "Recipe": {
+    "servings": "{count, plural, one {# personne} other {# personnes}}",
+    "servingsLabel": "Nombre de personnes",
+    "less": "Moins de personnes",
+    "more": "Plus de personnes",
+    "prep": "Préparation",
+    "cook": "Cuisson",
+    "rest": "Repos",
+    "total": "Total",
+    "difficulty": {
+      "easy": "Facile",
+      "medium": "Intermédiaire",
+      "hard": "Difficile"
+    },
+    "miseEnPlace": "Mise en place",
+    "stepsTitle": "Pas à pas",
+    "phases": {
+      "mise_en_place": "Mise en place",
+      "cooking": "Cuisson",
+      "plating": "Dressage"
+    },
+    "plating": "Dressage",
+    "platingFields": {
+      "plate": "Assiette",
+      "positioning": "Positionnement",
+      "quantities": "Quantités",
+      "sauce": "Sauce",
+      "garnish": "Garniture",
+      "finish": "Finition",
+      "decoration": "Décoration"
+    },
+    "equipment": "Matériel",
+    "allergens": "Allergènes",
+    "diets": "Régimes",
+    "tips": "Conseils",
+    "season": "Saison",
+    "optional": "facultatif",
+    "toConfirm": "à confirmer",
+    "toConfirmHint": "Ingrédient ajouté à votre base, à confirmer",
+    "cost": "Coût",
+    "costSoon": "Le coût sera calculé dès que les prix des ingrédients seront renseignés.",
+    "photo": "Photo",
+    "expected": "Résultat attendu",
+    "timer": "Minuteur",
+    "version": "Version {number}",
+    "versions": "{count, plural, one {# version} other {# versions}}",
+    "minutes": "{count} min",
+    "units": {
+      "mg": "mg",
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "cl": "cl",
+      "l": "l",
+      "piece": ""
+    },
+    "allergenNames": {
+      "gluten": "Gluten",
+      "crustaceans": "Crustacés",
+      "eggs": "Œufs",
+      "fish": "Poisson",
+      "peanuts": "Arachides",
+      "soy": "Soja",
+      "milk": "Lait",
+      "nuts": "Fruits à coque",
+      "celery": "Céleri",
+      "mustard": "Moutarde",
+      "sesame": "Sésame",
+      "sulphites": "Sulfites",
+      "lupin": "Lupin",
+      "molluscs": "Mollusques"
+    },
+    "dietNames": {
+      "vegan": "Végétalien",
+      "vegetarian": "Végétarien",
+      "gluten_free": "Sans gluten",
+      "lactose_free": "Sans lactose",
+      "halal": "Halal",
+      "kosher": "Casher",
+      "keto": "Cétogène"
+    },
+    "platforms": {
+      "generic": "Présentation",
+      "instagram": "Instagram",
+      "tiktok": "TikTok",
+      "pinterest": "Pinterest",
+      "linkedin": "LinkedIn"
+    },
+    "copy": "Copier",
+    "copied": "Copié !",
+    "empty": "Vous n'avez pas encore de recette.",
+    "listTitle": "Mes recettes",
+    "createdOn": "Créée le {date}",
+    "back": "Mes recettes"
   }
 }

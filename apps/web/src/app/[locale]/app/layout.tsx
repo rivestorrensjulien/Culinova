@@ -30,9 +30,15 @@ export default async function AppLayout({
         </div>
       ) : null}
       <SiteHeader homeHref="/app">
-        <nav className="flex items-center gap-1 text-sm">
+        <nav className="flex flex-wrap items-center gap-1 text-sm">
           <Link href="/app" className="rounded-full px-3 py-1.5 hover:bg-raised">
             {t("nav.dashboard")}
+          </Link>
+          <Link href="/app/creer" className="rounded-full px-3 py-1.5 hover:bg-raised">
+            {t("nav.create")}
+          </Link>
+          <Link href="/app/recettes" className="rounded-full px-3 py-1.5 hover:bg-raised">
+            {t("nav.recipes")}
           </Link>
           <Link href="/app/compte/securite" className="rounded-full px-3 py-1.5 hover:bg-raised">
             {t("nav.security")}

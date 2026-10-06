@@ -17,7 +17,8 @@
     "db:generate": "pnpm --filter @culinova/db db:generate",
     "db:migrate": "pnpm --filter @culinova/db db:migrate",
     "db:seed": "pnpm --filter @culinova/db db:seed",
-    "test:e2e": "pnpm --filter @culinova/web test:e2e"
+    "test:e2e": "pnpm --filter @culinova/web test:e2e",
+    "ai:essai": "pnpm --filter @culinova/ai try"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",

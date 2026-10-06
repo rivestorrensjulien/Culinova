@@ -3,6 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export const ADMIN_EMAIL = "admin@e2e.test";
+export const COOK_EMAIL = "cuisine@e2e.test";
 
 interface SavedEmail {
   to: string;
@@ -27,12 +28,20 @@ export async function waitForEmailLink(to: string, tag: string, after: number): 
 
 /** Connexion par lien magique depuis la page /connexion. */
 export async function signIn(page: Page, email: string): Promise<void> {
+  // Chaque navigateur simulé a sa propre adresse IP : sinon, tous les tests venant de la
+  // même machine déclencheraient la limitation des tentatives (voulue en production).
+  const octet = () => Math.floor(Math.random() * 250) + 1;
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": `10.${octet()}.${octet()}.${octet()}` });
   const before = Date.now();
   await page.goto("/connexion");
+  // Attendre que la page soit interactive avant de remplir le formulaire.
+  await page.waitForLoadState("networkidle");
   await page.getByLabel("Adresse e-mail").fill(email);
   await page.getByRole("button", { name: "Recevoir mon lien" }).click();
   await expect(page.getByText("un lien de connexion vient de lui être envoyé")).toBeVisible();
   const link = await waitForEmailLink(email, "magic-link", before);
   await page.goto(link);
   await page.getByRole("link", { name: "Me connecter" }).click();
+  // La connexion est terminée quand l'espace connecté s'affiche.
+  await page.waitForURL(/\/app(\?|$)/);
 }

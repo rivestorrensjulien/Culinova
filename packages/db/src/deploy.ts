@@ -42,10 +42,47 @@ try {
     await db.$client.end();
   }
 } catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`✗ Préparation de la base impossible : ${message}`);
+  console.error(`✗ Préparation de la base impossible : ${describeError(error)}`);
+  console.error(`  Adresse utilisée : ${describeUrl(url)}`);
   console.error(
     "  Vérifiez DATABASE_URL (adresse « Transaction pooler » de Supabase, port 6543, mot de passe).",
   );
   process.exit(1);
+}
+
+/** Message d'erreur, avec la cause réelle renvoyée par PostgreSQL (jamais le mot de passe). */
+function describeError(error: unknown): string {
+  const messages: string[] = [];
+  let current: unknown = error;
+  while (current && messages.length < 5) {
+    if (current instanceof Error) {
+      const code = (current as { code?: unknown }).code;
+      messages.push(typeof code === "string" ? `${current.message} [${code}]` : current.message);
+      current = current.cause;
+    } else {
+      messages.push(String(current));
+      break;
+    }
+  }
+  return messages.join(" ← cause : ");
+}
+
+/** Résumé de l'adresse de connexion, mot de passe masqué, pour repérer une erreur de saisie. */
+function describeUrl(raw: string): string {
+  try {
+    const parsed = new URL(raw.trim());
+    const password = decodeURIComponent(parsed.password);
+    const hints: string[] = [];
+    if (raw !== raw.trim()) hints.push("espaces avant ou après l'adresse");
+    if (!password) hints.push("mot de passe absent");
+    if (/[[\]]|YOUR-PASSWORD/i.test(password)) hints.push("crochets ou « YOUR-PASSWORD » encore présents");
+    return [
+      `${parsed.protocol}//${decodeURIComponent(parsed.username)}:****@${parsed.hostname}:${parsed.port || "5432"}${parsed.pathname}`,
+      hints.length ? `(attention : ${hints.join(", ")})` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  } catch {
+    return "illisible (ce n'est pas une adresse postgresql://… valide ; un caractère spécial du mot de passe est peut-être à remplacer)";
+  }
 }

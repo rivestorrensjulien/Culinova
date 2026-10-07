@@ -6,7 +6,8 @@ import postgres from "postgres";
 import { loadRootEnv } from "./env";
 
 export async function runMigrations(url: string): Promise<void> {
-  const client = postgres(url, { max: 1, onnotice: () => {} });
+  // `prepare: false` : le pooler de connexions de Supabase (mode transaction) refuse les requêtes préparées.
+  const client = postgres(url, { max: 1, prepare: false, onnotice: () => {} });
   try {
     await migrate(drizzle(client), {
       migrationsFolder: fileURLToPath(new URL("../drizzle", import.meta.url)),

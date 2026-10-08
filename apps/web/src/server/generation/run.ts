@@ -131,7 +131,9 @@ export async function runGeneration(
     return "succeeded";
   } catch (error) {
     const usage = error instanceof AiGenerationError ? error.usage : undefined;
-    console.error(`Génération ${generation.id} en échec`, error);
+    console.error(
+      `Génération ${generation.id} en échec : ${error instanceof Error ? error.message : String(error)}`,
+    );
     await db
       .update(s.aiGenerations)
       .set({
@@ -208,7 +210,7 @@ async function generateSocial(
     await recordAiSpend(db, result.usage.costUsdMicros);
   } catch (error) {
     const usage = error instanceof AiGenerationError ? error.usage : undefined;
-    console.error("Contenu social non généré", error);
+    console.error(`Contenu social non généré : ${error instanceof Error ? error.message : String(error)}`);
     await db
       .update(s.aiGenerations)
       .set({

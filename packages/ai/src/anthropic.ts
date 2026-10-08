@@ -34,6 +34,17 @@ function extractText(message: Anthropic.Message): string {
     .join("");
 }
 
+/** Explication lisible d'une erreur de l'API (code HTTP, type et message renvoyés par Anthropic). */
+export function describeApiError(error: unknown): string {
+  if (!(error instanceof Anthropic.APIError)) return error instanceof Error ? error.message : String(error);
+  const body = error.error as { error?: { type?: unknown; message?: unknown } } | undefined;
+  const type = typeof body?.error?.type === "string" ? body.error.type : undefined;
+  const message = typeof body?.error?.message === "string" ? body.error.message : error.message;
+  return [error.status, type, message, error.requestID ? `(requête ${error.requestID})` : undefined]
+    .filter((part) => part !== undefined && part !== "")
+    .join(" · ");
+}
+
 export class AnthropicAdapter implements LlmAdapter {
   readonly provider = "anthropic";
   private readonly client: Pick<Anthropic, "messages">;
@@ -85,8 +96,7 @@ export class AnthropicAdapter implements LlmAdapter {
         });
       } catch (error) {
         usage.durationMs = Date.now() - started;
-        const detail =
-          error instanceof Anthropic.APIError ? `${error.status ?? ""} ${error.message}` : String(error);
+        const detail = describeApiError(error);
         throw new AiGenerationError("provider_error", `Le service d'IA n'a pas répondu : ${detail}`, usage);
       }
 

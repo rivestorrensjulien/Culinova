@@ -1,7 +1,7 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { describe, expect, it, vi } from "vitest";
 import { AiGenerationError } from "./adapters";
-import { AnthropicAdapter } from "./anthropic";
+import { AnthropicAdapter, describeApiError } from "./anthropic";
 import { fakeRecipe } from "./fake";
 import { costUsdMicros } from "./models";
 import { generatedRecipeSchema, recipeProblems } from "./schemas";
@@ -108,5 +108,17 @@ describe("adaptateur Claude", () => {
       .adapter.generateStructured(request)
       .catch((e: unknown) => e);
     expect(error).toMatchObject({ code: "provider_error" });
+  });
+
+  it("explique clairement un refus de l'API", () => {
+    const error = new Anthropic.BadRequestError(
+      400,
+      { type: "error", error: { type: "invalid_request_error", message: "schema is too complex" } },
+      undefined,
+      new Headers({ "request-id": "req_123" }),
+    );
+    expect(describeApiError(error)).toBe(
+      "400 · invalid_request_error · schema is too complex · (requête req_123)",
+    );
   });
 });

@@ -33,8 +33,7 @@ export function remapStepQuantityTokens(text: string, map: ReadonlyMap<string, s
 }
 
 export type StepTextSegment =
-  | { kind: "text"; text: string }
-  | { kind: "quantity"; ref: string; part: number | null };
+  { kind: "text"; text: string } | { kind: "quantity"; ref: string; part: number | null };
 
 /** Découpe un texte d'étape en morceaux de texte et de quantités, pour l'affichage. */
 export function splitStepText(text: string): StepTextSegment[] {

@@ -24,7 +24,11 @@ describe("schéma de recette", () => {
       ...recipe,
       servings: 6,
       prepTimeSeconds: -5,
-      ingredients: [...recipe.ingredients, { ...recipe.ingredients[0]!, quantity: 0 }],
+      ingredients: [
+        ...recipe.ingredients,
+        { ...recipe.ingredients[0]!, quantity: 0 },
+        { ...recipe.ingredients[1]!, ref: "i50", unit: "ml" as const },
+      ],
       steps: [
         ...recipe.steps,
         { ...recipe.steps[0]!, ingredientRefs: ["i99"], action: "Ajouter {{i42:10}} au bol." },
@@ -36,6 +40,7 @@ describe("schéma de recette", () => {
         expect.stringContaining("servings doit valoir 4"),
         expect.stringContaining("en double : i1"),
         expect.stringContaining("Quantité invalide"),
+        expect.stringContaining("doit être pesé en grammes"),
         expect.stringContaining("ingrédient inconnu : i99"),
         expect.stringContaining("jeton de quantité inconnu : {{i42:10}}"),
         expect.stringContaining("prepTimeSeconds"),

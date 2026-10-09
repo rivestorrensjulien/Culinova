@@ -99,15 +99,16 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(view).toContainText("interprétation créative");
   await expect(page.getByTestId("ingredient").first()).toContainText("Riz à sushi");
   await expect(page.getByTestId("ingredient").first()).toContainText("300 g");
-  await expect(page.getByTestId("ingredient").filter({ hasText: "Yuzu kosho" })).toContainText("à confirmer");
+  await expect(view.getByRole("heading", { name: "Ingrédients" })).toBeVisible();
+  await expect(page.getByTestId("ingredient").filter({ hasText: "Eau" })).toContainText("360 g (36 cl)");
   await expect(page.getByTestId("step")).toHaveCount(6);
-  await expect(page.getByTestId("step").nth(1)).toContainText("Cuire 300 g de riz avec 36 cl d'eau");
+  await expect(page.getByTestId("step").nth(1)).toContainText("Cuire 300 g de riz avec 360 g (36 cl) d'eau");
 
   // Recalcul des quantités selon le nombre de personnes, liste et étapes comprises.
   await view.getByRole("button", { name: "6", exact: true }).click();
   await expect(page.getByTestId("servings")).toHaveText("6 personnes");
   await expect(page.getByTestId("ingredient").first()).toContainText("450 g");
-  await expect(page.getByTestId("step").nth(1)).toContainText("Cuire 450 g de riz avec 54 cl d'eau");
+  await expect(page.getByTestId("step").nth(1)).toContainText("Cuire 450 g de riz avec 540 g (54 cl) d'eau");
 
   // La recette survit à un rafraîchissement.
   await waitSaved(page);

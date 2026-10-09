@@ -26,10 +26,10 @@ export const recipeIngredientSchema = z.object({
   /** Référence courte (« i1 », « i2 »…) utilisée par les étapes. */
   ref: z.string(),
   name: z.string(),
-  /** Quantité en unité interne : grammes, millilitres ou pièces. */
+  /** Poids en grammes (« ml » et « piece » restent lisibles pour les anciennes recettes). */
   quantity: z.number(),
   unit: z.enum(["g", "ml", "piece"]),
-  /** Quantité « de cuisine » facultative pour l'affichage (ex. 2 c. à soupe). */
+  /** Mesure parlante facultative, affichée entre parenthèses (ex. 3 œufs, 1 pincée, 30 cl). */
   displayQuantity: z.number().nullable(),
   displayUnit: z.string().nullable(),
   preparation: z.string().nullable(),
@@ -104,6 +104,9 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
     if (refs.has(ingredient.ref)) problems.push(`Référence d'ingrédient en double : ${ingredient.ref}.`);
     refs.add(ingredient.ref);
     if (!(ingredient.quantity > 0)) problems.push(`Quantité invalide pour « ${ingredient.name} ».`);
+    if (ingredient.unit !== "g") {
+      problems.push(`« ${ingredient.name} » doit être pesé en grammes (unit = "g", reçu ${ingredient.unit}).`);
+    }
   }
   recipe.steps.forEach((step, index) => {
     for (const ref of step.ingredientRefs) {

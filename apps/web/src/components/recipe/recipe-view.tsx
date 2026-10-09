@@ -5,9 +5,7 @@ import { Badge, Button, Card, CardBody, cx } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
-import { formatDuration, platingText, scaledDisplay, scaledKitchenMeasure } from "./format";
-
-const DIMENSIONS = { mass: "mass", volume: "volume", count: "count" } as const;
+import { formatDuration, ingredientAmount, platingText } from "./format";
 
 export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: ReactNode }) {
   const t = useTranslations("Recipe");
@@ -15,35 +13,19 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
   const [servings, setServings] = useState(recipe.servings);
   const total = recipe.prepS + recipe.cookS + recipe.restS;
   const byId = new Map(recipe.ingredients.map((i) => [i.id, i]));
-  const groups = [...new Set(recipe.ingredients.map((i) => i.group ?? ""))];
 
-  const quantityText = (ingredient: RecipeData["ingredients"][number]) => {
-    const display = scaledDisplay(
-      { dimension: DIMENSIONS[ingredient.dimension], value: ingredient.quantity },
-      recipe.servings,
-      servings,
-    );
-    const unit = t(`units.${display.unit}`);
-    const main = `${format.number(display.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
-    if (ingredient.displayQuantity !== null && ingredient.displayUnit) {
-      const kitchen = scaledKitchenMeasure(ingredient.displayQuantity, recipe.servings, servings);
-      return `${main} (${format.number(kitchen)} ${ingredient.displayUnit})`;
-    }
-    return main;
+  /** Quantité d'un ingrédient (ou d'une partie) : grammes, puis mesure parlante entre parenthèses. */
+  const amountText = (ingredient: RecipeData["ingredients"][number], part: number | null = null) => {
+    const amount = ingredientAmount(ingredient, part, recipe.servings, servings);
+    const unit = t(`units.${amount.unit}`);
+    const main = `${format.number(amount.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
+    return amount.kitchen ? `${main} (${format.number(amount.kitchen.value)} ${amount.kitchen.unit})` : main;
   };
 
   /** Quantité citée dans une étape, recalculée au nombre de personnes affiché. */
   const stepQuantityText = (id: string, part: number | null) => {
     const ingredient = byId.get(id);
-    if (!ingredient) return "";
-    const display = scaledDisplay(
-      { dimension: DIMENSIONS[ingredient.dimension], value: part ?? ingredient.quantity },
-      recipe.servings,
-      servings,
-    );
-    const value = format.number(display.value, { maximumFractionDigits: 2 });
-    const unit = t(`units.${display.unit}`);
-    return unit ? `${value} ${unit}` : value;
+    return ingredient ? amountText(ingredient, part) : "";
   };
 
   return (
@@ -90,7 +72,7 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
           <Card>
             <CardBody className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="font-display text-2xl">{t("miseEnPlace")}</h3>
+                <h3 className="font-display text-2xl">{t("ingredientsTitle")}</h3>
                 <div className="flex items-center gap-1" role="group" aria-label={t("servingsLabel")}>
                   <Button
                     size="sm"
@@ -132,42 +114,23 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
                   </button>
                 ))}
               </div>
-              {groups.map((group) => (
-                <div key={group || "_"} className="flex flex-col gap-1">
-                  {group ? (
-                    <h4 className="text-xs font-medium tracking-wide text-muted uppercase">{group}</h4>
-                  ) : null}
-                  <ul className="divide-y divide-border">
-                    {recipe.ingredients
-                      .filter((i) => (i.group ?? "") === group)
-                      .map((ingredient) => (
-                        <li
-                          key={ingredient.id}
-                          className="flex items-baseline justify-between gap-3 py-1.5 text-sm"
-                          data-testid="ingredient"
-                        >
-                          <span>
-                            {ingredient.label}
-                            {ingredient.preparation ? (
-                              <span className="text-muted">, {ingredient.preparation}</span>
-                            ) : null}
-                            {ingredient.optional ? (
-                              <span className="text-muted"> ({t("optional")})</span>
-                            ) : null}
-                            {ingredient.toConfirm ? (
-                              <Badge tone="warning" className="ml-2" title={t("toConfirmHint")}>
-                                {t("toConfirm")}
-                              </Badge>
-                            ) : null}
-                          </span>
-                          <span className="shrink-0 text-right font-medium tabular-nums">
-                            {quantityText(ingredient)}
-                          </span>
-                        </li>
-                      ))}
-                  </ul>
-                </div>
-              ))}
+              <ul className="divide-y divide-border">
+                {recipe.ingredients.map((ingredient) => (
+                  <li
+                    key={ingredient.id}
+                    className="flex items-baseline justify-between gap-3 py-1.5 text-sm"
+                    data-testid="ingredient"
+                  >
+                    <span>
+                      {ingredient.label}
+                      {ingredient.optional ? <span className="text-muted"> ({t("optional")})</span> : null}
+                    </span>
+                    <span className="shrink-0 text-right font-medium tabular-nums">
+                      {amountText(ingredient)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </CardBody>
           </Card>
 

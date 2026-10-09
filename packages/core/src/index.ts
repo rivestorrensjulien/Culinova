@@ -6,4 +6,5 @@ export * from "./money";
 export * from "./portions";
 export * from "./quotas";
 export * from "./shopping-list";
+export * from "./step-quantities";
 export * from "./units";

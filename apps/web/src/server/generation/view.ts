@@ -49,6 +49,8 @@ export interface RecipeView {
     timer: boolean;
   }>;
   plating: {
+    /** Absent des recettes générées avant l'ajout de ce champ. */
+    description?: string | null;
     plate: string;
     positioning: string;
     quantities: string;

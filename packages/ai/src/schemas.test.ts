@@ -25,7 +25,10 @@ describe("schéma de recette", () => {
       servings: 6,
       prepTimeSeconds: -5,
       ingredients: [...recipe.ingredients, { ...recipe.ingredients[0]!, quantity: 0 }],
-      steps: [...recipe.steps, { ...recipe.steps[0]!, ingredientRefs: ["i99"] }],
+      steps: [
+        ...recipe.steps,
+        { ...recipe.steps[0]!, ingredientRefs: ["i99"], action: "Ajouter {{i42:10}} au bol." },
+      ],
     };
     const problems = recipeProblems(broken, 4);
     expect(problems).toEqual(
@@ -34,6 +37,7 @@ describe("schéma de recette", () => {
         expect.stringContaining("en double : i1"),
         expect.stringContaining("Quantité invalide"),
         expect.stringContaining("ingrédient inconnu : i99"),
+        expect.stringContaining("jeton de quantité inconnu : {{i42:10}}"),
         expect.stringContaining("prepTimeSeconds"),
       ]),
     );

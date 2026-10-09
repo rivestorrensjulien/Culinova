@@ -37,7 +37,7 @@ function adapterWith(...responses: Array<Anthropic.Message | Error>) {
 }
 
 const request = {
-  promptId: "recipe.generate@1",
+  promptId: "recipe.generate@2",
   system: "système",
   user,
   schema: generatedRecipeSchema,

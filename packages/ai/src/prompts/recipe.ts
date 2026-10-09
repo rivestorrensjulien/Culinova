@@ -4,8 +4,8 @@
  */
 import { isFusion, type RecipeRequest } from "./request";
 
-export const RECIPE_PROMPT_VERSION = "recipe.generate@1";
-export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@1";
+export const RECIPE_PROMPT_VERSION = "recipe.generate@2";
+export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@2";
 
 const LANGUAGE_NAMES = { fr: "français", en: "anglais (English)" } as const;
 
@@ -21,11 +21,16 @@ Exigences :
 - Quantités : unités internes uniquement — grammes (g) pour les solides, millilitres (ml) pour les liquides, pièces (piece) pour ce qui se compte (œufs, gousses…). Arrondis à des valeurs réalistes. Si une mesure de cuisine est plus parlante (cuillère, pincée), indique-la aussi dans displayQuantity/displayUnit.
 - Toutes les quantités correspondent exactement au nombre de personnes demandé (champ servings).
 - Mise en place : chaque ingrédient a une référence unique (i1, i2…) ; les étapes citent les ingrédients qu'elles utilisent par ces références.
-- Étapes : une action précise par étape, avec quantité utilisée, température (°C), durée (secondes), matériel et résultat attendu quand c'est pertinent ; timer = true quand un minuteur aide. Phases dans l'ordre : mise_en_place, puis cooking, puis plating.
-- Dressage : assiette, positionnement, quantités par assiette, sauce, garniture, finition, décoration — réalisable avec les seuls ingrédients de la recette (il servira à générer la photo).
+- Quantités dans le texte des étapes : n'écris JAMAIS une quantité d'ingrédient en chiffres dans action. Écris un jeton à la place, recalculé automatiquement selon le nombre de personnes : {{i3}} pour toute la quantité de l'ingrédient i3, {{i3:50}} pour une partie (50 dans l'unité interne de i3 : g, ml ou pièces). Le jeton affiche la quantité avec son unité : écris « Ajouter {{i3}} de mascarpone », « Fouetter les jaunes avec {{i2:50}} de sucre ». Pour un ingrédient compté en pièces, le jeton affiche seulement le nombre : écris « Séparer {{i1}} œufs ». Les températures, durées et dimensions (cm) restent écrites normalement.
+- Étapes : une action précise par étape, avec quantité utilisée (par jeton), température (°C), durée (secondes), matériel et résultat attendu quand c'est pertinent ; timer = true quand un minuteur aide. Phases dans l'ordre : mise_en_place, puis cooking, puis plating. La phase cooking ne concerne que les étapes qui chauffent réellement un aliment (four, feu, plaque, friture, eau bouillante…) ; fouetter, monter, mélanger, tremper, assembler ou réfrigérer relèvent de mise_en_place.
+- Temps de cuisson (cookTimeSeconds) : uniquement le temps où un aliment est chauffé ; 0 pour une recette sans cuisson. Préparer un café ou faire bouillir de l'eau n'est pas une cuisson de la recette : compte-le dans la préparation. Repos et réfrigération vont dans restTimeSeconds.
+- Dressage : plate (contenant de service), positionnement, quantités par portion, sauce, garniture, finition, décoration — réalisable avec les seuls ingrédients de la recette (il servira à générer la photo). Rédige aussi plating.description : une ou deux phrases naturelles qui racontent le dressage, sans titres ni énumération, par exemple « Dans une assiette ronde (21 à 22 cm de diamètre), déposez une belle part au centre afin de bien voir les strates du montage, puis voilez de cacao. »
+- Matériel cohérent : la liste equipment reprend exactement les noms utilisés dans les étapes et dans le dressage, sans synonymes ni contradictions. Le contenant de service du dressage y figure sous le même nom. Ne désigne jamais un ustensile de préparation par le mot « assiette » (dis bol, plat creux, saladier, cul-de-poule…) : l'assiette est réservée au service.
 - Durées en secondes, températures en °C. Indique les allergènes parmi les 14 allergènes réglementaires, les régimes compatibles (vegan, vegetarian, gluten_free, lactose_free, halal, kosher, keto…) et la saison.
 - Respecte strictement les contraintes de régime, d'allergies et d'ingrédients non désirés.
-- Rédige tous les textes dans la langue demandée, avec un vocabulaire culinaire juste (traduction culinaire, pas littérale).`;
+- Rédige tous les textes dans la langue demandée, avec un vocabulaire culinaire juste (traduction culinaire, pas littérale).
+- En français, emploie les noms d'ingrédients et de produits utilisés couramment en France, pas les noms étrangers : « biscuits boudoirs » et non « savoiardi », « pâte feuilletée » et non « puff pastry ». Garde le nom d'origine seulement pour un produit sans équivalent français courant (mascarpone, parmesan, miso…).
+- Ne compte une étape de cuisson que si la recette la demande réellement : un produit acheté prêt à l'emploi (biscuits boudoirs, pâte achetée…) ne se cuit pas.`;
 
 function list(items: string[]): string {
   return items.length > 0 ? items.join(", ") : "—";

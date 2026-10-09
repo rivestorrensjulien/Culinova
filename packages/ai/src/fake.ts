@@ -41,7 +41,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
     cookTimeSeconds: 900,
     restTimeSeconds: 600,
     season: ["autumn", "winter"],
-    equipment: ["casserole", "chalumeau de cuisine", "couteau d'office"],
+    equipment: ["casserole", "chalumeau de cuisine", "couteau d'office", "assiette creuse noire mate"],
     cuisineLabel: cuisine,
     fusionLabel: creative ? `${cuisine} — interprétation créative` : null,
     ingredients: [
@@ -149,7 +149,9 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       },
       {
         phase: "cooking",
-        action: english ? "Cook the rice covered over low heat." : "Cuire le riz à couvert, à feu doux.",
+        action: english
+          ? "Cook {{i1}} of rice with {{i2}} of water, covered, over low heat."
+          : "Cuire {{i1}} de riz avec {{i2}} d'eau, à couvert, à feu doux.",
         ingredientRefs: ["i1", "i2"],
         temperatureC: null,
         durationSeconds: 720,
@@ -160,8 +162,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       {
         phase: "cooking",
         action: english
-          ? "Fold in the vinegar and let the rice rest."
-          : "Incorporer le vinaigre et laisser reposer le riz.",
+          ? "Fold in {{i3}} of rice vinegar and let the rice rest."
+          : "Incorporer {{i3}} de vinaigre de riz et laisser reposer le riz.",
         ingredientRefs: ["i3"],
         temperatureC: null,
         durationSeconds: 600,
@@ -207,6 +209,9 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       },
     ],
     plating: {
+      description: english
+        ? "On a matte black shallow plate, set a quenelle of rice off-centre, lean the salmon against it, dot the ginger dressing around and sprinkle with sesame."
+        : "Dans une assiette creuse noire mate, déposez une quenelle de riz décentrée, appuyez le saumon contre elle, ponctuez de vinaigrette au gingembre et parsemez de sésame.",
       plate: english ? "Matte black shallow plate" : "Assiette creuse noire mate",
       positioning: english
         ? "Rice quenelle off-centre, salmon leaning against it"

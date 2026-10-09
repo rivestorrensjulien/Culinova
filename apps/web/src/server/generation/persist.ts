@@ -1,5 +1,6 @@
 /** Enregistrement d'une recette générée : recette, version, ingrédients rapprochés, étapes. */
 import type { GeneratedRecipe, SocialContent } from "@culinova/ai";
+import { remapStepQuantityTokens } from "@culinova/core";
 import type { Database } from "@culinova/db";
 import { recipeIngredients, recipes, recipeSteps, recipeVersions, socialContents } from "@culinova/db/schema";
 import { eq, sql } from "drizzle-orm";
@@ -104,7 +105,8 @@ export async function saveRecipeVersion(
       recipeVersionId: version!.id,
       sortOrder: index,
       phase: step.phase,
-      action: step.action,
+      // Les jetons de quantité ({{i3}}) pointent ensuite vers la ligne d'ingrédient.
+      action: remapStepQuantityTokens(step.action, refToRow),
       ingredientRefs: step.ingredientRefs.map((ref) => refToRow.get(ref)!).filter(Boolean),
       temperatureC: step.temperatureC === null ? null : Math.round(step.temperatureC),
       durationS: step.durationSeconds === null ? null : Math.round(step.durationSeconds),

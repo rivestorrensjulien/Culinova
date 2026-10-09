@@ -49,6 +49,8 @@ export const recipeStepSchema = z.object({
 });
 
 export const platingSchema = z.object({
+  /** Le dressage raconté en une ou deux phrases : c'est ce qui est affiché. */
+  description: z.string(),
   plate: z.string(),
   positioning: z.string(),
   quantities: z.string(),
@@ -83,6 +85,9 @@ export type GeneratedRecipe = z.infer<typeof generatedRecipeSchema>;
 export type GeneratedIngredient = z.infer<typeof recipeIngredientSchema>;
 export type GeneratedStep = z.infer<typeof recipeStepSchema>;
 
+/** Jeton de quantité dans le texte d'une étape : {{i3}} ou {{i3:50}} (voir @culinova/core). */
+const QUANTITY_TOKEN = /\{\{\s*([A-Za-z0-9_-]+)\s*(?::\s*\d+(?:[.,]\d+)?\s*)?\}\}/g;
+
 /**
  * Règles métier vérifiées après le schéma. Renvoie la liste des problèmes
  * (vide si la recette est valide) : ils sont renvoyés au modèle pour correction.
@@ -103,6 +108,11 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
   recipe.steps.forEach((step, index) => {
     for (const ref of step.ingredientRefs) {
       if (!refs.has(ref)) problems.push(`L'étape ${index + 1} cite un ingrédient inconnu : ${ref}.`);
+    }
+    for (const match of step.action.matchAll(QUANTITY_TOKEN)) {
+      if (!refs.has(match[1]!)) {
+        problems.push(`L'étape ${index + 1} contient un jeton de quantité inconnu : ${match[0]}.`);
+      }
     }
     if (step.durationSeconds !== null && step.durationSeconds < 0) {
       problems.push(`Durée négative à l'étape ${index + 1}.`);

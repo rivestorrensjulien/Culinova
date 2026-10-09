@@ -1,11 +1,11 @@
 "use client";
 
-import { SERVINGS_PRESETS } from "@culinova/core";
+import { SERVINGS_PRESETS, splitStepText } from "@culinova/core";
 import { Badge, Button, Card, CardBody, cx } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
-import { formatDuration, scaledDisplay, scaledKitchenMeasure } from "./format";
+import { formatDuration, platingText, scaledDisplay, scaledKitchenMeasure } from "./format";
 
 const DIMENSIONS = { mass: "mass", volume: "volume", count: "count" } as const;
 
@@ -14,7 +14,7 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
   const format = useFormatter();
   const [servings, setServings] = useState(recipe.servings);
   const total = recipe.prepS + recipe.cookS + recipe.restS;
-  const labels = new Map(recipe.ingredients.map((i) => [i.id, i.label]));
+  const byId = new Map(recipe.ingredients.map((i) => [i.id, i]));
   const groups = [...new Set(recipe.ingredients.map((i) => i.group ?? ""))];
 
   const quantityText = (ingredient: RecipeData["ingredients"][number]) => {
@@ -30,6 +30,20 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
       return `${main} (${format.number(kitchen)} ${ingredient.displayUnit})`;
     }
     return main;
+  };
+
+  /** Quantité citée dans une étape, recalculée au nombre de personnes affiché. */
+  const stepQuantityText = (id: string, part: number | null) => {
+    const ingredient = byId.get(id);
+    if (!ingredient) return "";
+    const display = scaledDisplay(
+      { dimension: DIMENSIONS[ingredient.dimension], value: part ?? ingredient.quantity },
+      recipe.servings,
+      servings,
+    );
+    const value = format.number(display.value, { maximumFractionDigits: 2 });
+    const unit = t(`units.${display.unit}`);
+    return unit ? `${value} ${unit}` : value;
   };
 
   return (
@@ -174,30 +188,18 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-soft font-display text-soft-foreground">
                     {index + 1}
                   </span>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-xs font-medium tracking-wide text-muted uppercase">
-                      {t(`phases.${step.phase}`)}
-                    </span>
-                    <p>{step.action}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {step.temperatureC !== null ? <Badge>{step.temperatureC} °C</Badge> : null}
-                      {step.durationS ? (
-                        <Badge tone={step.timer ? "accent" : "neutral"}>
-                          {step.timer ? `⏱ ${t("timer")} · ` : ""}
-                          {formatDuration(step.durationS)}
-                        </Badge>
-                      ) : null}
-                      {step.equipment.map((item) => (
-                        <Badge key={item}>{item}</Badge>
-                      ))}
-                      {step.ingredientIds.map((id) =>
-                        labels.has(id) ? (
-                          <Badge key={id} tone="sage">
-                            {labels.get(id)}
-                          </Badge>
-                        ) : null,
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <p>
+                      {splitStepText(step.action).map((segment, i) =>
+                        segment.kind === "text" ? (
+                          segment.text
+                        ) : (
+                          <span key={i} className="font-medium">
+                            {stepQuantityText(segment.ref, segment.part)}
+                          </span>
+                        ),
                       )}
-                    </div>
+                    </p>
                     {step.expectedResult ? (
                       <p className="text-sm text-muted">
                         {t("expected")} : {step.expectedResult}
@@ -213,16 +215,7 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
             <Card>
               <CardBody className="flex flex-col gap-3">
                 <h3 className="font-display text-2xl">{t("plating")}</h3>
-                <dl className="grid gap-2 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-6">
-                  {(Object.keys(recipe.plating) as Array<keyof NonNullable<RecipeData["plating"]>>)
-                    .filter((key) => recipe.plating?.[key])
-                    .map((key) => (
-                      <div key={key} className="contents">
-                        <dt className="text-muted">{t(`platingFields.${key}`)}</dt>
-                        <dd>{recipe.plating?.[key]}</dd>
-                      </div>
-                    ))}
-                </dl>
+                <p>{platingText(recipe.plating)}</p>
               </CardBody>
             </Card>
           ) : null}

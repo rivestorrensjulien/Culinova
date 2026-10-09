@@ -32,7 +32,7 @@ const request: RecipeRequest = {
 describe("prompt de recette", () => {
   it("transmet tous les paramètres de création au moteur", () => {
     const { system, user } = buildRecipePrompt(request);
-    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@4");
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@5");
     expect(system).toContain("fusionLabel");
     for (const expected of [
       "Moment de consommation : Plat",

@@ -52,7 +52,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Formatage
-        run: pnpm format:check
+        # En cas d'écart, chaque fichier concerné est signalé par une annotation lisible sur GitHub.
+        run: |
+          if ! pnpm format:check; then
+            pnpm exec prettier --list-different . | sed 's/^/::error file=/;s/$/::Formatage Prettier à corriger (pnpm format)/'
+            exit 1
+          fi
 
       - name: Lint
         run: pnpm lint

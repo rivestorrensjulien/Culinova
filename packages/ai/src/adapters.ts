@@ -18,7 +18,7 @@ export interface AiUsage {
 }
 
 export interface StructuredGenerationRequest<T extends z.ZodType> {
-  /** Identifiant du prompt versionné (ex. "recipe.generate@3"). */
+  /** Identifiant du prompt versionné (ex. "recipe.generate@4"). */
   promptId: string;
   system: string;
   user: string;

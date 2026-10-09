@@ -31,6 +31,14 @@ describe("quantités affichées", () => {
     });
   });
 
+  it("garde les demi-pièces : 4,5 œufs = 225 g", () => {
+    expect(ingredientAmount(grams(150, 3, "œufs"), null, 4, 6)).toEqual({
+      value: 225,
+      unit: "g",
+      kitchen: { value: 4.5, unit: "œufs" },
+    });
+  });
+
   it("calcule une partie de l'ingrédient pour les étapes", () => {
     expect(ingredientAmount(grams(75), 50, 4, 6)).toMatchObject({ value: 75, unit: "g" });
     expect(ingredientAmount(grams(165, 3, "œufs"), 55, 4, 4).kitchen).toEqual({ value: 1, unit: "œufs" });

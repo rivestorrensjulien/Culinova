@@ -60,15 +60,7 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
         <div className="flex flex-col gap-6">
-          <div
-            className="flex aspect-[4/5] items-center justify-center rounded-lg border border-dashed border-border-strong bg-raised p-6 text-center text-sm text-muted"
-            role="img"
-            aria-label={t("photo")}
-          >
-            {actions ? null : t("photo")}
-          </div>
-          {actions}
-
+          {/* La photo (jalon J4) prendra place ici, au-dessus des ingrédients ; pas de cadre vide en attendant. */}
           <Card>
             <CardBody className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-3">
@@ -133,6 +125,8 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
               </ul>
             </CardBody>
           </Card>
+
+          {actions}
 
           <Card>
             <CardBody className="flex flex-col gap-1 text-sm">

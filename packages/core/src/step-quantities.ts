@@ -1,13 +1,10 @@
 /**
  * Quantités citées dans le texte des étapes. Le texte n'écrit jamais un nombre
  * en dur : il contient des jetons qui renvoient à un ingrédient, recalculés au
- * nombre de personnes affiché.
- *
- *   {{i3}}      la quantité totale de l'ingrédient i3
- *   {{i3:50}}   une partie : 50 dans l'unité interne de l'ingrédient (g, ml ou pièces)
- *
- * À l'enregistrement, la référence courte (i3) est remplacée par l'identifiant
- * de la ligne d'ingrédient.
+ * nombre de personnes affiché. « {{i3}} » vaut la quantité totale de
+ * l'ingrédient i3 ; « {{i3:50}} » en vaut une partie, 50 dans l'unité interne
+ * de l'ingrédient (g, ml ou pièces). À l'enregistrement, la référence courte
+ * (i3) est remplacée par l'identifiant de la ligne d'ingrédient.
  */
 
 const TOKEN = /\{\{\s*([A-Za-z0-9_-]+)\s*(?::\s*(\d+(?:[.,]\d+)?)\s*)?\}\}/g;

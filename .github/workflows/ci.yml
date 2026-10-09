@@ -55,7 +55,10 @@ jobs:
         # En cas d'écart, chaque fichier concerné est signalé par une annotation lisible sur GitHub.
         run: |
           if ! pnpm format:check; then
-            pnpm exec prettier --list-different . | sed 's/^/::error file=/;s/$/::Formatage Prettier à corriger (pnpm format)/'
+            for file in $(pnpm exec prettier --list-different .); do
+              changes=$(pnpm exec prettier "$file" | diff "$file" - | head -40 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')
+              echo "::error file=$file::Formatage Prettier à corriger (pnpm format)%0A$changes"
+            done
             exit 1
           fi
 

@@ -9,6 +9,7 @@ const serverSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().default("http://localhost:3000"),
   DATABASE_URL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_WORKSPACE_ID: z.string().optional(),
   FAL_KEY: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   INNGEST_EVENT_KEY: z.string().optional(),

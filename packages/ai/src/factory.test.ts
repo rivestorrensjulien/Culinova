@@ -8,6 +8,12 @@ describe("choix de l'adaptateur", () => {
     expect(createLlmAdapter({ ANTHROPIC_API_KEY: "sk-test" })).toBeInstanceOf(AnthropicAdapter);
   });
 
+  it("accepte un espace de travail Anthropic pour une clé non rattachée", () => {
+    expect(
+      createLlmAdapter({ ANTHROPIC_API_KEY: "sk-test", ANTHROPIC_WORKSPACE_ID: "wrkspc_test" }),
+    ).toBeInstanceOf(AnthropicAdapter);
+  });
+
   it("utilise le factice sans clé en développement, ou sur demande", () => {
     expect(createLlmAdapter({ NODE_ENV: "development" })).toBeInstanceOf(FakeLlmAdapter);
     expect(createLlmAdapter({ AI_PROVIDER: "fake", NODE_ENV: "production" })).toBeInstanceOf(FakeLlmAdapter);

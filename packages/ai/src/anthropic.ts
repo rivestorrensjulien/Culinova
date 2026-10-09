@@ -18,6 +18,11 @@ import { costUsdMicros, DEFAULT_RECIPE_MODEL } from "./models";
 export interface AnthropicAdapterOptions {
   /** Clé API (par défaut : variable d'environnement ANTHROPIC_API_KEY). */
   apiKey?: string;
+  /**
+   * Espace de travail Anthropic (wrkspc_…), exigé quand la clé API n'est rattachée
+   * à aucun espace de travail : envoyé dans l'en-tête anthropic-workspace-id.
+   */
+  workspaceId?: string;
   model?: string;
   /** Effort de réflexion : profondeur du raisonnement et coût. */
   effort?: "low" | "medium" | "high" | "xhigh" | "max";
@@ -57,6 +62,7 @@ export class AnthropicAdapter implements LlmAdapter {
       options.client ??
       new Anthropic({
         ...(options.apiKey ? { apiKey: options.apiKey } : {}),
+        ...(options.workspaceId ? { defaultHeaders: { "anthropic-workspace-id": options.workspaceId } } : {}),
         // Une recette complète peut demander plus d'une minute de génération.
         timeout: 5 * 60 * 1000,
       });

@@ -20,6 +20,7 @@ export function createLlmAdapter(env: Record<string, string | undefined> = proce
     return new FakeLlmAdapter(undefined, Number(env.AI_FAKE_DELAY_MS ?? 0));
   }
   return new AnthropicAdapter({
+    workspaceId: env.ANTHROPIC_WORKSPACE_ID?.trim() || undefined,
     model: env.AI_RECIPE_MODEL || DEFAULT_RECIPE_MODEL,
     effort: (env.AI_RECIPE_EFFORT as "low" | "medium" | "high" | "xhigh" | "max" | undefined) || "high",
   });

@@ -105,7 +105,9 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
     refs.add(ingredient.ref);
     if (!(ingredient.quantity > 0)) problems.push(`Quantité invalide pour « ${ingredient.name} ».`);
     if (ingredient.unit !== "g") {
-      problems.push(`« ${ingredient.name} » doit être pesé en grammes (unit = "g", reçu ${ingredient.unit}).`);
+      problems.push(
+        `« ${ingredient.name} » doit être pesé en grammes (unit = "g", reçu ${ingredient.unit}).`,
+      );
     }
   }
   recipe.steps.forEach((step, index) => {

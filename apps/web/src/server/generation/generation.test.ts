@@ -13,6 +13,7 @@ import { createTestUser, hasTestDb, testDb } from "@/test/db";
 import { getMonthlyUsage } from "../quotas";
 import { runGeneration } from "./run";
 import { startRecipeGeneration, startRegeneration } from "./start";
+import { loadRecipeView } from "./view";
 
 const japaneseCreative: WizardState = {
   ...emptyWizardState("fr"),
@@ -318,5 +319,14 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
       .from(s.recipeVersions)
       .where(and(eq(s.recipeVersions.recipeId, recipeId)));
     expect(versions).toHaveLength(3);
+
+    // Toutes les versions restent consultables ; la version active est la plus récente.
+    const active = await loadRecipeView(db, recipeId, user.id);
+    expect(active).toMatchObject({ versionNo: 3, currentVersionNo: 3 });
+    expect(active!.versions.map((v) => v.versionNo)).toEqual([3, 2, 1]);
+    const first = await loadRecipeView(db, recipeId, user.id, 1);
+    expect(first).toMatchObject({ versionNo: 1, currentVersionNo: 3 });
+    expect(first!.steps.length).toBeGreaterThan(0);
+    expect(await loadRecipeView(db, recipeId, user.id, 9)).toBeNull();
   });
 });

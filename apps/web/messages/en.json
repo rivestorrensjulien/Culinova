@@ -318,6 +318,13 @@
     "expected": "Expected result",
     "timer": "Timer",
     "version": "Version {number}",
+    "versionsTitle": "Versions",
+    "versionItem": "Version {number}",
+    "versionActive": "active",
+    "versionViewing": "You're viewing version {number}. The active version is version {active}.",
+    "versionRestore": "Restore this version",
+    "versionBackToActive": "View the active version",
+    "versionRestored": "Version {number} is now the active version.",
     "versions": "{count, plural, one {# version} other {# versions}}",
     "minutes": "{count} min",
     "units": {

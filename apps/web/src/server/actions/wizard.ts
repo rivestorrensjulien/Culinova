@@ -1,10 +1,11 @@
 "use server";
 
 import * as s from "@culinova/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { audit } from "../audit";
 import { getDb } from "../db";
 import { dispatchGeneration } from "../generation/dispatch";
 import { type SaveResult, saveDraft, startNewDraft } from "../generation/drafts";
@@ -63,10 +64,42 @@ export async function draftStatusAction(draftId: string): Promise<DraftStatus | 
   return draft ?? null;
 }
 
-export async function recipeViewAction(recipeId: string): Promise<RecipeView | null> {
+export async function recipeViewAction(recipeId: string, versionNo?: number): Promise<RecipeView | null> {
   const session = await currentUser();
   if (!uuid.safeParse(recipeId).success) return null;
-  return loadRecipeView(getDb(), recipeId, session.user.id);
+  if (versionNo !== undefined && !(Number.isInteger(versionNo) && versionNo > 0)) return null;
+  return loadRecipeView(getDb(), recipeId, session.user.id, versionNo);
+}
+
+/** Fait d'une version précédente la version active de la recette (rien n'est supprimé). */
+export async function restoreVersionAction(recipeId: string, versionNo: number): Promise<RecipeView | null> {
+  const session = await currentUser();
+  if (!uuid.safeParse(recipeId).success || !(Number.isInteger(versionNo) && versionNo > 0)) return null;
+  const db = getDb();
+  const [target] = await db
+    .select({ id: s.recipeVersions.id, before: s.recipes.currentVersionId })
+    .from(s.recipeVersions)
+    .innerJoin(s.recipes, eq(s.recipes.id, s.recipeVersions.recipeId))
+    .where(
+      and(
+        eq(s.recipeVersions.recipeId, recipeId),
+        eq(s.recipeVersions.versionNo, versionNo),
+        eq(s.recipes.ownerId, session.user.id),
+        isNull(s.recipes.deletedAt),
+      ),
+    );
+  if (!target) return null;
+  await db.update(s.recipes).set({ currentVersionId: target.id }).where(eq(s.recipes.id, recipeId));
+  await audit(db, {
+    actorId: session.user.id,
+    action: "recipe.version.restore",
+    entity: "recipe",
+    entityId: recipeId,
+    before: { versionId: target.before },
+    after: { versionId: target.id, versionNo },
+  });
+  revalidatePath("/app/recettes", "layout");
+  return loadRecipeView(db, recipeId, session.user.id);
 }
 
 export async function regenerateAction(recipeId: string, instruction: string | null): Promise<StartResult> {

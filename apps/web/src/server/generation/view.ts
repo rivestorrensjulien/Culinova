@@ -1,7 +1,7 @@
-/** Données d'affichage d'une recette (version courante), prêtes pour l'interface. */
+/** Données d'affichage d'une recette (version active, ou une version précédente), prêtes pour l'interface. */
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { getQuotaLimits } from "../quotas";
 
 export interface RecipeView {
@@ -9,6 +9,10 @@ export interface RecipeView {
   versionId: string;
   versionNo: number;
   versionCount: number;
+  /** Numéro de la version active de la recette (celle affichée par défaut). */
+  currentVersionNo: number;
+  /** Toutes les versions, de la plus récente à la plus ancienne. */
+  versions: Array<{ versionNo: number; name: string; createdAt: string; changeNote: string | null }>;
   name: string;
   description: string | null;
   servings: number;
@@ -75,14 +79,36 @@ export async function loadRecipeView(
   db: Database,
   recipeId: string,
   userId: string,
+  /** Version à afficher ; absente = version active. */
+  versionNo?: number,
 ): Promise<RecipeView | null> {
   const [row] = await db
-    .select({ recipe: s.recipes, version: s.recipeVersions })
+    .select({ recipe: s.recipes, current: s.recipeVersions })
     .from(s.recipes)
     .innerJoin(s.recipeVersions, eq(s.recipeVersions.id, s.recipes.currentVersionId))
     .where(and(eq(s.recipes.id, recipeId), eq(s.recipes.ownerId, userId), isNull(s.recipes.deletedAt)));
   if (!row) return null;
-  const { recipe, version } = row;
+  const { recipe, current } = row;
+  const versions = await db
+    .select({
+      id: s.recipeVersions.id,
+      versionNo: s.recipeVersions.versionNo,
+      name: s.recipeVersions.name,
+      createdAt: s.recipeVersions.createdAt,
+      changeNote: s.recipeVersions.changeNote,
+    })
+    .from(s.recipeVersions)
+    .where(eq(s.recipeVersions.recipeId, recipe.id))
+    .orderBy(desc(s.recipeVersions.versionNo));
+  let version = current;
+  if (versionNo !== undefined && versionNo !== current.versionNo) {
+    const [other] = await db
+      .select()
+      .from(s.recipeVersions)
+      .where(and(eq(s.recipeVersions.recipeId, recipe.id), eq(s.recipeVersions.versionNo, versionNo)));
+    if (!other) return null;
+    version = other;
+  }
 
   const [ingredients, steps, social, [count], [usage], limits, [pending]] = await Promise.all([
     db
@@ -130,6 +156,13 @@ export async function loadRecipeView(
     versionId: version.id,
     versionNo: version.versionNo,
     versionCount: count?.n ?? 1,
+    currentVersionNo: current.versionNo,
+    versions: versions.map((v) => ({
+      versionNo: v.versionNo,
+      name: v.name,
+      createdAt: v.createdAt.toISOString(),
+      changeNote: v.changeNote,
+    })),
     name: version.name,
     description: version.description,
     servings: version.servings,

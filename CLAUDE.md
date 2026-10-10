@@ -51,7 +51,7 @@ packages/ui         Système de design (clair / sombre)
 - [x] **J2 · Moteur de recette et wizard** (12 étapes, sauvegarde auto, quotas appliqués, coût IA mesuré).
 - [ ] **J3 · Ingrédients, prix, coûts, marges** (Mes bases, main-d'œuvre, énergie, HT/TTC, nutrition).
 - [ ] **J4 · Images** (prompt dérivé du dressage, 4 formats recadrés).
-- [ ] **J5 · Bibliothèque, versions, traductions** (Ctrl+K, modification par instruction).
+- [ ] **J5 · Bibliothèque, versions, traductions** (Ctrl+K, modification par instruction). Déjà fait en avance : consultation des versions d'une recette et retour à une version précédente (page recette, action `restoreVersionAction`, tracée dans le journal d'audit).
 - [ ] **J6 · Administration et juridique** (mentions légales, CGU, confidentialité, cookies, export / suppression du compte).
 - [ ] **J7 · Outils pro** (courses, stocks, menus, fiche technique PDF, mode préparation, import, scan de factures, contenu social).
 - [ ] **J8 · Page d'accueil (demande d'invitation) et PWA.**

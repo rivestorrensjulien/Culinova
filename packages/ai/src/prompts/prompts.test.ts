@@ -95,5 +95,14 @@ describe("prompt de recette", () => {
     const { user } = buildSocialPrompt(recipe, "en");
     expect(user).toContain("anglais");
     expect(user).toContain(recipe.name);
+    // Les étapes réelles sont transmises, jetons de quantité remplacés par le poids.
+    expect(user).toContain("Cuire 300 g de riz avec 360 g d'eau");
+    expect(user).not.toContain("{{");
+  });
+
+  it("demande un script TikTok structuré, sans nombre d'ingrédients", () => {
+    const { system } = buildSocialPrompt(fakeRecipe("Nombre de personnes : 4"), "fr");
+    expect(system).toContain("une scène par ligne");
+    expect(system).toContain("Ne donne jamais de nombre d'ingrédients");
   });
 });

@@ -31,8 +31,7 @@ describe("recette de base faite maison", () => {
     expect(baseProblems({ ...base, yieldG: 900 }, 400)).toEqual([expect.stringContaining("trop élevé")]);
     // Un très petit besoin (4 g) peut donner une petite fournée réaliste.
     expect(baseProblems({ ...base, yieldG: 150 }, 4)).toEqual([]);
-    expect(baseProblems({ ...base, servings: 4 }, 400)).toEqual([
-      expect.stringContaining("servings doit valoir 1"),
-    ]);
+    // Un nombre de portions différent de 1 n'empêche pas d'enregistrer la base.
+    expect(baseProblems({ ...base, servings: 8 }, 400)).toEqual([]);
   });
 });

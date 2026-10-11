@@ -13,6 +13,7 @@ export const MEAL_MOMENTS: Array<{ code: string } & Labels> = [
   { code: "main", fr: "Plat", en: "Main course" },
   { code: "dessert", fr: "Dessert", en: "Dessert" },
   { code: "street_food", fr: "Street food", en: "Street food" },
+  { code: "sandwich", fr: "Sandwicherie", en: "Sandwich shop" },
   { code: "breakfast", fr: "Petit-déjeuner", en: "Breakfast" },
   { code: "snack", fr: "Goûter", en: "Afternoon snack" },
   { code: "sweet_bite", fr: "Mignardise sucrée", en: "Sweet petit four" },

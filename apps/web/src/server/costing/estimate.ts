@@ -32,8 +32,7 @@ export interface PriceProposal {
 }
 
 export type EstimateResult =
-  | { ok: true; proposals: PriceProposal[] }
-  | { ok: false; reason: "empty" | "budget" | "failed" };
+  { ok: true; proposals: PriceProposal[] } | { ok: false; reason: "empty" | "budget" | "failed" };
 
 export async function estimatePrices(
   db: Database,

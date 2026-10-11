@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { SocialContentView } from "@/components/recipe/social-content";
 import {
+  generationFailureAction,
   generationStatusAction,
   recipeViewAction,
   regenerateAction,
@@ -38,7 +39,12 @@ export function RecipePageClient({ initial }: { initial: RecipeData }) {
     const id = setInterval(async () => {
       const status = await generationStatusAction(pending).catch(() => null);
       if (!status || status === "queued" || status === "running") return;
-      if (status === "failed") setError(t("errors.unexpected"));
+      if (status === "failed") {
+        const code = await generationFailureAction(pending).catch(() => "unexpected");
+        setError(
+          t.has(`errors.${code}`) ? t(`errors.${code}` as "errors.unexpected") : t("errors.unexpected"),
+        );
+      }
       const view = await recipeViewAction(recipe.recipeId);
       if (view) setRecipe(view);
       setPending(null);

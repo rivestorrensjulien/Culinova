@@ -123,6 +123,18 @@ export async function generationStatusAction(
   return row?.status ?? null;
 }
 
+/** Cause d'échec d'une génération, sous forme de code affichable (ex. « truncated »). */
+export async function generationFailureAction(generationId: string): Promise<string> {
+  const session = await currentUser();
+  if (!uuid.safeParse(generationId).success) return "unexpected";
+  const [row] = await getDb()
+    .select({ error: s.aiGenerations.error })
+    .from(s.aiGenerations)
+    .where(and(eq(s.aiGenerations.id, generationId), eq(s.aiGenerations.userId, session.user.id)));
+  const code = /^([a-z_]+) : /.exec(row?.error ?? "")?.[1];
+  return code ?? "unexpected";
+}
+
 /** Ajoute ou retire une cuisine des favoris (suggestions du wizard). */
 export async function toggleFavoriteCuisineAction(cuisineCode: string): Promise<boolean> {
   const session = await currentUser();

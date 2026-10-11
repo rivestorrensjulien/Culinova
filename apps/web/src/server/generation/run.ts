@@ -77,6 +77,8 @@ export async function runGeneration(
       ...prompt,
       schema: generatedRecipeSchema,
       validate: (recipe) => recipeProblems(recipe, request.servings),
+      // Réflexion comprise : une recette riche (15 ingrédients, 15 étapes) dépasse vite 16 000 jetons.
+      maxOutputTokens: 32_000,
     });
     const recipe: GeneratedRecipe = result.data;
 
@@ -138,7 +140,11 @@ export async function runGeneration(
       .update(s.aiGenerations)
       .set({
         status: "failed",
-        error: error instanceof Error ? error.message.slice(0, 2000) : String(error),
+        // « code : détail » — le code est affiché à la personne, le détail sert au diagnostic.
+        error: `${userFacingError(error)} : ${error instanceof Error ? error.message : String(error)}`.slice(
+          0,
+          2000,
+        ),
         provider: usage?.provider ?? null,
         model: usage?.model ?? null,
         tokensIn: usage?.inputTokens ?? null,

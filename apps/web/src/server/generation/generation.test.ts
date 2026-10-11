@@ -273,6 +273,8 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
       .from(s.aiGenerations)
       .where(eq(s.aiGenerations.id, started.generationId));
     expect(generation).toMatchObject({ status: "failed", costUsdMicros: 26_400 });
+    // La cause est enregistrée sous la forme « code : détail » (code affiché à la personne).
+    expect(generation!.error).toMatch(/^invalid_output : /);
     // Après un échec, on peut relancer.
     expect((await startRecipeGeneration(db, { userId: user.id, draftId: draft.id })).ok).toBe(true);
   });

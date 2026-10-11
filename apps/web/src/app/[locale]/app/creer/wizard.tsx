@@ -23,6 +23,7 @@ import { formatResetDate } from "@/lib/dates";
 import { MAX_INPUT_LENGTH, missingFields, WIZARD_STEPS, type WizardState } from "@/lib/wizard";
 import {
   draftStatusAction,
+  generationFailureAction,
   generationStatusAction,
   newDraftAction,
   recipeViewAction,
@@ -54,7 +55,8 @@ export interface WizardProps {
 }
 
 type Problem =
-  { kind: "start"; result: Exclude<StartResult, { ok: true }> } | { kind: "failed"; code: string };
+  | { kind: "start"; result: Exclude<StartResult, { ok: true }> }
+  | { kind: "failed"; code: string };
 
 const POLL_MS = 2000;
 const GENERATION_STEP = 9;
@@ -155,7 +157,10 @@ export function Wizard({
     const id = setInterval(async () => {
       const current = await generationStatusAction(regenerating).catch(() => null);
       if (stopped || !current || current === "queued" || current === "running") return;
-      if (current === "failed") setProblem({ kind: "failed", code: "unexpected" });
+      if (current === "failed") {
+        const code = await generationFailureAction(regenerating).catch(() => "unexpected");
+        setProblem({ kind: "failed", code });
+      }
       setRecipe(await recipeViewAction(recipe.recipeId));
       setRegenerating(null);
     }, POLL_MS);

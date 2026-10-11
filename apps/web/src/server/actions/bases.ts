@@ -1,5 +1,7 @@
 "use server";
 
+import * as s from "@culinova/db/schema";
+import { and, eq } from "drizzle-orm";
 import { getLocale } from "next-intl/server";
 import { z } from "zod";
 import { audit } from "../audit";
@@ -27,4 +29,26 @@ export async function makeHomemadeAction(lineId: string): Promise<StartBaseResul
     await dispatchGeneration(result.generationId);
   }
   return result;
+}
+
+/**
+ * État d'une génération de base, sans rafraîchir la page côté serveur :
+ * la page recharge elle-même la recette quand la base est prête.
+ */
+export async function baseGenerationStatusAction(
+  generationId: string,
+): Promise<"queued" | "running" | "succeeded" | "failed" | null> {
+  const session = await requireUser(await getLocale());
+  if (!z.uuid().safeParse(generationId).success) return null;
+  const [row] = await getDb()
+    .select({ status: s.aiGenerations.status })
+    .from(s.aiGenerations)
+    .where(
+      and(
+        eq(s.aiGenerations.id, generationId),
+        eq(s.aiGenerations.userId, session.user.id),
+        eq(s.aiGenerations.kind, "base"),
+      ),
+    );
+  return row?.status ?? null;
 }

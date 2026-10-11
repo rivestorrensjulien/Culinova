@@ -2,10 +2,10 @@
 
 import { Button, Card, CardBody, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
-import { makeHomemadeAction } from "@/server/actions/bases";
+import { baseGenerationStatusAction, makeHomemadeAction } from "@/server/actions/bases";
 import { SocialContentView } from "@/components/recipe/social-content";
 import {
   generationFailureAction,
@@ -64,20 +64,32 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
     return () => clearInterval(id);
   }, [pending, recipe.recipeId, t]);
 
+  // Une seule vérification à la fois : les appels ne se chevauchent pas.
+  const checking = useRef(false);
   useEffect(() => {
     if (pendingBases.size === 0) return;
     const id = setInterval(async () => {
-      for (const [lineId, generationId] of pendingBases) {
-        const status = await generationStatusAction(generationId).catch(() => null);
-        if (!status || status === "queued" || status === "running") continue;
-        if (status === "failed") setError(tr("homemadeFailed"));
-        const view = await recipeViewAction(recipe.recipeId);
+      if (checking.current) return;
+      checking.current = true;
+      try {
+        const done: string[] = [];
+        let failed = false;
+        for (const [lineId, generationId] of pendingBases) {
+          const status = await baseGenerationStatusAction(generationId).catch(() => null);
+          if (status === "succeeded" || status === "failed" || status === null) done.push(lineId);
+          if (status === "failed") failed = true;
+        }
+        if (done.length === 0) return;
+        if (failed) setError(tr("homemadeFailed"));
+        const view = await recipeViewAction(recipe.recipeId).catch(() => null);
         if (view) setRecipe(view);
         setPendingBases((all) => {
           const next = new Map(all);
-          next.delete(lineId);
+          for (const lineId of done) next.delete(lineId);
           return next;
         });
+      } finally {
+        checking.current = false;
       }
     }, 2500);
     return () => clearInterval(id);

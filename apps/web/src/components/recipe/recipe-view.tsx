@@ -22,10 +22,21 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
     return amount.kitchen ? `${main} (${format.number(amount.kitchen.value)} ${amount.kitchen.unit})` : main;
   };
 
-  /** Quantité citée dans une étape, recalculée au nombre de personnes affiché. */
-  const stepQuantityText = (id: string, part: number | null) => {
+  /**
+   * Quantité citée dans une étape, recalculée au nombre de personnes affiché, entre
+   * parenthèses après le nom de l'ingrédient : « les carottes (100 g) », « le sel (5 g, 1 c. à café) ».
+   * Les recettes plus anciennes écrivaient « {{i3}} de mascarpone » : le poids reste alors sans parenthèses.
+   */
+  const stepQuantityText = (id: string, part: number | null, nextText: string) => {
     const ingredient = byId.get(id);
-    return ingredient ? amountText(ingredient, part) : "";
+    if (!ingredient) return "";
+    if (/^\s+(de|d['’])/i.test(nextText)) return amountText(ingredient, part);
+    const amount = ingredientAmount(ingredient, part, recipe.servings, servings);
+    const unit = t(`units.${amount.unit}`);
+    const main = `${format.number(amount.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
+    return amount.kitchen
+      ? `(${main}, ${format.number(amount.kitchen.value)} ${amount.kitchen.unit})`
+      : `(${main})`;
   };
 
   return (
@@ -147,15 +158,19 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
                   </span>
                   <div className="flex flex-col gap-1.5 pt-1">
                     <p>
-                      {splitStepText(step.action).map((segment, i) =>
-                        segment.kind === "text" ? (
-                          segment.text
-                        ) : (
+                      {splitStepText(step.action).map((segment, i, all) => {
+                        if (segment.kind === "text") return segment.text;
+                        const next = all[i + 1];
+                        return (
                           <span key={i} className="font-medium">
-                            {stepQuantityText(segment.ref, segment.part)}
+                            {stepQuantityText(
+                              segment.ref,
+                              segment.part,
+                              next?.kind === "text" ? next.text : "",
+                            )}
                           </span>
-                        ),
-                      )}
+                        );
+                      })}
                     </p>
                     {step.expectedResult ? (
                       <p className="text-sm text-muted">

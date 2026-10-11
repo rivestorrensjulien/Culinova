@@ -150,8 +150,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       {
         phase: "cooking",
         action: english
-          ? "Cook {{i1}} of rice with {{i2}} of water, covered, over low heat."
-          : "Cuire {{i1}} de riz avec {{i2}} d'eau, à couvert, à feu doux.",
+          ? "Cook the rice {{i1}} with the water {{i2}}, covered, over low heat."
+          : "Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux.",
         ingredientRefs: ["i1", "i2"],
         temperatureC: null,
         durationSeconds: 720,
@@ -162,8 +162,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       {
         phase: "cooking",
         action: english
-          ? "Fold in {{i3}} of rice vinegar and let the rice rest."
-          : "Incorporer {{i3}} de vinaigre de riz et laisser reposer le riz.",
+          ? "Fold in the rice vinegar {{i3}} and let the rice rest."
+          : "Incorporer le vinaigre de riz {{i3}} et laisser reposer le riz.",
         ingredientRefs: ["i3"],
         temperatureC: null,
         durationSeconds: 600,

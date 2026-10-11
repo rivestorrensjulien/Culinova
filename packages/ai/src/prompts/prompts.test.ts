@@ -32,7 +32,7 @@ const request: RecipeRequest = {
 describe("prompt de recette", () => {
   it("transmet tous les paramètres de création au moteur", () => {
     const { system, user } = buildRecipePrompt(request);
-    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@5");
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@6");
     expect(system).toContain("fusionLabel");
     for (const expected of [
       "Moment de consommation : Plat",
@@ -96,7 +96,7 @@ describe("prompt de recette", () => {
     expect(user).toContain("anglais");
     expect(user).toContain(recipe.name);
     // Les étapes réelles sont transmises, jetons de quantité remplacés par le poids.
-    expect(user).toContain("Cuire 300 g de riz avec 360 g d'eau");
+    expect(user).toContain("Cuire le riz 300 g avec l'eau 360 g");
     expect(user).not.toContain("{{");
   });
 

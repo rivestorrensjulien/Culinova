@@ -11,8 +11,17 @@ import { RecipePageClient } from "./recipe-page-client";
 // on lui laisse jusqu'à 5 minutes (limite de Vercel).
 export const maxDuration = 300;
 
-export default async function RecipePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+export default async function RecipePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ quantite?: string }>;
+}) {
   const { locale, id } = await params;
+  const { quantite } = await searchParams;
+  // Base ouverte depuis une recette : quantité nécessaire, en grammes.
+  const targetG = quantite && /^\d{1,6}$/.test(quantite) ? Number(quantite) : undefined;
   setRequestLocale(locale);
   const session = await requireUser(locale);
   if (!z.uuid().safeParse(id).success) notFound();
@@ -21,10 +30,16 @@ export default async function RecipePage({ params }: { params: Promise<{ locale:
   const t = await getTranslations("Recipe");
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/app/recettes" className="text-sm text-primary hover:underline">
-        ← {t("back")}
-      </Link>
-      <RecipePageClient initial={recipe} />
+      {recipe.kind === "base" ? (
+        <Link href="/app/bases" className="text-sm text-primary hover:underline">
+          ← {t("backToBases")}
+        </Link>
+      ) : (
+        <Link href="/app/recettes" className="text-sm text-primary hover:underline">
+          ← {t("back")}
+        </Link>
+      )}
+      <RecipePageClient initial={recipe} targetG={targetG} />
     </div>
   );
 }

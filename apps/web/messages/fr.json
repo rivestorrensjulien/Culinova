@@ -113,6 +113,7 @@
       "admin": "Administration",
       "create": "Créer",
       "recipes": "Mes recettes",
+      "bases": "Mes bases",
       "ingredients": "Ingrédients",
       "settings": "Réglages"
     },
@@ -380,7 +381,26 @@
     "empty": "Vous n'avez pas encore de recette.",
     "listTitle": "Mes recettes",
     "createdOn": "Créée le {date}",
-    "back": "Mes recettes"
+    "back": "Mes recettes",
+    "baseBadge": "Ma base",
+    "baseYield": "Rendement de la recette :",
+    "baseShelfLife": "se conserve {hours, plural, one {# heure} other {# heures}} au réfrigérateur",
+    "baseShelfLifeDays": "se conserve {days, plural, one {# jour} other {# jours}} au réfrigérateur",
+    "baseUsedIn": "Utilisée dans :",
+    "baseQuantityLabel": "Quantité à préparer",
+    "storeBought": "Acheté tout prêt",
+    "makeHomemade": "Faire maison",
+    "homemade": "Fait maison",
+    "homemadeOpen": "Voir la recette maison",
+    "homemadePending": "Recette maison en cours de rédaction…",
+    "homemadeFailed": "La recette maison n'a pas pu être rédigée. Réessayez dans un instant.",
+    "homemadeBusy": "La recette maison est déjà en cours de rédaction.",
+    "costBase": "Coût pour {grams} g",
+    "costPerKg": "Au kilo",
+    "upstreamTitle": "À préparer en amont",
+    "upstreamStart": "À commencer environ {duration} avant le service.",
+    "upstreamDetail": "Recette maison : {base}, puis cette recette : {recipe}.",
+    "backToBases": "Mes bases"
   },
   "Ingredients": {
     "title": "Mes ingrédients",
@@ -505,5 +525,13 @@
     "appliancePower": "Puissance (W)",
     "addAppliance": "Ajouter",
     "applianceInvalid": "Indiquez un nom et une puissance en watts (entre 1 et 30 000)."
+  },
+  "Bases": {
+    "title": "Mes bases",
+    "intro": "Vos préparations faites maison (pains, pâtes, fonds, condiments…). Elles naissent du bouton « Faire maison » d'un ingrédient acheté tout prêt, et leur coût remplace celui du produit acheté.",
+    "empty": "Aucune base pour l'instant. Dans une recette, cliquez sur « Faire maison » à côté d'un ingrédient acheté tout prêt.",
+    "yield": "Rendement : {grams} g",
+    "usedIn": "Utilisée dans : {names}",
+    "notUsed": "Utilisée dans aucune recette"
   }
 }

@@ -113,6 +113,7 @@
       "admin": "Administration",
       "create": "Create",
       "recipes": "My recipes",
+      "bases": "My bases",
       "ingredients": "Ingredients",
       "settings": "Settings"
     },
@@ -380,7 +381,26 @@
     "empty": "You don't have any recipes yet.",
     "listTitle": "My recipes",
     "createdOn": "Created on {date}",
-    "back": "My recipes"
+    "back": "My recipes",
+    "baseBadge": "My base",
+    "baseYield": "Recipe yield:",
+    "baseShelfLife": "keeps {hours, plural, one {# hour} other {# hours}} in the fridge",
+    "baseShelfLifeDays": "keeps {days, plural, one {# day} other {# days}} in the fridge",
+    "baseUsedIn": "Used in:",
+    "baseQuantityLabel": "Quantity to make",
+    "storeBought": "Store-bought",
+    "makeHomemade": "Make it homemade",
+    "homemade": "Homemade",
+    "homemadeOpen": "See the homemade recipe",
+    "homemadePending": "Writing the homemade recipe…",
+    "homemadeFailed": "The homemade recipe could not be written. Please try again in a moment.",
+    "homemadeBusy": "The homemade recipe is already being written.",
+    "costBase": "Cost for {grams} g",
+    "costPerKg": "Per kilo",
+    "upstreamTitle": "Prepare ahead",
+    "upstreamStart": "Start about {duration} before serving.",
+    "upstreamDetail": "Homemade recipe: {base}, then this recipe: {recipe}.",
+    "backToBases": "My bases"
   },
   "Ingredients": {
     "title": "My ingredients",
@@ -505,5 +525,13 @@
     "appliancePower": "Power (W)",
     "addAppliance": "Add",
     "applianceInvalid": "Enter a name and a power in watts (between 1 and 30,000)."
+  },
+  "Bases": {
+    "title": "My bases",
+    "intro": "Your homemade preparations (breads, doughs, stocks, condiments…). They come from the “Make it homemade” button next to a store-bought ingredient, and their cost replaces the store-bought price.",
+    "empty": "No bases yet. In a recipe, click “Make it homemade” next to a store-bought ingredient.",
+    "yield": "Yield: {grams} g",
+    "usedIn": "Used in: {names}",
+    "notUsed": "Not used in any recipe"
   }
 }

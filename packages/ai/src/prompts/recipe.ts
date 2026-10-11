@@ -4,8 +4,8 @@
  */
 import { isFusion, type RecipeRequest } from "./request";
 
-export const RECIPE_PROMPT_VERSION = "recipe.generate@9";
-export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@9";
+export const RECIPE_PROMPT_VERSION = "recipe.generate@10";
+export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@10";
 
 const LANGUAGE_NAMES = { fr: "français", en: "anglais (English)" } as const;
 
@@ -30,7 +30,8 @@ Exigences :
 - Respecte strictement les contraintes de régime, d'allergies et d'ingrédients non désirés.
 - Rédige tous les textes dans la langue demandée, avec un vocabulaire culinaire juste (traduction culinaire, pas littérale).
 - En français, emploie les noms d'ingrédients et de produits utilisés couramment en France, pas les noms étrangers : « biscuits boudoirs » et non « savoiardi », « pâte feuilletée » et non « puff pastry ». Garde le nom d'origine seulement pour un produit sans équivalent français courant (mascarpone, parmesan, miso…).
-- Ne compte une étape de cuisson que si la recette la demande réellement : un produit acheté prêt à l'emploi (biscuits boudoirs, pâte achetée…) ne se cuit pas.`;
+- Ne compte une étape de cuisson que si la recette la demande réellement : un produit acheté prêt à l'emploi (biscuits boudoirs, pâte achetée…) ne se cuit pas.
+- Produits achetés tout prêts : storeBought = true pour un ingrédient qui est lui-même une préparation, habituellement achetée toute prête mais réalisable à la maison (pains bao, pains burger, pâte feuilletée, pâte brisée, biscuits boudoirs, brioche, tortillas, fond de veau, bouillon, mayonnaise, pesto, pâte de curry, yuzu kosho…). storeBought = false pour un produit brut ou de base (farine, œufs, légumes, viande, poisson, fromage, épices, huile, vinaigre, sauce soja, chocolat…). La personne pourra choisir de faire ces préparations maison.`;
 
 function list(items: string[]): string {
   return items.length > 0 ? items.join(", ") : "—";

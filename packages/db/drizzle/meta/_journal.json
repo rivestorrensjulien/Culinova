@@ -29,6 +29,13 @@
       "when": 1791700000000,
       "tag": "0003_prix_vente_ttc",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791800000000,
+      "tag": "0004_mes_bases",
+      "breakpoints": true
     }
   ]
 }

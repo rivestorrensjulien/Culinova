@@ -35,6 +35,8 @@ export const recipeIngredientSchema = z.object({
   preparation: z.string().nullable(),
   group: z.string().nullable(),
   optional: z.boolean(),
+  /** Préparation habituellement achetée toute prête mais réalisable à la maison (pains bao, pâte feuilletée…). */
+  storeBought: z.boolean(),
 });
 
 export const recipeStepSchema = z.object({

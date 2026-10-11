@@ -22,6 +22,7 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
 import { recordAiSpend, releaseQuota } from "../quotas";
+import { runBaseGeneration } from "./base";
 import { saveRecipeVersion, saveSocialContent } from "./persist";
 
 export type GenerationOutcome = "succeeded" | "failed" | "skipped";
@@ -43,6 +44,7 @@ export async function runGeneration(
     .set({ status: "running", startedAt: new Date() })
     .where(and(eq(s.aiGenerations.id, generationId), inArray(s.aiGenerations.status, ["queued", "running"])))
     .returning();
+  if (generation?.kind === "base") return runBaseGeneration(db, ai, generation);
   if (!generation || (generation.kind !== "recipe" && generation.kind !== "regeneration")) return "skipped";
 
   const [params] = generation.generationParamsId

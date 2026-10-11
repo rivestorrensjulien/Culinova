@@ -25,6 +25,7 @@ export const AI_GENERATION_KINDS = [
   "edit",
   "invoice_scan",
   "price_estimate",
+  "base",
 ] as const;
 export type AiGenerationKind = (typeof AI_GENERATION_KINDS)[number];
 

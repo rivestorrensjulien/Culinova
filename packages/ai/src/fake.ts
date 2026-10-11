@@ -10,6 +10,7 @@ import {
   type StructuredGenerationRequest,
   type StructuredGenerationResult,
 } from "./adapters";
+import type { GeneratedBase } from "./prompts/base";
 import type { GeneratedRecipe, SocialContent } from "./schemas";
 
 type Responder = (request: StructuredGenerationRequest<z.ZodType>) => unknown;
@@ -55,6 +56,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: english ? "rinsed" : "rincé",
         group: english ? "Rice" : "Riz",
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i2",
@@ -66,6 +68,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: null,
         group: english ? "Rice" : "Riz",
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i3",
@@ -77,6 +80,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: null,
         group: english ? "Rice" : "Riz",
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i4",
@@ -88,6 +92,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: english ? "skinless, cut into 4 portions" : "sans peau, en 4 portions",
         group: null,
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i5",
@@ -99,6 +104,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: null,
         group: english ? "Dressing" : "Vinaigrette",
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i6",
@@ -110,6 +116,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: english ? "finely grated" : "râpé finement",
         group: english ? "Dressing" : "Vinaigrette",
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i7",
@@ -121,6 +128,7 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: english ? "toasted" : "torréfiées",
         group: null,
         optional: false,
+        storeBought: false,
       },
       {
         ref: "i8",
@@ -132,6 +140,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
         preparation: null,
         group: english ? "Dressing" : "Vinaigrette",
         optional: true,
+        // Condiment souvent acheté tout prêt : permet de tester « Faire maison ».
+        storeBought: true,
       },
     ],
     steps: [
@@ -266,7 +276,79 @@ export function fakePriceEstimates(user: string) {
   };
 }
 
+/** Base « faite maison » d'exemple, dimensionnée d'après la quantité nécessaire lue dans le prompt. */
+export function fakeBase(user: string): GeneratedBase {
+  const name = field(user, "Préparation") ?? "Préparation";
+  const needed = Number(/^Quantité nécessaire : ([\d.,]+) g/m.exec(user)?.[1]?.replace(",", ".") ?? 100);
+  const yieldG = Math.max(Math.ceil(needed), 150);
+  const k = yieldG / 150;
+  const q = (n: number) => Math.max(1, Math.round(n * k));
+  const ingredient = (ref: string, label: string, quantity: number) => ({
+    ref,
+    name: label,
+    quantity,
+    unit: "g" as const,
+    displayQuantity: null,
+    displayUnit: null,
+    preparation: null,
+    group: null,
+    optional: false,
+    storeBought: false,
+  });
+  const step = (action: string, refs: string[], expectedResult: string | null) => ({
+    phase: "mise_en_place" as const,
+    action,
+    ingredientRefs: refs,
+    temperatureC: null,
+    durationSeconds: 300,
+    equipment: ["bol"],
+    expectedResult,
+    timer: false,
+  });
+  return {
+    name: `${name} maison`,
+    description: `${name} préparé à la maison, à la place du produit acheté tout prêt.`,
+    servings: 1,
+    difficulty: "easy",
+    prepTimeSeconds: 1200,
+    cookTimeSeconds: 0,
+    restTimeSeconds: 3600,
+    season: [],
+    equipment: ["bol", "bocal en verre"],
+    cuisineLabel: "Maison",
+    fusionLabel: null,
+    ingredients: [
+      ingredient("i1", "Zestes de yuzu", q(60)),
+      ingredient("i2", "Piment vert", q(75)),
+      ingredient("i3", "Sel fin", q(15)),
+    ],
+    steps: [
+      step("Hacher finement le piment vert {{i2}}.", ["i2"], "Un hachis très fin."),
+      step("Mélanger les zestes de yuzu {{i1}} avec le piment et le sel {{i3}}.", ["i1", "i3"], null),
+      step("Laisser reposer la pâte une heure au frais avant de l'utiliser.", [], "Une pâte parfumée."),
+    ],
+    plating: {
+      description: "Tassez la préparation dans un bocal en verre fermé et réservez-la au réfrigérateur.",
+      plate: "Bocal en verre",
+      positioning: "Tassé",
+      quantities: `${yieldG} g`,
+      sauce: null,
+      garnish: null,
+      finish: null,
+      decoration: null,
+    },
+    allergens: [],
+    diets: ["vegan"],
+    tips: ["Se garde une semaine au frais."],
+    yieldG,
+    yieldDisplayQuantity: null,
+    yieldDisplayUnit: null,
+    shelfLifeHours: 168,
+  };
+}
+
 const defaultResponder: Responder = (request) => {
+  if (request.promptId.startsWith("base.")) return fakeBase(request.user);
   if (request.promptId.startsWith("social.")) return fakeSocial(request.user);
   if (request.promptId.startsWith("prices.")) return fakePriceEstimates(request.user);
   return fakeRecipe(request.user, request.promptId.includes("regenerate") ? 1 : 0);

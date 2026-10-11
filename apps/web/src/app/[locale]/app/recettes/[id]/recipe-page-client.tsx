@@ -5,6 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
+import { makeHomemadeAction } from "@/server/actions/bases";
 import { SocialContentView } from "@/components/recipe/social-content";
 import {
   generationFailureAction,
@@ -15,7 +16,7 @@ import {
 } from "@/server/actions/wizard";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 
-export function RecipePageClient({ initial }: { initial: RecipeData }) {
+export function RecipePageClient({ initial, targetG }: { initial: RecipeData; targetG?: number }) {
   const t = useTranslations("Wizard");
   const tr = useTranslations("Recipe");
   const format = useFormatter();
@@ -32,6 +33,16 @@ export function RecipePageClient({ initial }: { initial: RecipeData }) {
     setSwitching(false);
   };
   const [pending, setPending] = useState<string | null>(initial.pendingGenerationId);
+  // Recettes maison en cours de rédaction : ligne d'ingrédient → génération.
+  const [pendingBases, setPendingBases] = useState<Map<string, string>>(
+    () =>
+      new Map(
+        initial.ingredients.flatMap((i) =>
+          i.pendingBaseGenerationId ? [[i.id, i.pendingBaseGenerationId] as const] : [],
+        ),
+      ),
+  );
+  const isBase = recipe.kind === "base";
   const [instruction, setInstruction] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -52,6 +63,44 @@ export function RecipePageClient({ initial }: { initial: RecipeData }) {
     }, 2000);
     return () => clearInterval(id);
   }, [pending, recipe.recipeId, t]);
+
+  useEffect(() => {
+    if (pendingBases.size === 0) return;
+    const id = setInterval(async () => {
+      for (const [lineId, generationId] of pendingBases) {
+        const status = await generationStatusAction(generationId).catch(() => null);
+        if (!status || status === "queued" || status === "running") continue;
+        if (status === "failed") setError(tr("homemadeFailed"));
+        const view = await recipeViewAction(recipe.recipeId);
+        if (view) setRecipe(view);
+        setPendingBases((all) => {
+          const next = new Map(all);
+          next.delete(lineId);
+          return next;
+        });
+      }
+    }, 2500);
+    return () => clearInterval(id);
+  }, [pendingBases, recipe.recipeId, tr]);
+
+  const makeHomemade = async (lineId: string) => {
+    setError(null);
+    const result = await makeHomemadeAction(lineId).catch(() => null);
+    if (result?.ok) {
+      setPendingBases((all) => new Map(all).set(lineId, result.generationId));
+    } else if (result?.reason === "already_homemade") {
+      const view = await recipeViewAction(recipe.recipeId);
+      if (view) setRecipe(view);
+    } else {
+      setError(
+        result?.reason === "budget"
+          ? t("errors.budget")
+          : result?.reason === "busy"
+            ? tr("homemadeBusy")
+            : t("errors.unexpected"),
+      );
+    }
+  };
 
   const limit = recipe.regenerations.limit;
   const left = limit === null ? null : Math.max(0, limit - recipe.regenerations.used);
@@ -119,58 +168,66 @@ export function RecipePageClient({ initial }: { initial: RecipeData }) {
         </section>
       ) : null}
       <RecipeView
+        key={recipe.versionId}
         recipe={recipe}
+        initialTargetG={targetG}
+        pendingLineIds={new Set(pendingBases.keys())}
+        {...(viewingOld || isBase ? {} : { onMakeHomemade: makeHomemade })}
         actions={
-          <Card>
-            <CardBody className="flex flex-col gap-3">
-              <p className="text-sm text-muted">{t("imageSoon")}</p>
-              {viewingOld ? null : pending ? (
-                <p className="flex items-center gap-2 text-sm">
-                  <Spinner /> {t("regenerating")}
-                </p>
-              ) : (
-                <>
-                  <Input
-                    value={instruction}
-                    maxLength={500}
-                    onChange={(e) => setInstruction(e.target.value)}
-                    placeholder={t("regenerateHint")}
-                    aria-label={t("regenerateHint")}
-                  />
-                  <Button
-                    variant="secondary"
-                    disabled={left === 0}
-                    onClick={async () => {
-                      setError(null);
-                      const result = await regenerateAction(recipe.recipeId, instruction || null);
-                      if (result.ok) {
-                        setPending(result.generationId);
-                        setInstruction("");
-                      } else {
-                        setError(
-                          result.reason === "quota"
-                            ? t("errors.quotaRegen", { limit: result.limit ?? 0 })
-                            : t(`errors.${result.reason}`),
-                        );
-                      }
-                    }}
-                  >
-                    {t("regenerate")}
-                  </Button>
-                  {left !== null ? (
-                    <span className="text-xs text-muted">{t("regenerateRemaining", { count: left })}</span>
-                  ) : null}
-                </>
-              )}
-            </CardBody>
-          </Card>
+          isBase ? undefined : (
+            <Card>
+              <CardBody className="flex flex-col gap-3">
+                <p className="text-sm text-muted">{t("imageSoon")}</p>
+                {viewingOld ? null : pending ? (
+                  <p className="flex items-center gap-2 text-sm">
+                    <Spinner /> {t("regenerating")}
+                  </p>
+                ) : (
+                  <>
+                    <Input
+                      value={instruction}
+                      maxLength={500}
+                      onChange={(e) => setInstruction(e.target.value)}
+                      placeholder={t("regenerateHint")}
+                      aria-label={t("regenerateHint")}
+                    />
+                    <Button
+                      variant="secondary"
+                      disabled={left === 0}
+                      onClick={async () => {
+                        setError(null);
+                        const result = await regenerateAction(recipe.recipeId, instruction || null);
+                        if (result.ok) {
+                          setPending(result.generationId);
+                          setInstruction("");
+                        } else {
+                          setError(
+                            result.reason === "quota"
+                              ? t("errors.quotaRegen", { limit: result.limit ?? 0 })
+                              : t(`errors.${result.reason}`),
+                          );
+                        }
+                      }}
+                    >
+                      {t("regenerate")}
+                    </Button>
+                    {left !== null ? (
+                      <span className="text-xs text-muted">{t("regenerateRemaining", { count: left })}</span>
+                    ) : null}
+                  </>
+                )}
+              </CardBody>
+            </Card>
+          )
         }
       />
-      {viewingOld ? null : <PricingCard key={recipe.versionId} recipe={recipe} />}
-      <section className="flex flex-col gap-4">
-        <h2 className="font-display text-3xl">{t("questions.social")}</h2>
-        <SocialContentView social={recipe.social} />
-      </section>
+      {viewingOld || isBase ? null : <PricingCard key={recipe.versionId} recipe={recipe} />}
+      {isBase ? null : (
+        <section className="flex flex-col gap-4">
+          <h2 className="font-display text-3xl">{t("questions.social")}</h2>
+          <SocialContentView social={recipe.social} />
+        </section>
+      )}
     </div>
   );
 }

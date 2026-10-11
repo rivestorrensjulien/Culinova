@@ -3,7 +3,7 @@ import type { GeneratedRecipe, SocialContent } from "@culinova/ai";
 import { remapStepQuantityTokens } from "@culinova/core";
 import type { Database } from "@culinova/db";
 import { recipeIngredients, recipes, recipeSteps, recipeVersions, socialContents } from "@culinova/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { and, eq, isNotNull, sql } from "drizzle-orm";
 import { matchIngredients } from "./matching";
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -17,6 +17,10 @@ export interface SaveVersionInput {
   momentId: string | null;
   generationParamsId: string | null;
   changeNote: string | null;
+  /** « base » pour une préparation de « Mes bases » (par défaut : un plat). */
+  kind?: "dish" | "base";
+  /** Poids produit par une base, en grammes. */
+  yieldG?: number | null;
 }
 
 export async function saveRecipeVersion(
@@ -30,7 +34,7 @@ export async function saveRecipeVersion(
       .insert(recipes)
       .values({
         ownerId: input.ownerId,
-        kind: "dish",
+        kind: input.kind ?? "dish",
         source: "generated",
         originalLanguage: input.languageCode,
         status: "ready",
@@ -65,6 +69,7 @@ export async function saveRecipeVersion(
       allergens: recipe.allergens,
       diets: recipe.diets,
       tips: recipe.tips,
+      yieldG: input.yieldG === undefined || input.yieldG === null ? null : Math.round(input.yieldG),
       generationParamsId: input.generationParamsId,
       changeNote: input.changeNote,
       createdBy: input.ownerId,
@@ -77,6 +82,9 @@ export async function saveRecipeVersion(
     recipe.ingredients.map((i) => ({ name: i.name, unit: i.unit })),
     input.languageCode,
   );
+
+  // Régénération : les préparations déjà faites maison restent liées à leur base.
+  const previousBases = await homemadeBasesOf(tx, recipeId);
 
   const refToRow = new Map<string, string>();
   const rows = await tx
@@ -95,6 +103,11 @@ export async function saveRecipeVersion(
         groupLabel: ingredient.group,
         sortOrder: index,
         optional: ingredient.optional,
+        storeBought: ingredient.storeBought,
+        baseRecipeId:
+          previousBases.byIngredient.get(matches[index]!.ingredientId ?? "") ??
+          previousBases.byLabel.get(ingredient.name.trim().toLowerCase()) ??
+          null,
       })),
     )
     .returning({ id: recipeIngredients.id, sortOrder: recipeIngredients.sortOrder });
@@ -126,6 +139,26 @@ export async function saveRecipeVersion(
     versionNo: next,
     createdIngredients: matches.filter((m) => m.created).length,
   };
+}
+
+/** Bases liées aux lignes de la version active d'une recette (par ingrédient et par libellé). */
+async function homemadeBasesOf(tx: Tx, recipeId: string) {
+  const rows = await tx
+    .select({
+      ingredientId: recipeIngredients.ingredientId,
+      label: recipeIngredients.label,
+      baseRecipeId: recipeIngredients.baseRecipeId,
+    })
+    .from(recipes)
+    .innerJoin(recipeIngredients, eq(recipeIngredients.recipeVersionId, recipes.currentVersionId))
+    .where(and(eq(recipes.id, recipeId), isNotNull(recipeIngredients.baseRecipeId)));
+  const byIngredient = new Map<string, string>();
+  const byLabel = new Map<string, string>();
+  for (const row of rows) {
+    if (row.ingredientId) byIngredient.set(row.ingredientId, row.baseRecipeId!);
+    byLabel.set(row.label.trim().toLowerCase(), row.baseRecipeId!);
+  }
+  return { byIngredient, byLabel };
 }
 
 /** Enregistre le contenu social (une ligne par plateforme). */

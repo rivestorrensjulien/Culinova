@@ -28,8 +28,26 @@ export async function listMyIngredients(
   options: { recipeId?: string; languageCode?: string } = {},
 ): Promise<IngredientRow[]> {
   const language = options.languageCode ?? "fr";
+  // Une recette filtrée inclut les ingrédients de ses préparations faites maison.
+  const recipeIds = options.recipeId
+    ? [
+        options.recipeId,
+        ...(
+          await db
+            .select({ recipeId: s.baseRecipes.recipeId })
+            .from(s.recipes)
+            .innerJoin(
+              s.recipeIngredients,
+              eq(s.recipeIngredients.recipeVersionId, s.recipes.currentVersionId),
+            )
+            .innerJoin(s.baseRecipes, eq(s.baseRecipes.id, s.recipeIngredients.baseRecipeId))
+            .where(and(eq(s.recipes.id, options.recipeId), eq(s.recipes.ownerId, userId)))
+        ).map((r) => r.recipeId),
+      ]
+    : null;
   const usage = await db
     .select({
+      baseRecipeId: s.recipeIngredients.baseRecipeId,
       ingredientId: s.recipeIngredients.ingredientId,
       recipeId: s.recipes.id,
       recipeName: s.recipeVersions.name,
@@ -41,13 +59,14 @@ export async function listMyIngredients(
       and(
         eq(s.recipes.ownerId, userId),
         isNull(s.recipes.deletedAt),
-        options.recipeId ? eq(s.recipes.id, options.recipeId) : undefined,
+        recipeIds ? inArray(s.recipes.id, recipeIds) : undefined,
       ),
     );
 
   const recipesByIngredient = new Map<string, Map<string, string>>();
   for (const row of usage) {
-    if (!row.ingredientId) continue;
+    // Un produit remplacé par une préparation maison n'est plus acheté.
+    if (!row.ingredientId || row.baseRecipeId) continue;
     const map = recipesByIngredient.get(row.ingredientId) ?? new Map<string, string>();
     map.set(row.recipeId, row.recipeName);
     recipesByIngredient.set(row.ingredientId, map);

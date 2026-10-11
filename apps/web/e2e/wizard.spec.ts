@@ -175,6 +175,19 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(page.getByTestId("appliances")).toContainText("Four");
   await page.goto(recipeUrl);
   await expect(page.getByTestId("pricing").getByLabel("Four", { exact: true })).toBeVisible();
+
+  // Fait maison : le yuzu kosho, acheté tout prêt, devient une base de « Mes bases ».
+  const yuzu = page.getByTestId("ingredient").filter({ hasText: "Yuzu kosho" });
+  await expect(yuzu).toContainText("Acheté tout prêt");
+  await yuzu.getByRole("button", { name: "Faire maison" }).click();
+  await expect(yuzu.getByTestId("homemade")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("upstream")).toContainText("À commencer environ 2 h 30 avant le service.");
+  await yuzu.getByRole("link", { name: "Voir la recette maison" }).click();
+  await expect(page.getByTestId("recipe-name")).toHaveText("Yuzu kosho maison");
+  await expect(page.getByTestId("base-quantity")).toHaveText("4 g");
+  await expect(page.getByTestId("base-info")).toContainText("Saumon snacké");
+  await page.getByRole("link", { name: "Mes bases" }).first().click();
+  await expect(page.getByTestId("bases")).toContainText("Yuzu kosho maison");
   await page.goto("/app/recettes");
   await expect(page.getByText("Saumon snacké")).toBeVisible();
 

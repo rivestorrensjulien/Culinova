@@ -137,6 +137,9 @@ export const baseRecipes = pgTable("base_recipes", {
     .unique()
     .references(() => recipes.id, { onDelete: "cascade" }),
   yieldG: integer("yield_g").notNull(),
+  /** Rendement lisible (8 pains), facultatif. */
+  yieldDisplayQuantity: numeric("yield_display_quantity", { precision: 12, scale: 3 }),
+  yieldDisplayUnit: text("yield_display_unit"),
   shelfLifeH: integer("shelf_life_h"),
   ...timestamps,
 });
@@ -162,6 +165,8 @@ export const recipeIngredients = pgTable(
     groupLabel: text("group_label"),
     sortOrder: integer("sort_order").notNull().default(0),
     optional: boolean("optional").notNull().default(false),
+    /** Produit habituellement acheté tout prêt, réalisable maison (null : non renseigné, recettes anciennes). */
+    storeBought: boolean("store_bought"),
     ...timestamps,
   },
   (t) => [index("recipe_ingredients_version_idx").on(t.recipeVersionId)],

@@ -102,13 +102,17 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(view.getByRole("heading", { name: "Ingrédients" })).toBeVisible();
   await expect(page.getByTestId("ingredient").filter({ hasText: "Eau" })).toContainText("360 g (36 cl)");
   await expect(page.getByTestId("step")).toHaveCount(6);
-  await expect(page.getByTestId("step").nth(1)).toContainText("Cuire le riz (300 g) avec l'eau (360 g, 36 cl)");
+  await expect(page.getByTestId("step").nth(1)).toContainText(
+    "Cuire le riz (300 g) avec l'eau (360 g, 36 cl)",
+  );
 
   // Recalcul des quantités selon le nombre de personnes, liste et étapes comprises.
   await view.getByRole("button", { name: "6", exact: true }).click();
   await expect(page.getByTestId("servings")).toHaveText("6 personnes");
   await expect(page.getByTestId("ingredient").first()).toContainText("450 g");
-  await expect(page.getByTestId("step").nth(1)).toContainText("Cuire le riz (450 g) avec l'eau (540 g, 54 cl)");
+  await expect(page.getByTestId("step").nth(1)).toContainText(
+    "Cuire le riz (450 g) avec l'eau (540 g, 54 cl)",
+  );
 
   // La recette survit à un rafraîchissement.
   await waitSaved(page);

@@ -181,6 +181,19 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(yuzu).toContainText("Acheté tout prêt");
   await yuzu.getByRole("button", { name: "Faire maison" }).click();
   await expect(yuzu.getByTestId("homemade").first()).toBeVisible({ timeout: 20_000 });
+  const layout = await page.evaluate(() => {
+    const articles = [...document.querySelectorAll("[data-testid=recipe-view]")];
+    const lists = [...document.querySelectorAll("ul")].filter((ul) =>
+      ul.querySelector("[data-testid=ingredient]"),
+    );
+    return {
+      articles: articles.length,
+      lists: lists.map((ul) => ul.querySelectorAll("[data-testid=ingredient]").length),
+      main: document.querySelectorAll("main").length,
+      body: document.body.children.length,
+    };
+  });
+  expect(layout).toEqual({ articles: 1, lists: [8], main: 1, body: -1 });
   const rows = await page.getByTestId("ingredient").allTextContents();
   expect(rows.filter((row) => row.includes("Fait maison"))).toHaveLength(1);
   expect(rows).toHaveLength(8);

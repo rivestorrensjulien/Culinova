@@ -55,8 +55,7 @@ export interface WizardProps {
 }
 
 type Problem =
-  | { kind: "start"; result: Exclude<StartResult, { ok: true }> }
-  | { kind: "failed"; code: string };
+  { kind: "start"; result: Exclude<StartResult, { ok: true }> } | { kind: "failed"; code: string };
 
 const POLL_MS = 2000;
 const GENERATION_STEP = 9;

@@ -180,7 +180,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         </section>
       ) : null}
       <RecipeView
-        key={recipe.versionId}
+        key={`view-${recipe.versionId}`}
         recipe={recipe}
         initialTargetG={targetG}
         pendingLineIds={new Set(pendingBases.keys())}
@@ -233,7 +233,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
           )
         }
       />
-      {viewingOld || isBase ? null : <PricingCard key={recipe.versionId} recipe={recipe} />}
+      {viewingOld || isBase ? null : <PricingCard key={`pricing-${recipe.versionId}`} recipe={recipe} />}
       {isBase ? null : (
         <section className="flex flex-col gap-4">
           <h2 className="font-display text-3xl">{t("questions.social")}</h2>

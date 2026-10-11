@@ -36,7 +36,9 @@ describe("chiffrement du secret", () => {
 
   it("détecte une altération", () => {
     const [v, iv, tag, data] = encryptSecret("JBSWY3DPEHPK3PXP").split(":");
-    const tampered = [v, iv, tag, `${data!.slice(0, -2)}AA`].join(":");
+    // Le premier caractère est toujours significatif : on le remplace par un caractère différent.
+    const first = data!.charAt(0) === "A" ? "B" : "A";
+    const tampered = [v, iv, tag, `${first}${data!.slice(1)}`].join(":");
     expect(() => decryptSecret(tampered)).toThrow();
   });
 });

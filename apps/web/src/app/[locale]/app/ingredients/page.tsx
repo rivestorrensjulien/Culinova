@@ -6,6 +6,9 @@ import { getDb } from "@/server/db";
 import { requireUser } from "@/server/session";
 import { IngredientsTable } from "./ingredients-table";
 
+// L'estimation des prix par l'IA peut prendre jusqu'à une minute.
+export const maxDuration = 120;
+
 /** Mes ingrédients : prix au kilo, au litre ou à la pièce, utilisés pour chiffrer les recettes. */
 export default async function IngredientsPage({
   params,

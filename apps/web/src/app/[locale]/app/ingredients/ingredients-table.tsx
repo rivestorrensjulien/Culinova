@@ -1,11 +1,15 @@
 "use client";
 
-import { Badge, Button, cx, Input } from "@culinova/ui";
+import { Badge, Button, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { confirmIngredientAction, savePriceAction } from "@/server/actions/costing";
+import { confirmIngredientAction, estimatePricesAction, savePriceAction } from "@/server/actions/costing";
+import type { PriceProposal } from "@/server/costing/estimate";
 import type { IngredientRow } from "@/server/costing/ingredients";
+
+/** Nombre maximal d'ingrédients estimés en une fois (voir PRICE_ESTIMATE_MAX_ITEMS). */
+const ESTIMATE_BATCH = 40;
 
 type Filter = "all" | "missing";
 
@@ -18,6 +22,11 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
   // Une ligne chiffrée pendant la visite reste affichée, même avec le filtre « Sans prix ».
   const [savedNow, setSavedNow] = useState<ReadonlySet<string>>(new Set());
   const missingCount = rows.filter((r) => !r.price).length;
+  // Prix proposés par l'IA, en attente de validation.
+  const [proposals, setProposals] = useState<ReadonlyMap<string, PriceProposal>>(new Map());
+  const [estimating, setEstimating] = useState(false);
+  const [validating, setValidating] = useState(false);
+  const [estimateError, setEstimateError] = useState<string | null>(null);
 
   const visible = useMemo(() => {
     const q = query.trim().toLocaleLowerCase();
@@ -30,6 +39,49 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
 
   const update = (id: string, patch: Partial<IngredientRow>) =>
     setRows((current) => current.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+
+  const markSaved = (id: string, price: string, supplierName: string | null) => {
+    setSavedNow((ids) => new Set(ids).add(id));
+    setProposals((current) => {
+      const next = new Map(current);
+      next.delete(id);
+      return next;
+    });
+    update(id, { price, priceIsOwn: true, supplierName, priceUpdatedAt: new Date().toISOString() });
+  };
+
+  const estimate = async () => {
+    setEstimating(true);
+    setEstimateError(null);
+    const ids = visible.filter((r) => !r.price && !proposals.has(r.id)).map((r) => r.id);
+    const result = await estimatePricesAction(ids.slice(0, ESTIMATE_BATCH)).catch(() => null);
+    if (result?.ok) {
+      setProposals((current) => {
+        const next = new Map(current);
+        for (const proposal of result.proposals) next.set(proposal.ingredientId, proposal);
+        return next;
+      });
+    } else {
+      setEstimateError(t(result?.reason === "budget" ? "estimateBudget" : "estimateFailed"));
+    }
+    setEstimating(false);
+  };
+
+  const validateAll = async () => {
+    setValidating(true);
+    for (const proposal of proposals.values()) {
+      const row = rows.find((r) => r.id === proposal.ingredientId);
+      const result = await savePriceAction(
+        proposal.ingredientId,
+        proposal.price,
+        row?.supplierName ?? null,
+      ).catch(() => null);
+      if (result?.ok) markSaved(proposal.ingredientId, result.price, row?.supplierName ?? null);
+    }
+    setValidating(false);
+  };
+
+  const toEstimate = visible.filter((r) => !r.price && !proposals.has(r.id)).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -61,7 +113,30 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
           placeholder={t("search")}
           aria-label={t("search")}
         />
+        {toEstimate > 0 ? (
+          <Button type="button" size="sm" variant="secondary" onClick={estimate} disabled={estimating}>
+            {estimating ? (
+              <span className="flex items-center gap-2">
+                <Spinner /> {t("estimating")}
+              </span>
+            ) : (
+              t("estimate", { count: Math.min(toEstimate, ESTIMATE_BATCH) })
+            )}
+          </Button>
+        ) : null}
       </div>
+
+      {estimateError ? <Notice tone="danger">{estimateError}</Notice> : null}
+      {proposals.size > 0 ? (
+        <Notice tone="info">
+          <span className="flex flex-wrap items-center gap-3">
+            {t("proposalsHint", { count: proposals.size })}
+            <Button type="button" size="sm" onClick={validateAll} disabled={validating}>
+              {validating ? t("validating") : t("validateAll", { count: proposals.size })}
+            </Button>
+          </span>
+        </Notice>
+      ) : null}
 
       {visible.length === 0 ? (
         <p className="text-sm text-muted">{filter === "missing" ? t("allPriced") : t("noMatch")}</p>
@@ -71,15 +146,8 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
             <PriceRow
               key={row.id}
               row={row}
-              onSaved={(price, supplierName) => {
-                setSavedNow((ids) => new Set(ids).add(row.id));
-                update(row.id, {
-                  price,
-                  priceIsOwn: true,
-                  supplierName,
-                  priceUpdatedAt: new Date().toISOString(),
-                });
-              }}
+              proposal={proposals.get(row.id) ?? null}
+              onSaved={(price, supplierName) => markSaved(row.id, price, supplierName)}
               onConfirmed={() => update(row.id, { toConfirm: false })}
               formatDate={(iso) => format.dateTime(new Date(iso), { dateStyle: "short" })}
             />
@@ -92,11 +160,13 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
 
 function PriceRow({
   row,
+  proposal,
   onSaved,
   onConfirmed,
   formatDate,
 }: {
   row: IngredientRow;
+  proposal: PriceProposal | null;
   onSaved: (price: string, supplierName: string | null) => void;
   onConfirmed: () => void;
   formatDate: (iso: string) => string;
@@ -106,6 +176,11 @@ function PriceRow({
   const [price, setPrice] = useState(row.price ? displayPrice(row.price) : "");
   const [supplier, setSupplier] = useState(row.supplierName ?? "");
   const [state, setState] = useState<"idle" | "saving" | "saved" | "invalid">("idle");
+
+  // Un prix proposé par l'IA pré-remplit le champ, sans écraser une saisie en cours.
+  useEffect(() => {
+    if (proposal) setPrice((current) => (current.trim() === "" ? displayPrice(proposal.price) : current));
+  }, [proposal]);
 
   const save = async () => {
     setState("saving");
@@ -145,6 +220,13 @@ function PriceRow({
               ))
             : t("unused")}
         </span>
+        {proposal ? (
+          <span className="flex flex-wrap items-center gap-2 text-xs text-muted" data-testid="proposal">
+            <Badge tone="accent">{t("aiEstimate")}</Badge>
+            {t(`confidence.${proposal.confidence}`)}
+            {proposal.note ? ` · ${proposal.note}` : ""}
+          </span>
+        ) : null}
         {row.price ? (
           <span className="text-xs text-muted">
             {row.priceIsOwn ? t("ownPrice") : t("referencePrice")}

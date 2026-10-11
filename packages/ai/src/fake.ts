@@ -250,8 +250,25 @@ export function fakeSocial(user: string): SocialContent {
   };
 }
 
+/** Estimation factice : un prix plausible et stable pour chaque identifiant reçu. */
+export function fakePriceEstimates(user: string) {
+  const ids = [...user.matchAll(/^- (\S+) · .+ · (€\/kg|€\/l|€\/pièce)$/gm)].map((m) => ({
+    id: m[1]!,
+    unit: m[2]!,
+  }));
+  return {
+    estimates: ids.map(({ id, unit }) => ({
+      id,
+      price: unit === "€/pièce" ? 0.3 : unit === "€/l" ? 2.5 : 4,
+      confidence: "medium" as const,
+      note: null,
+    })),
+  };
+}
+
 const defaultResponder: Responder = (request) => {
   if (request.promptId.startsWith("social.")) return fakeSocial(request.user);
+  if (request.promptId.startsWith("prices.")) return fakePriceEstimates(request.user);
   return fakeRecipe(request.user, request.promptId.includes("regenerate") ? 1 : 0);
 };
 

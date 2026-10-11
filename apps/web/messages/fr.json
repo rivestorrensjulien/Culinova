@@ -410,6 +410,19 @@
       "kg": "€/kg",
       "l": "€/l",
       "piece": "€/pièce"
+    },
+    "estimate": "Estimer les prix avec l'IA ({count})",
+    "estimating": "Estimation en cours…",
+    "estimateFailed": "L'estimation n'a pas pu aboutir. Réessayez dans un instant.",
+    "estimateBudget": "Le budget IA du mois est atteint : l'estimation des prix est suspendue jusqu'au mois prochain.",
+    "proposalsHint": "{count, plural, one {# prix estimé par l'IA, à vérifier.} other {# prix estimés par l'IA, à vérifier.}} Corrigez-les si besoin, puis enregistrez-les un par un ou tous ensemble.",
+    "validateAll": "Valider {count, plural, one {le prix estimé} other {les # prix estimés}}",
+    "validating": "Enregistrement…",
+    "aiEstimate": "Estimation IA",
+    "confidence": {
+      "high": "fiable",
+      "medium": "à vérifier",
+      "low": "très variable"
     }
   }
 }

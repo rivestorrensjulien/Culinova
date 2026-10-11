@@ -410,6 +410,19 @@
       "kg": "€/kg",
       "l": "€/l",
       "piece": "€/piece"
+    },
+    "estimate": "Estimate prices with AI ({count})",
+    "estimating": "Estimating…",
+    "estimateFailed": "The estimate couldn't be completed. Try again in a moment.",
+    "estimateBudget": "This month's AI budget is used up: price estimates are paused until next month.",
+    "proposalsHint": "{count, plural, one {# price estimated by AI, to check.} other {# prices estimated by AI, to check.}} Adjust them if needed, then save them one by one or all at once.",
+    "validateAll": "Approve {count, plural, one {the estimated price} other {the # estimated prices}}",
+    "validating": "Saving…",
+    "aiEstimate": "AI estimate",
+    "confidence": {
+      "high": "reliable",
+      "medium": "to check",
+      "low": "highly variable"
     }
   }
 }

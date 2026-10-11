@@ -1,9 +1,11 @@
 "use server";
 
+import { createLlmAdapter } from "@culinova/ai";
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { audit } from "../audit";
+import { type EstimateResult, estimatePrices } from "../costing/estimate";
 import { confirmIngredient } from "../costing/ingredients";
 import { type SavePriceResult, savePrice } from "../costing/prices";
 import { getDb } from "../db";
@@ -49,4 +51,17 @@ export async function confirmIngredientAction(ingredientId: string): Promise<boo
   const ok = await confirmIngredient(getDb(), session.user.id, ingredientId);
   if (ok) revalidatePath("/app", "layout");
   return ok;
+}
+
+/** Propose des prix estimés par l'IA (rien n'est enregistré sans validation). */
+export async function estimatePricesAction(ingredientIds: string[]): Promise<EstimateResult> {
+  const session = await currentUser();
+  const ids = ingredientIds.filter((id) => uuid.safeParse(id).success);
+  return estimatePrices(
+    getDb(),
+    createLlmAdapter(process.env, { effort: "low" }),
+    session.user.id,
+    ids,
+    await getLocale(),
+  );
 }

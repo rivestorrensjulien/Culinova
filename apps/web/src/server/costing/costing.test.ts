@@ -1,4 +1,4 @@
-import { FakeLlmAdapter } from "@culinova/ai";
+import { FakeLlmAdapter, PRICE_ESTIMATE_PROMPT_VERSION } from "@culinova/ai";
 import * as s from "@culinova/db/schema";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import { createTestUser, hasTestDb, testDb } from "@/test/db";
 import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { loadRecipeView } from "../generation/view";
+import { estimatePrices } from "./estimate";
 import { listMyIngredients } from "./ingredients";
 import { priceHistoryOf, readPriceInput, savePrice } from "./prices";
 import { computeRecipeCost } from "./recipe-cost";
@@ -113,5 +114,40 @@ describe.skipIf(!hasTestDb)("prix des ingrédients et coût matière", () => {
       ok: false,
       reason: "not_found",
     });
+  });
+
+  it("propose des prix estimés par l'IA sans rien enregistrer", async () => {
+    const db = testDb();
+    const user = await createTestUser();
+    const recipe = await recipeFor(user.id);
+    const rows = await listMyIngredients(db, user.id, { recipeId: recipe.recipeId });
+    const ai = new FakeLlmAdapter();
+
+    const result = await estimatePrices(
+      db,
+      ai,
+      user.id,
+      rows.map((r) => r.id),
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.proposals).toHaveLength(rows.length);
+    const rice = rows.find((r) => r.name === "Riz à sushi")!;
+    expect(result.proposals.find((p) => p.ingredientId === rice.id)).toMatchObject({ price: "4.0000" });
+    // Le prompt n'envoie que des identifiants courts, jamais les identifiants internes.
+    expect(ai.calls[0]!.promptId).toBe(PRICE_ESTIMATE_PROMPT_VERSION);
+    expect(ai.calls[0]!.user).toContain("- p1 · ");
+    expect(ai.calls[0]!.user).not.toContain(rice.id);
+
+    // Rien n'est enregistré tant que la personne ne valide pas.
+    const after = await computeRecipeCost(db, user.id, recipe.versionId, recipe.servings);
+    expect(after.pricedCount).toBe(0);
+    const [generation] = await db
+      .select()
+      .from(s.aiGenerations)
+      .where(eq(s.aiGenerations.kind, "price_estimate"))
+      .orderBy(s.aiGenerations.createdAt);
+    expect(generation).toBeDefined();
+    expect(await estimatePrices(db, ai, user.id, [])).toEqual({ ok: false, reason: "empty" });
   });
 });

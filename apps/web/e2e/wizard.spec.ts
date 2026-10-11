@@ -180,7 +180,10 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   const yuzu = page.getByTestId("ingredient").filter({ hasText: "Yuzu kosho" });
   await expect(yuzu).toContainText("Acheté tout prêt");
   await yuzu.getByRole("button", { name: "Faire maison" }).click();
-  await expect(yuzu.getByTestId("homemade")).toBeVisible({ timeout: 20_000 });
+  await expect(yuzu.getByTestId("homemade").first()).toBeVisible({ timeout: 20_000 });
+  const rows = await page.getByTestId("ingredient").allTextContents();
+  expect(rows.filter((row) => row.includes("Fait maison"))).toHaveLength(1);
+  expect(rows).toHaveLength(8);
   await expect(page.getByTestId("upstream")).toContainText("À commencer environ 2 h 30 avant le service.");
   await yuzu.getByRole("link", { name: "Voir la recette maison" }).click();
   await expect(page.getByTestId("recipe-name")).toHaveText("Yuzu kosho maison");

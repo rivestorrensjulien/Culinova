@@ -2,6 +2,7 @@
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { loadPricingContext, type PricingContext } from "../costing/pricing";
 import { computeRecipeCost, type RecipeCost } from "../costing/recipe-cost";
 import { getQuotaLimits } from "../quotas";
 
@@ -76,6 +77,8 @@ export interface RecipeView {
   pendingGenerationId: string | null;
   /** Coût matière calculé avec les prix actuels (pour le nombre de personnes de la version). */
   cost: RecipeCost;
+  /** Réglages de chiffrage du compte et paramètres de prix de la recette. */
+  pricing: PricingContext;
 }
 
 export async function loadRecipeView(
@@ -153,6 +156,7 @@ export async function loadRecipeView(
       ),
     computeRecipeCost(db, userId, version.id, version.servings),
   ]);
+  const pricing = await loadPricingContext(db, userId, recipe.id, version.id);
 
   const order = ["generic", "instagram", "tiktok", "pinterest", "linkedin"];
   return {
@@ -222,6 +226,7 @@ export async function loadRecipeView(
     regenerations: { used: usage?.count ?? 0, limit: limits.regenerations },
     pendingGenerationId: pending?.id ?? null,
     cost,
+    pricing,
   };
 }
 

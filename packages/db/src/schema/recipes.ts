@@ -241,6 +241,8 @@ export const recipePricing = pgTable("recipe_pricing", {
   coefficient: numeric("coefficient", { precision: 8, scale: 4 }),
   vatRate: numeric("vat_rate", { precision: 5, scale: 2 }),
   sellingPriceHtCents: integer("selling_price_ht_cents"),
+  /** Prix TTC tel que saisi (le prix HT en est déduit, sans écart d'arrondi à l'affichage). */
+  sellingPriceTtcCents: integer("selling_price_ttc_cents"),
   laborSeconds: jsonb("labor_seconds").$type<{ prep?: number; watch?: number; plating?: number }>(),
   hourlyRateCents: integer("hourly_rate_cents"),
   energyUses: jsonb("energy_uses").$type<Array<{ applianceId: string; seconds: number }>>(),

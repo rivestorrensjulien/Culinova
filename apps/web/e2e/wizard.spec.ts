@@ -148,6 +148,33 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await page.getByRole("link", { name: "Retour à la recette" }).click();
   await expect(page.getByTestId("cost-total")).toContainText("1,20");
   await expect(page.getByTestId("cost-portion")).toContainText("0,30");
+
+  // Prix de vente : 0,30 € × 3,5 = 1,05 € HT, soit 1,16 € TTC (TVA 10 %).
+  const recipeUrl = page.url();
+  const pricing = page.getByTestId("pricing");
+  await expect(pricing.getByTestId("suggested-ttc")).toContainText("1,16");
+  const sellingPrice = pricing.getByLabel("Prix de vente TTC d'une portion (€)");
+  await sellingPrice.fill("5");
+  // 5 € TTC = 4,55 € HT ; marge brute = 4,55 − 0,30 = 4,25 €.
+  await expect(pricing.getByTestId("actual-margin")).toContainText("4,25");
+  await pricing.getByRole("button", { name: "Enregistrer ces paramètres" }).click();
+  await expect(pricing).toContainText("Paramètres de prix enregistrés.");
+  await page.reload();
+  await expect(page.getByTestId("pricing").getByLabel("Prix de vente TTC d'une portion (€)")).toHaveValue(
+    "5,00",
+  );
+
+  // Réglages du compte : coût horaire et appareils courants.
+  await page.getByRole("link", { name: "Réglages", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Réglages de chiffrage" })).toBeVisible();
+  await page.getByLabel("Coût horaire de la main-d'œuvre (€ / heure)").fill("20");
+  await page.getByLabel("Prix du kWh d'électricité (€)").fill("0,25");
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
+  await expect(page.getByText("Réglages enregistrés.")).toBeVisible();
+  await page.getByRole("button", { name: /Ajouter les appareils courants/ }).click();
+  await expect(page.getByTestId("appliances")).toContainText("Four");
+  await page.goto(recipeUrl);
+  await expect(page.getByTestId("pricing").getByLabel("Four", { exact: true })).toBeVisible();
   await page.goto("/app/recettes");
   await expect(page.getByText("Saumon snacké")).toBeVisible();
 

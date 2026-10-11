@@ -3,6 +3,7 @@
 import { Button, Card, CardBody, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { SocialContentView } from "@/components/recipe/social-content";
 import {
@@ -165,6 +166,7 @@ export function RecipePageClient({ initial }: { initial: RecipeData }) {
           </Card>
         }
       />
+      {viewingOld ? null : <PricingCard key={recipe.versionId} recipe={recipe} />}
       <section className="flex flex-col gap-4">
         <h2 className="font-display text-3xl">{t("questions.social")}</h2>
         <SocialContentView social={recipe.social} />

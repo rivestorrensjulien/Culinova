@@ -13,6 +13,7 @@ import {
   BASE_PROMPT_VERSION,
   type BaseRequest,
   baseProblems,
+  baseToRecipe,
   buildBasePrompt,
   generatedBaseSchema,
   type LlmAdapter,
@@ -126,13 +127,13 @@ export async function runBaseGeneration(
       validate: (base) => baseProblems(base, neededG),
       maxOutputTokens: 32_000,
     });
-    // Une base est une fournée : elle est enregistrée « pour 1 », dimensionnée par son poids.
-    const base = { ...result.data, servings: 1 };
+    const base = result.data;
 
     const saved = await db.transaction(async (tx) => {
       const version = await saveRecipeVersion(tx, {
         ownerId: generation.userId!,
-        recipe: base,
+        // Une base est une fournée : elle est enregistrée « pour 1 », dimensionnée par son poids.
+        recipe: baseToRecipe(base, row.cuisine),
         languageCode: request.language,
         momentId: null,
         generationParamsId: null,

@@ -177,7 +177,7 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
     ]);
     const main = generations.find((g) => g.kind === "recipe")!;
     expect(main).toMatchObject({
-      promptVersion: "recipe.generate@6",
+      promptVersion: "recipe.generate@7",
       tokensIn: 1200,
       tokensOut: 2400,
       costUsdMicros: 26_400,
@@ -306,7 +306,7 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
         .where(eq(s.recipes.id, recipeId));
       expect(current!.versionNo).toBe(i);
     }
-    const regenPrompts = ai.calls.filter((c) => c.promptId === "recipe.regenerate@6");
+    const regenPrompts = ai.calls.filter((c) => c.promptId === "recipe.regenerate@7");
     expect(regenPrompts[0]!.user).toContain("Version plus légère");
     expect(regenPrompts[1]!.user).toContain("nettement différente");
 

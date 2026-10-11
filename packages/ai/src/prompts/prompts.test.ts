@@ -32,8 +32,11 @@ const request: RecipeRequest = {
 describe("prompt de recette", () => {
   it("transmet tous les paramètres de création au moteur", () => {
     const { system, user } = buildRecipePrompt(request);
-    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@6");
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@7");
     expect(system).toContain("fusionLabel");
+    // Contenant de service adapté au moment de consommation, sans assiette ronde par défaut.
+    expect(system).toContain("street food → barquette");
+    expect(system).not.toContain("assiette ronde (21");
     for (const expected of [
       "Moment de consommation : Plat",
       "Influence culinaire : Asie",

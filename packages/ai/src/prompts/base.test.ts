@@ -13,11 +13,11 @@ const request = {
 describe("recette de base faite maison", () => {
   it("transmet la préparation et la quantité nécessaire", () => {
     const { user } = buildBasePrompt(request);
-    expect(BASE_PROMPT_VERSION).toBe("base.generate@1");
+    expect(BASE_PROMPT_VERSION).toBe("base.generate@2");
     expect(user).toContain("Préparation : Pains bao");
     expect(user).toContain("Quantité nécessaire : 400 g (8 pains)");
     expect(user).toContain("Recette principale : « Bao au porc laqué »");
-    expect(user).toContain("entre 400 g et 640 g");
+    expect(user).toContain("entre 400 g et 800 g");
   });
 
   it("vérifie que la fournée couvre le besoin, sans excès", () => {

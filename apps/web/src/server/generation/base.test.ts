@@ -68,7 +68,7 @@ describe.skipIf(!hasTestDb)("préparations faites maison", () => {
     // Gratuit : le quota de recettes du mois n'a pas bougé.
     expect((await getMonthlyUsage(db, user.id)).used.recipes).toBe(usedBefore);
     const prompt = ai.calls.at(-1)!;
-    expect(prompt.promptId).toBe("base.generate@1");
+    expect(prompt.promptId).toBe("base.generate@2");
     expect(prompt.user).toContain("Préparation : Yuzu kosho");
     expect(prompt.user).toContain("Quantité nécessaire : 4 g");
 

@@ -126,7 +126,8 @@ export async function runBaseGeneration(
       validate: (base) => baseProblems(base, neededG),
       maxOutputTokens: 32_000,
     });
-    const base = result.data;
+    // Une base est une fournée : elle est enregistrée « pour 1 », dimensionnée par son poids.
+    const base = { ...result.data, servings: 1 };
 
     const saved = await db.transaction(async (tx) => {
       const version = await saveRecipeVersion(tx, {

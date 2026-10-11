@@ -7,7 +7,7 @@ import { z } from "zod";
 import { generatedRecipeSchema, recipeProblems } from "../schemas";
 import { RECIPE_SYSTEM_PROMPT } from "./recipe";
 
-export const BASE_PROMPT_VERSION = "base.generate@1";
+export const BASE_PROMPT_VERSION = "base.generate@2";
 
 /** Une base qui produit moins de 150 g est rarement réaliste : le surplus se conserve. */
 export const BASE_MIN_REALISTIC_YIELD_G = 150;
@@ -38,7 +38,7 @@ export interface BaseRequest {
 const LANGUAGE_NAMES = { fr: "français", en: "anglais (English)" } as const;
 
 export function maxBaseYield(neededG: number): number {
-  return Math.max(neededG * 1.6, BASE_MIN_REALISTIC_YIELD_G);
+  return Math.max(neededG * 2, BASE_MIN_REALISTIC_YIELD_G);
 }
 
 export function buildBasePrompt(request: BaseRequest): { system: string; user: string } {
@@ -76,7 +76,8 @@ Règles propres à cette préparation de base :
 
 /** Règles métier d'une base : celles d'une recette, plus le rendement attendu. */
 export function baseProblems(base: GeneratedBase, neededG: number): string[] {
-  const problems = recipeProblems(base, 1);
+  // Une base est une fournée : le nombre de « personnes » n'a pas de sens, il est ramené à 1 à l'enregistrement.
+  const problems = recipeProblems(base, base.servings);
   if (!(base.yieldG >= neededG * 0.95)) {
     problems.push(`yieldG (${base.yieldG} g) ne couvre pas la quantité nécessaire (${neededG} g).`);
   } else if (base.yieldG > maxBaseYield(neededG)) {

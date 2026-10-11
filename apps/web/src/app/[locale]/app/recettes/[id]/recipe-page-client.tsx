@@ -73,14 +73,21 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
       checking.current = true;
       try {
         const done: string[] = [];
-        let failed = false;
+        let failedId: string | null = null;
         for (const [lineId, generationId] of pendingBases) {
           const status = await baseGenerationStatusAction(generationId).catch(() => null);
           if (status === "succeeded" || status === "failed" || status === null) done.push(lineId);
-          if (status === "failed") failed = true;
+          if (status === "failed") failedId = generationId;
         }
         if (done.length === 0) return;
-        if (failed) setError(tr("homemadeFailed"));
+        if (failedId) {
+          // Cause précise (réponse invalide, coupée, service indisponible…), comme pour la régénération.
+          const code = await generationFailureAction(failedId).catch(() => "unexpected");
+          const reason = t.has(`errors.${code}`)
+            ? t(`errors.${code}` as "errors.unexpected")
+            : t("errors.unexpected");
+          setError(`${tr("homemadeFailed")} ${reason}`);
+        }
         const view = await recipeViewAction(recipe.recipeId).catch(() => null);
         if (view) setRecipe(view);
         setPendingBases((all) => {
@@ -93,7 +100,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
       }
     }, 2500);
     return () => clearInterval(id);
-  }, [pendingBases, recipe.recipeId, tr]);
+  }, [pendingBases, recipe.recipeId, t, tr]);
 
   const makeHomemade = async (lineId: string) => {
     setError(null);

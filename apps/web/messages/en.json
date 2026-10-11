@@ -393,7 +393,7 @@
     "homemade": "Homemade",
     "homemadeOpen": "See the homemade recipe",
     "homemadePending": "Writing the homemade recipe…",
-    "homemadeFailed": "The homemade recipe could not be written. Please try again in a moment.",
+    "homemadeFailed": "The homemade recipe could not be written.",
     "homemadeBusy": "The homemade recipe is already being written.",
     "costBase": "Cost for {grams} g",
     "costPerKg": "Per kilo",

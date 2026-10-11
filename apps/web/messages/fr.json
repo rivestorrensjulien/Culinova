@@ -393,7 +393,7 @@
     "homemade": "Fait maison",
     "homemadeOpen": "Voir la recette maison",
     "homemadePending": "Recette maison en cours de rédaction…",
-    "homemadeFailed": "La recette maison n'a pas pu être rédigée. Réessayez dans un instant.",
+    "homemadeFailed": "La recette maison n'a pas pu être rédigée.",
     "homemadeBusy": "La recette maison est déjà en cours de rédaction.",
     "costBase": "Coût pour {grams} g",
     "costPerKg": "Au kilo",

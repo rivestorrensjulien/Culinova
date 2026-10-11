@@ -2,7 +2,7 @@
 
 import { Badge, Button, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { confirmIngredientAction, estimatePricesAction, savePriceAction } from "@/server/actions/costing";
 import type { PriceProposal } from "@/server/costing/estimate";
@@ -144,7 +144,7 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
         <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
           {visible.map((row) => (
             <PriceRow
-              key={row.id}
+              key={`${row.id}:${proposals.has(row.id) ? "proposal" : "own"}`}
               row={row}
               proposal={proposals.get(row.id) ?? null}
               onSaved={(price, supplierName) => markSaved(row.id, price, supplierName)}
@@ -173,14 +173,12 @@ function PriceRow({
 }) {
   const t = useTranslations("Ingredients");
   const format = useFormatter();
-  const [price, setPrice] = useState(row.price ? displayPrice(row.price) : "");
+  // Un prix proposé par l'IA pré-remplit le champ (la ligne est recréée quand une proposition arrive).
+  const [price, setPrice] = useState(
+    row.price ? displayPrice(row.price) : proposal ? displayPrice(proposal.price) : "",
+  );
   const [supplier, setSupplier] = useState(row.supplierName ?? "");
   const [state, setState] = useState<"idle" | "saving" | "saved" | "invalid">("idle");
-
-  // Un prix proposé par l'IA pré-remplit le champ, sans écraser une saisie en cours.
-  useEffect(() => {
-    if (proposal) setPrice((current) => (current.trim() === "" ? displayPrice(proposal.price) : current));
-  }, [proposal]);
 
   const save = async () => {
     setState("saving");

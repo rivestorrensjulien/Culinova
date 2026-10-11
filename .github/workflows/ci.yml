@@ -63,7 +63,20 @@ jobs:
           fi
 
       - name: Lint
-        run: pnpm lint
+        # En cas d'erreur, chaque problème est signalé par une annotation lisible sur GitHub.
+        run: |
+          if ! pnpm lint; then
+            for dir in apps/web packages/*; do
+              (cd "$dir" && pnpm exec eslint . -f json 2>/dev/null) | node -e '
+                const d = require("fs").readFileSync(0, "utf8");
+                try {
+                  for (const f of JSON.parse(d)) for (const m of f.messages)
+                    if (m.severity === 2) console.log(`::error file=${f.filePath},line=${m.line}::${m.ruleId}: ${m.message}`);
+                } catch {}
+              ' || true
+            done
+            exit 1
+          fi
 
       - name: Vérification des types
         run: pnpm typecheck

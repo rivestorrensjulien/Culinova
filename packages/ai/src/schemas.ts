@@ -85,6 +85,10 @@ export type GeneratedRecipe = z.infer<typeof generatedRecipeSchema>;
 export type GeneratedIngredient = z.infer<typeof recipeIngredientSchema>;
 export type GeneratedStep = z.infer<typeof recipeStepSchema>;
 
+/** Seuils de complétude : une recette en dessous est renvoyée au modèle pour correction. */
+const MIN_STEPS = 3;
+const MIN_TEXT = 10;
+
 /** Jeton de quantité dans le texte d'une étape : {{i3}} ou {{i3:50}} (voir @culinova/core). */
 const QUANTITY_TOKEN = /\{\{\s*([A-Za-z0-9_-]+)\s*(?::\s*\d+(?:[.,]\d+)?\s*)?\}\}/g;
 
@@ -99,6 +103,14 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
   }
   if (recipe.ingredients.length === 0) problems.push("La liste des ingrédients est vide.");
   if (recipe.steps.length === 0) problems.push("La liste des étapes est vide.");
+  else if (recipe.steps.length < MIN_STEPS) {
+    problems.push(
+      `La recette doit compter au moins ${MIN_STEPS} étapes complètes (reçu ${recipe.steps.length}).`,
+    );
+  }
+  if (recipe.plating.description.trim().length < MIN_TEXT) {
+    problems.push("plating.description est vide : raconte le dressage en une ou deux phrases.");
+  }
   const refs = new Set<string>();
   for (const ingredient of recipe.ingredients) {
     if (refs.has(ingredient.ref)) problems.push(`Référence d'ingrédient en double : ${ingredient.ref}.`);
@@ -119,10 +131,22 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
         problems.push(`L'étape ${index + 1} contient un jeton de quantité inconnu : ${match[0]}.`);
       }
     }
+    if (step.action.trim().length < MIN_TEXT) {
+      problems.push(`L'étape ${index + 1} est vide ou incomplète : rédige l'action complète.`);
+    }
     if (step.durationSeconds !== null && step.durationSeconds < 0) {
       problems.push(`Durée négative à l'étape ${index + 1}.`);
     }
   });
+  // Chaque ingrédient doit servir dans au moins une étape (sinon la recette est incomplète).
+  const used = new Set(recipe.steps.flatMap((step) => step.ingredientRefs));
+  for (const match of recipe.steps.flatMap((step) => [...step.action.matchAll(QUANTITY_TOKEN)])) {
+    used.add(match[1]!);
+  }
+  const unused = recipe.ingredients.filter((i) => !used.has(i.ref)).map((i) => `${i.ref} (${i.name})`);
+  if (unused.length > 0 && recipe.steps.length > 0) {
+    problems.push(`Ingrédients jamais utilisés dans les étapes : ${unused.join(", ")}.`);
+  }
   for (const [field, value] of [
     ["prepTimeSeconds", recipe.prepTimeSeconds],
     ["cookTimeSeconds", recipe.cookTimeSeconds],

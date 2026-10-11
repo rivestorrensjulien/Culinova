@@ -46,6 +46,20 @@ describe("schéma de recette", () => {
         expect.stringContaining("prepTimeSeconds"),
       ]),
     );
+    // Recette incomplète (étapes vides, dressage vide, ingrédients inutilisés) : renvoyée au modèle.
+    const truncated = {
+      ...recipe,
+      steps: [recipe.steps[0]!, { ...recipe.steps[1]!, action: "", ingredientRefs: [] }],
+      plating: { ...recipe.plating, description: "." },
+    };
+    expect(recipeProblems(truncated, 4)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("au moins 3 étapes"),
+        expect.stringContaining("L'étape 2 est vide"),
+        expect.stringContaining("plating.description est vide"),
+        expect.stringContaining("Ingrédients jamais utilisés dans les étapes"),
+      ]),
+    );
     expect(recipeProblems({ ...recipe, ingredients: [], steps: [] }, 4)).toEqual(
       expect.arrayContaining(["La liste des ingrédients est vide.", "La liste des étapes est vide."]),
     );

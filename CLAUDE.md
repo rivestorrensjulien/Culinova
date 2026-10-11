@@ -41,6 +41,7 @@ packages/ui         Système de design (clair / sombre)
 - Dressage : contenant de service adapté au moment et varié (street food → barquette kraft ou bambou, papier, planche ; snacking & sandwicherie (un seul moment, code `sandwich`) → papier kraft, boîte carton, bocal, bol kraft, planche ; goûter → plats en bois de partage ; jamais d'assiette ronde blanche par défaut).
 - Pas à pas : le jeton suit le nom de l'ingrédient et s'affiche entre parenthèses (« Éplucher les carottes (100 g) », « le sel (5 g, 1 c. à café) ») ; nom au pluriel dès que la quantité dépasse une pièce moyenne. Les anciennes recettes « {{i3}} de … » gardent le poids sans parenthèses.
 - Contenu social (prompt `social.generate@2`) : Instagram et Pinterest validés par Julien ; script TikTok en lignes courtes (Accroche, Plan 1, Plan 2…, Final), dans l'ordre réel des étapes, sans nombre d'ingrédients ni quantités.
+- Contrôle de complétude (`recipeProblems`) : au moins 3 étapes, aucune étape vide, dressage rédigé, chaque ingrédient utilisé dans une étape ; sinon la recette est renvoyée au modèle (3 tentatives au plus).
 - Affichage du pas à pas : numéro, consigne et résultat attendu uniquement (pas d'intitulé de phase ni de pastilles). Les données (durées, minuteurs, matériel par étape) restent enregistrées pour le futur mode préparation.
 - Aucune clé en dur : tout passe par des variables d'environnement (`.env.example` documenté).
 - Calculs de coûts et quotas couverts par des tests unitaires.

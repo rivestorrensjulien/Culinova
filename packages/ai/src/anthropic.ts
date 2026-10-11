@@ -68,7 +68,7 @@ export class AnthropicAdapter implements LlmAdapter {
       });
     this.model = options.model ?? DEFAULT_RECIPE_MODEL;
     this.effort = options.effort ?? "high";
-    this.maxAttempts = options.maxAttempts ?? 2;
+    this.maxAttempts = options.maxAttempts ?? 3;
   }
 
   async generateStructured<T extends z.ZodType>(

@@ -85,11 +85,11 @@ describe("adaptateur Claude", () => {
     expect(second.messages[2].content).toContain("servings doit valoir 4");
   });
 
-  it("abandonne après deux réponses invalides en signalant le coût engagé", async () => {
-    const { adapter } = adapterWith(message("pas du json"), message("{}"));
+  it("abandonne après trois réponses invalides en signalant le coût engagé", async () => {
+    const { adapter } = adapterWith(message("pas du json"), message("{}"), message("{}"));
     const error = await adapter.generateStructured(request).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(AiGenerationError);
-    expect(error).toMatchObject({ code: "invalid_output", usage: { attempts: 2, costUsdMicros: 104_000 } });
+    expect(error).toMatchObject({ code: "invalid_output", usage: { attempts: 3, costUsdMicros: 156_000 } });
   });
 
   it("signale un refus et une réponse coupée", async () => {

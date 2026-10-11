@@ -112,7 +112,8 @@
       "security": "Sécurité",
       "admin": "Administration",
       "create": "Créer",
-      "recipes": "Mes recettes"
+      "recipes": "Mes recettes",
+      "ingredients": "Ingrédients"
     },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
@@ -314,6 +315,11 @@
     "toConfirmHint": "Ingrédient ajouté à votre base, à confirmer",
     "cost": "Coût",
     "costSoon": "Le coût sera calculé dès que les prix des ingrédients seront renseignés.",
+    "costEmpty": "Renseignez le prix de vos ingrédients pour calculer le coût de cette recette.",
+    "costTotal": "Coût matière ({count, plural, one {# personne} other {# personnes}})",
+    "costPerPortion": "Par portion",
+    "costMissing": "{count, plural, one {# ingrédient sur {total} n'a} other {# ingrédients sur {total} n'ont}} pas encore de prix :",
+    "costFillPrices": "Renseigner les prix",
     "photo": "Photo",
     "expected": "Résultat attendu",
     "timer": "Minuteur",
@@ -374,5 +380,36 @@
     "listTitle": "Mes recettes",
     "createdOn": "Créée le {date}",
     "back": "Mes recettes"
+  },
+  "Ingredients": {
+    "title": "Mes ingrédients",
+    "intro": "Indiquez le prix d'achat de vos ingrédients : le coût de toutes les recettes qui les utilisent est recalculé automatiquement. Les prix sont au kilo, au litre ou à la pièce, selon l'ingrédient.",
+    "filteredBy": "Ingrédients de la recette « {name} ».",
+    "showAll": "Voir tous mes ingrédients",
+    "backToRecipe": "Retour à la recette",
+    "empty": "Vos ingrédients apparaîtront ici dès votre première recette.",
+    "filter": "Filtrer les ingrédients",
+    "filterMissing": "Sans prix ({count})",
+    "filterAll": "Tous ({count})",
+    "search": "Rechercher un ingrédient",
+    "allPriced": "Tous les ingrédients ont un prix.",
+    "noMatch": "Aucun ingrédient ne correspond.",
+    "toConfirm": "à confirmer",
+    "toConfirmHint": "Ingrédient ajouté automatiquement lors d'une génération : vérifiez son nom puis confirmez-le.",
+    "confirm": "Confirmer",
+    "unused": "Utilisé dans aucune recette",
+    "ownPrice": "Votre prix",
+    "referencePrice": "Prix de référence",
+    "priceLabel": "Prix de {name}",
+    "supplier": "Fournisseur (facultatif)",
+    "supplierLabel": "Fournisseur de {name}",
+    "save": "Enregistrer",
+    "saved": "Enregistré : {price}",
+    "invalid": "Prix invalide : saisissez un nombre positif, par exemple 9,80.",
+    "unit": {
+      "kg": "€/kg",
+      "l": "€/l",
+      "piece": "€/pièce"
+    }
   }
 }

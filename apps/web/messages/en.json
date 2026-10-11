@@ -112,7 +112,8 @@
       "security": "Security",
       "admin": "Administration",
       "create": "Create",
-      "recipes": "My recipes"
+      "recipes": "My recipes",
+      "ingredients": "Ingredients"
     },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
@@ -314,6 +315,11 @@
     "toConfirmHint": "Ingredient added to your base, to be confirmed",
     "cost": "Cost",
     "costSoon": "The cost will be calculated once ingredient prices are filled in.",
+    "costEmpty": "Add your ingredient prices to calculate the cost of this recipe.",
+    "costTotal": "Food cost ({count, plural, one {# serving} other {# servings}})",
+    "costPerPortion": "Per serving",
+    "costMissing": "{count, plural, one {# ingredient out of {total} has} other {# ingredients out of {total} have}} no price yet:",
+    "costFillPrices": "Add prices",
     "photo": "Photo",
     "expected": "Expected result",
     "timer": "Timer",
@@ -374,5 +380,36 @@
     "listTitle": "My recipes",
     "createdOn": "Created on {date}",
     "back": "My recipes"
+  },
+  "Ingredients": {
+    "title": "My ingredients",
+    "intro": "Enter what you pay for your ingredients: the cost of every recipe that uses them is recalculated automatically. Prices are per kilo, per litre or per piece, depending on the ingredient.",
+    "filteredBy": "Ingredients of the recipe “{name}”.",
+    "showAll": "Show all my ingredients",
+    "backToRecipe": "Back to the recipe",
+    "empty": "Your ingredients will appear here after your first recipe.",
+    "filter": "Filter ingredients",
+    "filterMissing": "No price ({count})",
+    "filterAll": "All ({count})",
+    "search": "Search an ingredient",
+    "allPriced": "Every ingredient has a price.",
+    "noMatch": "No ingredient matches.",
+    "toConfirm": "to confirm",
+    "toConfirmHint": "Added automatically during a generation: check its name, then confirm it.",
+    "confirm": "Confirm",
+    "unused": "Not used in any recipe",
+    "ownPrice": "Your price",
+    "referencePrice": "Reference price",
+    "priceLabel": "Price of {name}",
+    "supplier": "Supplier (optional)",
+    "supplierLabel": "Supplier of {name}",
+    "save": "Save",
+    "saved": "Saved: {price}",
+    "invalid": "Invalid price: enter a positive number, for example 9.80.",
+    "unit": {
+      "kg": "€/kg",
+      "l": "€/l",
+      "piece": "€/piece"
+    }
   }
 }

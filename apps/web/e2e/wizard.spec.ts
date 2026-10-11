@@ -133,6 +133,21 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(page.getByRole("heading", { name: "Votre recette est enregistrée" })).toBeVisible();
   await page.getByRole("link", { name: "Ouvrir la recette" }).click();
   await expect(page.getByTestId("recipe-name")).toContainText("Saumon snacké");
+
+  // Chiffrage : sans prix, la recette invite à les renseigner ; un prix saisi met le coût à jour.
+  await expect(page.getByTestId("cost")).toContainText("Renseignez le prix de vos ingrédients");
+  await page.getByRole("link", { name: "Renseigner les prix" }).click();
+  await expect(page.getByRole("heading", { name: "Mes ingrédients" })).toBeVisible();
+  await page.getByLabel("Prix de Riz à sushi").fill("4");
+  await page
+    .getByTestId("price-row")
+    .filter({ hasText: "Riz à sushi" })
+    .getByRole("button", { name: "Enregistrer" })
+    .click();
+  await expect(page.getByTestId("price-row").filter({ hasText: "Riz à sushi" })).toContainText("Enregistré");
+  await page.getByRole("link", { name: "Retour à la recette" }).click();
+  await expect(page.getByTestId("cost-total")).toContainText("1,20");
+  await expect(page.getByTestId("cost-portion")).toContainText("0,30");
   await page.goto("/app/recettes");
   await expect(page.getByText("Saumon snacké")).toBeVisible();
 

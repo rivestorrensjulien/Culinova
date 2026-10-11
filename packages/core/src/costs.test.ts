@@ -50,6 +50,27 @@ describe("coût d'une ligne", () => {
     expect(() =>
       lineCost({ quantity: toBase(2, "piece"), price: perKg("1.10"), densityGramsPerMl: 1 }),
     ).toThrow(TypeError);
+    expect(() => lineCost({ quantity: toBase(150, "g"), price: perPiece("0.30") })).toThrow(
+      /poids à la pièce manquant/,
+    );
+  });
+
+  it("convertit grammes → pièces avec le poids moyen d'une pièce", () => {
+    // 150 g d'œufs (50 g pièce) = 3 œufs à 0,30 € = 0,90 €
+    expect(
+      toCents(lineCost({ quantity: toBase(150, "g"), price: perPiece("0.30"), pieceWeightGrams: 50 })),
+    ).toBe(90);
+    // 225 g = 4,5 œufs = 1,35 €
+    expect(
+      toCents(lineCost({ quantity: toBase(225, "g"), price: perPiece("0.30"), pieceWeightGrams: 50 })),
+    ).toBe(135);
+  });
+
+  it("convertit pièces → grammes avec le poids moyen d'une pièce", () => {
+    // 2 citrons de 120 g à 3,00 €/kg = 240 g = 0,72 €
+    expect(
+      toCents(lineCost({ quantity: toBase(2, "piece"), price: perKg("3.00"), pieceWeightGrams: 120 })),
+    ).toBe(72);
   });
 });
 

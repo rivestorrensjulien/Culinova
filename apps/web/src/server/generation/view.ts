@@ -2,6 +2,7 @@
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { computeRecipeCost, type RecipeCost } from "../costing/recipe-cost";
 import { getQuotaLimits } from "../quotas";
 
 export interface RecipeView {
@@ -73,6 +74,8 @@ export interface RecipeView {
   regenerations: { used: number; limit: number | null };
   /** Génération (régénération) en cours pour cette recette. */
   pendingGenerationId: string | null;
+  /** Coût matière calculé avec les prix actuels (pour le nombre de personnes de la version). */
+  cost: RecipeCost;
 }
 
 export async function loadRecipeView(
@@ -110,7 +113,7 @@ export async function loadRecipeView(
     version = other;
   }
 
-  const [ingredients, steps, social, [count], [usage], limits, [pending]] = await Promise.all([
+  const [ingredients, steps, social, [count], [usage], limits, [pending], cost] = await Promise.all([
     db
       .select({ line: s.recipeIngredients, status: s.ingredients.status })
       .from(s.recipeIngredients)
@@ -148,6 +151,7 @@ export async function loadRecipeView(
           sql`${s.aiGenerations.status} in ('queued', 'running')`,
         ),
       ),
+    computeRecipeCost(db, userId, version.id, version.servings),
   ]);
 
   const order = ["generic", "instagram", "tiktok", "pinterest", "linkedin"];
@@ -217,6 +221,7 @@ export async function loadRecipeView(
       .sort((a, b) => order.indexOf(a.platform) - order.indexOf(b.platform)),
     regenerations: { used: usage?.count ?? 0, limit: limits.regenerations },
     pendingGenerationId: pending?.id ?? null,
+    cost,
   };
 }
 

@@ -23,12 +23,29 @@ export interface CostLine {
   price: ReferencePrice;
   /** Densité (g/ml), nécessaire si la quantité est en volume et le prix au kilo (ou l'inverse). */
   densityGramsPerMl?: number;
+  /** Poids moyen d'une pièce (g), nécessaire si la quantité est en grammes et le prix à la pièce (ou l'inverse). */
+  pieceWeightGrams?: number;
 }
 
 /** Ramène la quantité dans la dimension du prix (conversion volume ↔ masse via la densité). */
 function quantityInPriceDimension(line: CostLine): number {
-  const { quantity, price, densityGramsPerMl } = line;
+  const { quantity, price, densityGramsPerMl, pieceWeightGrams } = line;
   if (quantity.dimension === price.dimension) return quantity.value;
+  if (pieceWeightGrams !== undefined && pieceWeightGrams > 0) {
+    // Grammes ↔ pièces (ex. 150 g d'œufs à 50 g pièce = 3 œufs) ; un volume passe d'abord par la densité.
+    if (price.dimension === "count") {
+      const grams =
+        quantity.dimension === "mass"
+          ? quantity.value
+          : densityGramsPerMl !== undefined
+            ? volumeToMass(quantity.value, densityGramsPerMl)
+            : undefined;
+      if (grams !== undefined) return grams / pieceWeightGrams;
+    }
+    if (quantity.dimension === "count" && price.dimension === "mass") {
+      return quantity.value * pieceWeightGrams;
+    }
+  }
   if (densityGramsPerMl !== undefined) {
     if (quantity.dimension === "volume" && price.dimension === "mass") {
       return volumeToMass(quantity.value, densityGramsPerMl);
@@ -39,7 +56,13 @@ function quantityInPriceDimension(line: CostLine): number {
   }
   throw new TypeError(
     `Quantité (${quantity.dimension}) et prix (${price.dimension}) incompatibles` +
-      (densityGramsPerMl === undefined ? " : densité manquante" : ""),
+      (quantity.dimension === "count" || price.dimension === "count"
+        ? pieceWeightGrams === undefined
+          ? " : poids à la pièce manquant"
+          : ""
+        : densityGramsPerMl === undefined
+          ? " : densité manquante"
+          : ""),
   );
 }
 

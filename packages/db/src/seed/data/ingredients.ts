@@ -146,7 +146,7 @@ export const INGREDIENTS: IngredientSeed[] = [
     allergens: ["milk"],
     pieceWeight: 125,
   }),
-  i("egg", "Œuf", "Egg", "eggs", "piece", "egg", { allergens: ["eggs"], pieceWeight: 55 }),
+  i("egg", "Œuf", "Egg", "eggs", "piece", "egg", { allergens: ["eggs"], pieceWeight: 50 }),
   // Viandes, volailles, poissons
   i("chicken_breast", "Blanc de poulet", "Chicken breast", "poultry", "g", "meat"),
   i("chicken_thigh", "Cuisse de poulet", "Chicken thigh", "poultry", "g", "meat"),

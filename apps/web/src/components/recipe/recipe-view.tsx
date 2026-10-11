@@ -4,6 +4,7 @@ import { SERVINGS_PRESETS, splitStepText } from "@culinova/core";
 import { Badge, Button, Card, CardBody, cx } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
+import { Link } from "@/i18n/navigation";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 import { formatDuration, ingredientAmount, platingText } from "./format";
 
@@ -13,6 +14,8 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
   const [servings, setServings] = useState(recipe.servings);
   const total = recipe.prepS + recipe.cookS + recipe.restS;
   const byId = new Map(recipe.ingredients.map((i) => [i.id, i]));
+  const euros = (cents: number) =>
+    format.number(Math.round(cents) / 100, { style: "currency", currency: "EUR" });
 
   /** Quantité d'un ingrédient (ou d'une partie) : grammes, puis mesure parlante entre parenthèses. */
   const amountText = (ingredient: RecipeData["ingredients"][number], part: number | null = null) => {
@@ -139,10 +142,44 @@ export function RecipeView({ recipe, actions }: { recipe: RecipeData; actions?: 
 
           {actions}
 
-          <Card>
-            <CardBody className="flex flex-col gap-1 text-sm">
+          <Card data-testid="cost">
+            <CardBody className="flex flex-col gap-3 text-sm">
               <h3 className="font-display text-xl">{t("cost")}</h3>
-              <p className="text-muted">{t("costSoon")}</p>
+              {recipe.cost.pricedCount === 0 ? (
+                <p className="text-muted">{t("costEmpty")}</p>
+              ) : (
+                <dl className="grid grid-cols-2 gap-3">
+                  <div>
+                    <dt className="text-muted">{t("costTotal", { count: servings })}</dt>
+                    <dd className="font-display text-2xl" data-testid="cost-total">
+                      {euros((recipe.cost.totalCents * servings) / recipe.servings)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted">{t("costPerPortion")}</dt>
+                    <dd className="font-display text-2xl" data-testid="cost-portion">
+                      {euros(recipe.cost.perPortionCents)}
+                    </dd>
+                  </div>
+                </dl>
+              )}
+              {recipe.cost.missing.length > 0 ? (
+                <div className="flex flex-col gap-1">
+                  <p className="text-muted">
+                    {t("costMissing", {
+                      count: recipe.cost.missing.length,
+                      total: recipe.cost.lineCount,
+                    })}{" "}
+                    {recipe.cost.missing.map((m) => m.label).join(", ")}.
+                  </p>
+                  <Link
+                    href={`/app/ingredients?recette=${recipe.recipeId}`}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {t("costFillPrices")}
+                  </Link>
+                </div>
+              ) : null}
             </CardBody>
           </Card>
         </div>

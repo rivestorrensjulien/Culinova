@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Card, CardBody, cx, Input, Notice, Spinner } from "@culinova/ui";
+import { Button, Card, CardBody, cx, Notice, Spinner, Textarea } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -14,9 +14,11 @@ import {
   generationFailureAction,
   generationStatusAction,
   recipeViewAction,
+  editRecipeAction,
   regenerateAction,
   restoreVersionAction,
 } from "@/server/actions/wizard";
+import type { StartResult } from "@/server/generation/start";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 
 export function RecipePageClient({ initial, targetG }: { initial: RecipeData; targetG?: number }) {
@@ -131,6 +133,20 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
     }
   };
 
+  /** Modification par instruction ou nouvelle proposition : même quota, suivi identique. */
+  const startChange = async (start: () => Promise<StartResult>) => {
+    setError(null);
+    const result = await start().catch(() => null);
+    if (result?.ok) {
+      setPending(result.generationId);
+      setInstruction("");
+    } else if (result?.reason === "quota") {
+      setError(t("errors.quotaRegen", { limit: result.limit ?? 0 }));
+    } else {
+      setError(t(`errors.${result?.reason ?? "unexpected"}` as "errors.unexpected"));
+    }
+  };
+
   const limit = recipe.regenerations.limit;
   const left = limit === null ? null : Math.max(0, limit - recipe.regenerations.used);
 
@@ -216,32 +232,27 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
                   </p>
                 ) : (
                   <>
-                    <Input
+                    <h3 className="font-display text-xl">{tr("editTitle")}</h3>
+                    <Textarea
                       value={instruction}
                       maxLength={500}
+                      rows={2}
                       onChange={(e) => setInstruction(e.target.value)}
-                      placeholder={t("regenerateHint")}
-                      aria-label={t("regenerateHint")}
+                      placeholder={tr("editHint")}
+                      aria-label={tr("editTitle")}
                     />
+                    <Button
+                      disabled={left === 0 || !instruction.trim()}
+                      onClick={() => startChange(() => editRecipeAction(recipe.recipeId, instruction))}
+                    >
+                      {tr("editApply")}
+                    </Button>
                     <Button
                       variant="secondary"
                       disabled={left === 0}
-                      onClick={async () => {
-                        setError(null);
-                        const result = await regenerateAction(recipe.recipeId, instruction || null);
-                        if (result.ok) {
-                          setPending(result.generationId);
-                          setInstruction("");
-                        } else {
-                          setError(
-                            result.reason === "quota"
-                              ? t("errors.quotaRegen", { limit: result.limit ?? 0 })
-                              : t(`errors.${result.reason}`),
-                          );
-                        }
-                      }}
+                      onClick={() => startChange(() => regenerateAction(recipe.recipeId, null))}
                     >
-                      {t("regenerate")}
+                      {tr("editOther")}
                     </Button>
                     {left !== null ? (
                       <span className="text-xs text-muted">{t("regenerateRemaining", { count: left })}</span>

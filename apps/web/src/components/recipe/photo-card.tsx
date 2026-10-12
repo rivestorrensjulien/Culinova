@@ -123,7 +123,9 @@ export function PhotoCard({
         ) : (
           <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 rounded-lg bg-soft p-6 text-center">
             <p className="font-display text-xl text-soft-foreground">{t("emptyTitle")}</p>
-            <p className="text-sm text-muted">{t("emptyHint")}</p>
+            <p className="text-sm text-muted">
+              {recipe.versionCount > 1 ? t("changedHint") : t("emptyHint")}
+            </p>
           </div>
         )}
 

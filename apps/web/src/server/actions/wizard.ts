@@ -110,6 +110,20 @@ export async function regenerateAction(recipeId: string, instruction: string | n
   return result;
 }
 
+/** Modification par instruction (« remplace le poulet par du poisson ») : nouvelle version ciblée. */
+export async function editRecipeAction(recipeId: string, instruction: string): Promise<StartResult> {
+  const session = await currentUser();
+  if (!uuid.safeParse(recipeId).success) return { ok: false, reason: "not_found" };
+  const result = await startRegeneration(getDb(), {
+    userId: session.user.id,
+    recipeId,
+    instruction: String(instruction ?? "").slice(0, 500),
+    mode: "edit",
+  });
+  if (result.ok) await dispatchGeneration(result.generationId);
+  return result;
+}
+
 export async function generationStatusAction(
   generationId: string,
 ): Promise<"queued" | "running" | "succeeded" | "failed" | null> {

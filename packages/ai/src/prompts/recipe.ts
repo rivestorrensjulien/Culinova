@@ -2,10 +2,12 @@
  * Prompts versionnés de génération de recette. Changer le texte d'un prompt =
  * changer sa version : chaque génération enregistre la version utilisée.
  */
+import type { GeneratedRecipe } from "../schemas";
 import { isFusion, type RecipeRequest } from "./request";
 
 export const RECIPE_PROMPT_VERSION = "recipe.generate@10";
 export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@10";
+export const RECIPE_EDIT_PROMPT_VERSION = "recipe.edit@1";
 
 const LANGUAGE_NAMES = { fr: "français", en: "anglais (English)" } as const;
 
@@ -99,5 +101,36 @@ export function buildRegenerationPrompt(
   return {
     system: RECIPE_SYSTEM_PROMPT,
     user: `Voici les paramètres de création.\n\n${describeRequest(request)}\n\nVersion précédente : « ${previous.name} » — ${previous.description}\n\n${guidance}`,
+  };
+}
+
+/**
+ * Modification par instruction (« remplace le poulet par du poisson ») : la recette
+ * actuelle est reprise telle quelle, seul ce que la consigne implique change.
+ */
+export function buildEditPrompt(
+  request: RecipeRequest,
+  current: GeneratedRecipe,
+  instruction: string,
+): { system: string; user: string } {
+  return {
+    system: RECIPE_SYSTEM_PROMPT,
+    user: `Voici les paramètres de création de la recette.
+
+${describeRequest(request)}
+
+Recette actuelle (JSON) :
+${JSON.stringify(current)}
+
+Modification demandée par la personne :
+"""
+${instruction.trim()}
+"""
+
+Applique cette modification à la recette actuelle et renvoie la recette complète :
+- Ne change que ce que la consigne demande et ce qui en découle (ingrédients, quantités, étapes, cuissons et temps, dressage, matériel, allergènes, régimes, astuces) ; tout le reste reste identique, mot pour mot quand c'est possible.
+- Garde le même nombre de personnes (servings = ${current.servings}).
+- Garde le nom et la description, sauf si la modification change la nature du plat : adapte-les alors.
+- Toutes les règles de rédaction s'appliquent (pesée en grammes, jetons de quantité dans les étapes, dressage raconté, matériel cohérent, storeBought).`,
   };
 }

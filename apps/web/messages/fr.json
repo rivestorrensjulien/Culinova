@@ -400,7 +400,11 @@
     "upstreamTitle": "À préparer en amont",
     "upstreamStart": "À commencer environ {duration} avant le service.",
     "upstreamDetail": "Recette maison : {base}, puis cette recette : {recipe}.",
-    "backToBases": "Mes bases"
+    "backToBases": "Mes bases",
+    "editTitle": "Modifier la recette",
+    "editHint": "Ex. « remplace le poulet par du poisson », « version sans gluten », « sans four »",
+    "editApply": "Appliquer la modification",
+    "editOther": "Proposer une autre recette"
   },
   "Ingredients": {
     "title": "Mes ingrédients",
@@ -602,7 +606,8 @@
       "provider_error": "Le service d'images est momentanément indisponible. Votre crédit n'a pas été décompté : réessayez.",
       "invalid_output": "Aucune image n'a été renvoyée. Votre crédit n'a pas été décompté : réessayez.",
       "unexpected": "Une erreur est survenue. Votre crédit n'a pas été décompté : réessayez."
-    }
+    },
+    "changedHint": "La recette a changé : créez une photo pour cette version, d'après son nouveau dressage."
   },
   "Library": {
     "searchLabel": "Rechercher une recette",

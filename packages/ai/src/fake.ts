@@ -357,6 +357,10 @@ const defaultResponder: Responder = (request) => {
   if (request.promptId.startsWith("base.")) return fakeBase(request.user);
   if (request.promptId.startsWith("social.")) return fakeSocial(request.user);
   if (request.promptId.startsWith("prices.")) return fakePriceEstimates(request.user);
+  if (request.promptId.startsWith("recipe.edit")) {
+    const recipe = fakeRecipe(request.user, 0);
+    return { ...recipe, name: `${recipe.name} (version modifiée)` };
+  }
   return fakeRecipe(request.user, request.promptId.includes("regenerate") ? 1 : 0);
 };
 

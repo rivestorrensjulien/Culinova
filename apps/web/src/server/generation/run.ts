@@ -5,12 +5,14 @@
  */
 import {
   AiGenerationError,
+  buildEditPrompt,
   buildRecipePrompt,
   buildRegenerationPrompt,
   buildSocialPrompt,
   type GeneratedRecipe,
   generatedRecipeSchema,
   type LlmAdapter,
+  RECIPE_EDIT_PROMPT_VERSION,
   RECIPE_PROMPT_VERSION,
   RECIPE_REGENERATE_PROMPT_VERSION,
   type RecipeRequest,
@@ -25,6 +27,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { recordAiSpend, releaseQuota } from "../quotas";
 import { runImageGeneration } from "../images/generate";
 import { runBaseGeneration } from "./base";
+import { loadGeneratedRecipe } from "./current-recipe";
 import { saveRecipeVersion, saveSocialContent } from "./persist";
 
 export type GenerationOutcome = "succeeded" | "failed" | "skipped";
@@ -48,7 +51,7 @@ export async function runGeneration(
     .returning();
   if (generation?.kind === "base") return runBaseGeneration(db, ai, generation);
   if (generation?.kind === "image") return runImageGeneration(db, ai, generation);
-  if (!generation || (generation.kind !== "recipe" && generation.kind !== "regeneration")) return "skipped";
+  if (!generation || !["recipe", "regeneration", "edit"].includes(generation.kind)) return "skipped";
 
   const [params] = generation.generationParamsId
     ? await db
@@ -57,13 +60,25 @@ export async function runGeneration(
         .where(eq(s.generationParams.id, generation.generationParamsId))
     : [];
   const request = params?.snapshot as unknown as RecipeRequest | undefined;
-  const isRegeneration = generation.kind === "regeneration";
+  // Une modification par instruction est une régénération ciblée : même quota, nouvelle version.
+  const isEdit = generation.kind === "edit";
+  const isRegeneration = generation.kind === "regeneration" || isEdit;
 
   try {
     if (!request || !generation.userId) throw new Error("Paramètres de génération introuvables");
 
     let prompt = buildRecipePrompt(request);
-    if (isRegeneration) {
+    let expectedServings = request.servings;
+    if (isEdit) {
+      const [recipeRow] = await db
+        .select({ versionId: s.recipes.currentVersionId })
+        .from(s.recipes)
+        .where(eq(s.recipes.id, generation.recipeId!));
+      const current = recipeRow?.versionId ? await loadGeneratedRecipe(db, recipeRow.versionId) : null;
+      if (!current) throw new Error("Recette actuelle introuvable");
+      expectedServings = current.servings;
+      prompt = buildEditPrompt(request, current, generation.instruction ?? "");
+    } else if (isRegeneration) {
       const [current] = await db
         .select({ name: s.recipeVersions.name, description: s.recipeVersions.description })
         .from(s.recipes)
@@ -76,12 +91,16 @@ export async function runGeneration(
       );
     }
 
-    const promptVersion = isRegeneration ? RECIPE_REGENERATE_PROMPT_VERSION : RECIPE_PROMPT_VERSION;
+    const promptVersion = isEdit
+      ? RECIPE_EDIT_PROMPT_VERSION
+      : isRegeneration
+        ? RECIPE_REGENERATE_PROMPT_VERSION
+        : RECIPE_PROMPT_VERSION;
     const result = await ai.generateStructured({
       promptId: promptVersion,
       ...prompt,
       schema: generatedRecipeSchema,
-      validate: (recipe) => recipeProblems(recipe, request.servings),
+      validate: (recipe) => recipeProblems(recipe, expectedServings),
       // Réflexion comprise : une recette riche (15 ingrédients, 15 étapes) dépasse vite 16 000 jetons.
       maxOutputTokens: 32_000,
     });

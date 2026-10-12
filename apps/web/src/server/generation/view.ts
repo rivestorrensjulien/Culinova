@@ -202,7 +202,7 @@ export async function loadRecipeView(
       .where(
         and(
           eq(s.aiGenerations.recipeId, recipe.id),
-          eq(s.aiGenerations.kind, "regeneration"),
+          inArray(s.aiGenerations.kind, ["regeneration", "edit"]),
           sql`${s.aiGenerations.status} in ('queued', 'running')`,
         ),
       ),

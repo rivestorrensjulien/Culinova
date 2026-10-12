@@ -201,9 +201,18 @@ export async function startRecipeGeneration(
 /** Régénère le texte d'une recette (nouvelle version), dans la limite de 2 par recette. */
 export async function startRegeneration(
   db: Database,
-  input: { userId: string; recipeId: string; instruction?: string | null; now?: Date },
+  input: {
+    userId: string;
+    recipeId: string;
+    instruction?: string | null;
+    now?: Date;
+    /** « edit » : modification ciblée de la recette actuelle (consigne obligatoire). */
+    mode?: "regeneration" | "edit";
+  },
 ): Promise<StartResult> {
   const now = input.now ?? new Date();
+  const mode = input.mode ?? "regeneration";
+  if (mode === "edit" && !input.instruction?.trim()) return { ok: false, reason: "incomplete" };
   const [recipe] = await db
     .select({ id: s.recipes.id, versionId: s.recipes.currentVersionId })
     .from(s.recipes)
@@ -236,7 +245,7 @@ export async function startRegeneration(
     .insert(s.aiGenerations)
     .values({
       userId: input.userId,
-      kind: "regeneration",
+      kind: mode,
       status: "queued",
       inputRef: `recipe:${recipe.id}`,
       recipeId: recipe.id,

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { fakeRecipe, fakeSocial } from "../fake";
-import { buildRecipePrompt, buildRegenerationPrompt, RECIPE_PROMPT_VERSION } from "./recipe";
+import {
+  buildEditPrompt,
+  buildRecipePrompt,
+  buildRegenerationPrompt,
+  RECIPE_EDIT_PROMPT_VERSION,
+  RECIPE_PROMPT_VERSION,
+} from "./recipe";
 import { isFusion, type RecipeRequest } from "./request";
 import { buildSocialPrompt, socialProblems } from "./social";
 
@@ -91,6 +97,16 @@ describe("prompt de recette", () => {
     expect(buildRegenerationPrompt(request, previous, "Remplace le saumon par du tofu").user).toContain(
       "Remplace le saumon par du tofu",
     );
+  });
+
+  it("modifie la recette actuelle selon la consigne, sans repartir de zéro", () => {
+    const current = fakeRecipe("Nombre de personnes : 6");
+    const { user } = buildEditPrompt(request, current, "  Remplace le saumon par du tofu ");
+    expect(RECIPE_EDIT_PROMPT_VERSION).toBe("recipe.edit@1");
+    expect(user).toContain('"""\nRemplace le saumon par du tofu\n"""');
+    expect(user).toContain(JSON.stringify(current));
+    expect(user).toContain("servings = 6");
+    expect(user).toContain("Ne change que ce que la consigne demande");
   });
 
   it("construit le prompt du contenu social à partir de la recette", () => {

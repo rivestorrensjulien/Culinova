@@ -233,6 +233,13 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await palette.getByRole("textbox").press("Enter");
   await expect(page.getByTestId("recipe-name")).toContainText("Saumon snacké");
 
+  // Modification par instruction : nouvelle version ciblée (2e et dernière régénération).
+  await page.getByRole("textbox", { name: "Modifier la recette" }).fill("Remplace le saumon par du tofu");
+  await page.getByRole("button", { name: "Appliquer la modification" }).click();
+  await expect(page.getByTestId("recipe-name")).toContainText("(version modifiée)", { timeout: 20_000 });
+  await expect(page.getByText("Plus de régénération possible")).toBeVisible();
+  await expect(page.getByTestId("photo")).toContainText("La recette a changé");
+
   // 6e recette du mois : refusée avec un message clair.
   await page.goto("/app/creer");
   await page.getByRole("button", { name: "Nouvelle recette" }).first().click();

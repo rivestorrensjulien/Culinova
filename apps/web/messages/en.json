@@ -400,7 +400,11 @@
     "upstreamTitle": "Prepare ahead",
     "upstreamStart": "Start about {duration} before serving.",
     "upstreamDetail": "Homemade recipe: {base}, then this recipe: {recipe}.",
-    "backToBases": "My bases"
+    "backToBases": "My bases",
+    "editTitle": "Change the recipe",
+    "editHint": "E.g. “swap the chicken for fish”, “gluten-free version”, “no oven”",
+    "editApply": "Apply the change",
+    "editOther": "Suggest another recipe"
   },
   "Ingredients": {
     "title": "My ingredients",
@@ -602,7 +606,8 @@
       "provider_error": "The image service is temporarily unavailable. Your credit was not used: try again.",
       "invalid_output": "No image was returned. Your credit was not used: try again.",
       "unexpected": "Something went wrong. Your credit was not used: try again."
-    }
+    },
+    "changedHint": "The recipe has changed: create a photo for this version, based on its new plating."
   },
   "Library": {
     "searchLabel": "Search recipes",

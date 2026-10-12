@@ -923,5 +923,26 @@
     "unitPrice": "{price} l’unité",
     "invalidPrice": "Choisissez un ingrédient et un prix valide.",
     "date": "Facture du {date}"
+  },
+  "Publishing": {
+    "title": "Publication sur les réseaux",
+    "intro": "L’agent de publication récupère les recettes « à publier » (textes Instagram et TikTok, photo 9:16) puis indique quand c’est publié.",
+    "agentOff": "Agent non configuré : ajoutez la variable AGENT_API_KEY dans Vercel pour ouvrir sa porte d’accès.",
+    "platforms": {
+      "tiktok": "TikTok",
+      "instagram": "Instagram"
+    },
+    "none": "Non prévu",
+    "queued": "À publier",
+    "published": "Publié le {date}",
+    "failed": "Échec : {note}",
+    "failedNoNote": "Échec",
+    "queue": "Marquer « à publier »",
+    "cancel": "Retirer de la file",
+    "markPublished": "Marquer publié",
+    "link": "Voir la publication",
+    "postUrl": "Lien de la publication (facultatif)",
+    "needPhoto": "Générez d’abord la photo : l’agent publie l’image 9:16.",
+    "error": "L’opération a échoué."
   }
 }

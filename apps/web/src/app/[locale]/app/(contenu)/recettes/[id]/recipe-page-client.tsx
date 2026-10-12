@@ -10,6 +10,7 @@ import { TranslationBar } from "@/components/recipe/translation-bar";
 import { NutritionCard } from "@/components/recipe/nutrition-card";
 import { PhotoCard } from "@/components/recipe/photo-card";
 import { PricingCard } from "@/components/recipe/pricing-card";
+import { PublishingCard } from "@/components/recipe/publishing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { baseGenerationStatusAction, makeHomemadeAction } from "@/server/actions/bases";
 import { estimateRecipePricesAction } from "@/server/actions/costing";
@@ -345,6 +346,9 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         />
       )}
       {viewingOld ? null : <NutritionCard recipe={recipe} onChanged={reload} />}
+      {viewingOld || !recipe.publishing ? null : (
+        <PublishingCard key={`publishing-${recipe.versionId}`} recipe={recipe} />
+      )}
       {isBase ? null : (
         <section className="flex flex-col gap-4">
           <h2 className="font-display text-3xl">{t("questions.social")}</h2>

@@ -327,3 +327,27 @@ export const recipeViews = pgTable(
   },
   (t) => [index("recipe_views_recipe_idx").on(t.recipeId, t.at)],
 );
+
+export const PUBLICATION_PLATFORMS = ["tiktok", "instagram"] as const;
+export type PublicationPlatform = (typeof PUBLICATION_PLATFORMS)[number];
+
+/**
+ * Publication d'une recette de l'administrateur sur un réseau social, par l'agent de
+ * publication : « à publier » (queued), puis publiée (avec la date et le lien) ou en échec.
+ */
+export const recipePublications = pgTable(
+  "recipe_publications",
+  {
+    id: id(),
+    recipeId: uuid("recipe_id")
+      .notNull()
+      .references(() => recipes.id, { onDelete: "cascade" }),
+    platform: text("platform").$type<PublicationPlatform>().notNull(),
+    status: text("status").$type<"queued" | "published" | "failed">().notNull().default("queued"),
+    publishedAt: tz("published_at"),
+    postUrl: text("post_url"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("recipe_publications_unique").on(t.recipeId, t.platform)],
+);

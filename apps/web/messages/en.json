@@ -923,5 +923,26 @@
     "unitPrice": "{price} each",
     "invalidPrice": "Choose an ingredient and a valid price.",
     "date": "Invoice of {date}"
+  },
+  "Publishing": {
+    "title": "Social media publishing",
+    "intro": "The publishing agent fetches recipes “to publish” (Instagram and TikTok texts, 9:16 photo) and reports when they are live.",
+    "agentOff": "Agent not configured: add the AGENT_API_KEY variable in Vercel to open its gate.",
+    "platforms": {
+      "tiktok": "TikTok",
+      "instagram": "Instagram"
+    },
+    "none": "Not planned",
+    "queued": "To publish",
+    "published": "Published on {date}",
+    "failed": "Failed: {note}",
+    "failedNoNote": "Failed",
+    "queue": "Mark “to publish”",
+    "cancel": "Remove from queue",
+    "markPublished": "Mark published",
+    "link": "View post",
+    "postUrl": "Post link (optional)",
+    "needPhoto": "Generate the photo first: the agent publishes the 9:16 image.",
+    "error": "The operation failed."
   }
 }

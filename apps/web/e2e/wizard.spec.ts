@@ -67,7 +67,7 @@ async function fillWizardUpToGeneration(page: Page) {
 
 test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchissement, quota", async ({ page }) => {
   // Parcours complet (génération, prix, bases maison, nutrition) : plus long que la moyenne.
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
   await signIn(page, COOK_EMAIL);
   await page.goto("/app/creer");
   await fillWizardUpToGeneration(page);
@@ -292,6 +292,33 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await page.goto("/app/stocks");
   await expect(page.getByTestId("stock-item")).toHaveCount(1);
   await expect(page.getByTestId("stock-item")).toContainText(/riz à sushi/i);
+  await page.goto(recipeUrl);
+
+  // Import d'une recette collée : réécrite au format Culinova.
+  await page.goto("/app/importer");
+  await page
+    .getByLabel("Texte de la recette")
+    .fill(
+      "Gâteau au yaourt\nPour 6 personnes\n1 pot de yaourt, 2 pots de sucre, 3 pots de farine, 3 œufs.\nCuire 35 min à 180 °C.",
+    );
+  await page.getByRole("button", { name: "Importer la recette" }).click();
+  await expect(page.getByTestId("recipe-name")).toContainText("(importée)", { timeout: 30_000 });
+
+  // Facture fournisseur : lue par l'IA, prix proposés puis validés.
+  await page.goto("/app/ingredients/factures");
+  await page.getByLabel("Photo ou PDF de la facture").setInputFiles({
+    name: "facture.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
+  await page.getByRole("button", { name: "Lire la facture" }).click();
+  await expect(page.getByTestId("invoice-supplier")).toHaveText("Fournisseur test", { timeout: 30_000 });
+  await expect(page.getByTestId("invoice-line")).toHaveCount(4);
+  await page.getByRole("button", { name: "Valider toutes les lignes rapprochées" }).click();
+  await expect(page.getByTestId("invoice-line").filter({ hasText: "Validé" })).toHaveCount(3);
   await page.goto(recipeUrl);
 
   // Modification par instruction : nouvelle version ciblée (2e et dernière régénération).

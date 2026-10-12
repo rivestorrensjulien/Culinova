@@ -34,7 +34,7 @@ async function loadProfile(db: Database, userId: string) {
   };
 }
 
-async function budgetAllows(db: Database): Promise<boolean> {
+export async function budgetAllows(db: Database): Promise<boolean> {
   const [cap, spent] = await Promise.all([getAiBudgetCap(db), getAiSpend(db)]);
   return isWithinBudget(spent, cap, RECIPE_GENERATION_ESTIMATE_USD_MICROS);
 }
@@ -95,7 +95,7 @@ async function resolveIds(db: Database, state: WizardState) {
   };
 }
 
-function quotaRefusal(metric: QuotaMetric, limit: number | null, now: Date): StartRefusal {
+export function quotaRefusal(metric: QuotaMetric, limit: number | null, now: Date): StartRefusal {
   return {
     ok: false,
     reason: "quota",

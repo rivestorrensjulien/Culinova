@@ -122,7 +122,8 @@
       "account": "Mon compte",
       "menus": "Menus",
       "shopping": "Courses",
-      "stock": "Stocks"
+      "stock": "Stocks",
+      "import": "Importer"
     },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
@@ -870,5 +871,57 @@
     "bestBeforeShort": "DLC",
     "lowCount": "{count, plural, one {# article sous le seuil} other {# articles sous le seuil}}",
     "soonCount": "{count, plural, one {# article à consommer vite} other {# articles à consommer vite}}"
+  },
+  "Import": {
+    "title": "Importer une recette",
+    "intro": "Collez le texte d’une recette ou l’adresse d’une page web : l’IA la réécrit au format Culinova (pesée en grammes, pas à pas, dressage), sans en changer le fond. Un import compte comme une recette du mois.",
+    "url": "Adresse de la page (facultatif)",
+    "urlPlaceholder": "https://…",
+    "text": "Texte de la recette",
+    "textHint": "Titre, ingrédients et étapes, tels que vous les avez. Les notes et commentaires sont ignorés.",
+    "submit": "Importer la recette",
+    "pending": "Import en cours : l’IA réécrit la recette (une minute environ)…",
+    "errors": {
+      "empty": "Collez une recette (au moins quelques lignes) ou indiquez l’adresse d’une page.",
+      "url": "Cette adresse n’est pas acceptée : utilisez l’adresse publique d’une page (https://…).",
+      "fetch": "La page n’a pas pu être lue. Copiez-collez plutôt le texte de la recette.",
+      "budget": "Le budget d’IA du mois est atteint : réessayez le mois prochain.",
+      "quota": "Vous avez utilisé vos {limit} recettes du mois.",
+      "failed": "L’import n’a pas abouti. Réessayez, ou simplifiez le texte collé."
+    }
+  },
+  "Invoices": {
+    "title": "Factures fournisseurs",
+    "link": "Scanner une facture",
+    "intro": "Prenez en photo (ou envoyez le PDF d’)une facture : l’IA lit chaque ligne, la rapproche de vos ingrédients et propose le prix au kilo, au litre ou à la pièce. Vous validez ligne par ligne.",
+    "file": "Photo ou PDF de la facture",
+    "fileHint": "JPEG, PNG, WebP ou PDF, 4 Mo au plus. Les photos sont réduites avant l’envoi.",
+    "scan": "Lire la facture",
+    "scanning": "Lecture de la facture… (jusqu’à une minute)",
+    "errors": {
+      "type": "Format non accepté : envoyez une photo (JPEG, PNG, WebP) ou un PDF.",
+      "size": "Fichier trop lourd (4 Mo au plus).",
+      "budget": "Le budget d’IA du mois est atteint.",
+      "failed": "La facture n’a pas pu être lue. Essayez une photo plus nette, bien cadrée.",
+      "auth": "Votre session a expiré : reconnectez-vous."
+    },
+    "empty": "Aucune facture lue pour l’instant.",
+    "back": "Toutes les factures",
+    "unknownSupplier": "Fournisseur non identifié",
+    "lines": "{count, plural, one {# ligne} other {# lignes}}",
+    "pending": "{count, plural, =0 {tout est traité} one {# à valider} other {# à valider}}",
+    "label": "Libellé",
+    "quantity": "Quantité",
+    "ingredient": "Ingrédient",
+    "price": "Prix",
+    "noMatch": "— Aucun —",
+    "accept": "Valider",
+    "reject": "Ignorer",
+    "accepted": "Validé",
+    "rejected": "Ignoré",
+    "acceptAll": "Valider toutes les lignes rapprochées",
+    "unitPrice": "{price} l’unité",
+    "invalidPrice": "Choisissez un ingrédient et un prix valide.",
+    "date": "Facture du {date}"
   }
 }

@@ -6,6 +6,7 @@
 import {
   AiGenerationError,
   buildEditPrompt,
+  buildImportPrompt,
   buildRecipePrompt,
   buildRegenerationPrompt,
   buildSocialPrompt,
@@ -13,6 +14,7 @@ import {
   generatedRecipeSchema,
   type LlmAdapter,
   RECIPE_EDIT_PROMPT_VERSION,
+  RECIPE_IMPORT_PROMPT_VERSION,
   RECIPE_PROMPT_VERSION,
   RECIPE_REGENERATE_PROMPT_VERSION,
   type RecipeRequest,
@@ -58,6 +60,7 @@ export async function runGeneration(
     .returning();
   if (generation?.kind === "base") return runBaseGeneration(db, ai, generation, options);
   if (generation?.kind === "image") return runImageGeneration(db, ai, generation);
+  if (generation?.kind === "import") return runImportGeneration(db, ai, generation, options);
   if (!generation || !["recipe", "regeneration", "edit"].includes(generation.kind)) return "skipped";
 
   const [params] = generation.generationParamsId
@@ -265,5 +268,89 @@ async function generateSocial(
       })
       .where(eq(s.aiGenerations.id, row!.id));
     if (usage?.costUsdMicros) await recordAiSpend(db, usage.costUsdMicros);
+  }
+}
+
+/**
+ * Import d'une recette existante (texte collé ou page web, conservé dans `instruction`) :
+ * réécrite au format Culinova, enregistrée comme nouvelle recette. Compte comme une recette du mois.
+ */
+async function runImportGeneration(
+  db: Database,
+  ai: LlmAdapter,
+  generation: typeof s.aiGenerations.$inferSelect,
+  options: RunOptions,
+): Promise<GenerationOutcome> {
+  const language = generation.inputRef === "import:en" ? "en" : "fr";
+  try {
+    if (!generation.userId || !generation.instruction) throw new Error("Import sans texte source");
+    const result = await ai.generateStructured({
+      promptId: RECIPE_IMPORT_PROMPT_VERSION,
+      ...buildImportPrompt(generation.instruction, language),
+      schema: generatedRecipeSchema,
+      validate: (recipe) => recipeProblems(recipe, recipe.servings),
+      maxOutputTokens: 32_000,
+    });
+    const recipe = result.data;
+    const saved = await db.transaction(async (tx) => {
+      const version = await saveRecipeVersion(tx, {
+        ownerId: generation.userId!,
+        recipeId: null,
+        recipe,
+        languageCode: language,
+        momentId: null,
+        generationParamsId: null,
+        changeNote: "Importée",
+        source: "imported",
+      });
+      await tx
+        .update(s.aiGenerations)
+        .set({
+          recipeId: version.recipeId,
+          output: { versionId: version.versionId },
+          provider: result.usage.provider,
+          model: result.usage.model,
+          promptVersion: RECIPE_IMPORT_PROMPT_VERSION,
+          tokensIn: result.usage.inputTokens,
+          tokensOut: result.usage.outputTokens,
+          costUsdMicros: result.usage.costUsdMicros,
+          attempts: result.usage.attempts,
+        })
+        .where(eq(s.aiGenerations.id, generation.id));
+      return version;
+    });
+    await recordAiSpend(db, result.usage.costUsdMicros);
+    await Promise.all([
+      generateSocial(db, ai, { userId: generation.userId, versionId: saved.versionId, recipe, language }),
+      options.estimatePrices ? autoEstimate(db, ai, generation.userId, saved.versionId, language) : null,
+    ]);
+    await db
+      .update(s.aiGenerations)
+      .set({ status: "succeeded", finishedAt: new Date() })
+      .where(eq(s.aiGenerations.id, generation.id));
+    return "succeeded";
+  } catch (error) {
+    const usage = error instanceof AiGenerationError ? error.usage : undefined;
+    console.error(
+      `Import ${generation.id} en échec : ${error instanceof Error ? error.message : String(error)}`,
+    );
+    await db
+      .update(s.aiGenerations)
+      .set({
+        status: "failed",
+        error: `${userFacingError(error)} : ${error instanceof Error ? error.message : String(error)}`.slice(
+          0,
+          2000,
+        ),
+        costUsdMicros: usage?.costUsdMicros ?? 0,
+        attempts: usage?.attempts ?? 0,
+        finishedAt: new Date(),
+      })
+      .where(eq(s.aiGenerations.id, generation.id));
+    if (usage?.costUsdMicros) await recordAiSpend(db, usage.costUsdMicros);
+    if (generation.userId) {
+      await releaseQuota(db, { userId: generation.userId, metric: "recipes", now: generation.createdAt });
+    }
+    return "failed";
   }
 }

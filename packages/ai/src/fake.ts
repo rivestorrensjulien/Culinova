@@ -374,7 +374,39 @@ export function fakeTranslation(user: string) {
   };
 }
 
+/** Lecture de facture d'exemple : une ligne par ingrédient proposé (3 au plus), à 5 € l'unité. */
+export function fakeInvoice(user: string) {
+  const candidates = [...user.matchAll(/^- (\S+) · (.+) · (€\/kg|€\/l|€\/pièce)$/gm)].slice(0, 3);
+  return {
+    supplier: "Fournisseur test",
+    invoiceDate: "2026-10-01",
+    lines: [
+      ...candidates.map((m) => ({
+        label: `${m[2]!.toUpperCase()} 1 KG`,
+        quantity: 1,
+        unit: m[3] === "€/pièce" ? ("piece" as const) : m[3] === "€/l" ? ("l" as const) : ("kg" as const),
+        totalPrice: 5,
+        ingredientRef: m[1]!,
+        pricePerUnit: 5,
+      })),
+      {
+        label: "FRAIS DE LIVRAISON",
+        quantity: null,
+        unit: null,
+        totalPrice: 12,
+        ingredientRef: null,
+        pricePerUnit: null,
+      },
+    ],
+  };
+}
+
 const defaultResponder: Responder = (request) => {
+  if (request.promptId.startsWith("invoice.")) return fakeInvoice(request.user);
+  if (request.promptId.startsWith("recipe.import")) {
+    const recipe = fakeRecipe(request.user, 0);
+    return { ...recipe, name: `${recipe.name} (importée)` };
+  }
   if (request.promptId.startsWith("recipe.translate")) return fakeTranslation(request.user);
   if (request.promptId.startsWith("image.")) return fakeImagePrompt(request.user);
   if (request.promptId.startsWith("nutrition.")) return fakeNutritionMatches(request.user);

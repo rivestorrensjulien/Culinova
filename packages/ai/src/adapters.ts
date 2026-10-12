@@ -17,11 +17,21 @@ export interface AiUsage {
   attempts: number;
 }
 
+export type AttachmentMediaType = "image/jpeg" | "image/png" | "image/webp" | "application/pdf";
+
+export interface Attachment {
+  mediaType: AttachmentMediaType;
+  /** Contenu encodé en base64. */
+  data: string;
+}
+
 export interface StructuredGenerationRequest<T extends z.ZodType> {
   /** Identifiant du prompt versionné (ex. "recipe.generate@10"). */
   promptId: string;
   system: string;
   user: string;
+  /** Pièces jointes lues par le modèle avant le texte (photo ou PDF d'une facture…). */
+  attachments?: ReadonlyArray<Attachment>;
   /** Schéma Zod que la réponse JSON doit respecter. */
   schema: T;
   /** Règles métier supplémentaires : renvoie les problèmes à corriger (liste vide si valide). */

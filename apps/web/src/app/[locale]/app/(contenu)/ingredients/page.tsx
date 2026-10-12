@@ -1,3 +1,4 @@
+import { buttonClasses } from "@culinova/ui";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { z } from "zod";
 import { Link } from "@/i18n/navigation";
@@ -29,7 +30,12 @@ export default async function IngredientsPage({
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
-        <h1 className="font-display text-4xl">{t("title")}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-4xl">{t("title")}</h1>
+          <Link href="/app/ingredients/factures" className={buttonClasses("secondary")}>
+            {(await getTranslations("Invoices"))("link")}
+          </Link>
+        </div>
         <p className="max-w-3xl text-muted">{t("intro")}</p>
         {recipeId ? (
           <p className="text-sm">

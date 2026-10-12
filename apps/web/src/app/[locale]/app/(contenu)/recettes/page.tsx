@@ -19,9 +19,14 @@ export default async function RecipesPage({ params }: { params: Promise<{ locale
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-4xl">{t("listTitle")}</h1>
-        <Link href="/app/creer" className={buttonClasses("primary")}>
-          {app("createCta")}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/app/importer" className={buttonClasses("secondary")}>
+            {app("nav.import")}
+          </Link>
+          <Link href="/app/creer" className={buttonClasses("primary")}>
+            {app("createCta")}
+          </Link>
+        </div>
       </div>
       {cards.length === 0 ? <p className="text-muted">{t("empty")}</p> : <Library cards={cards} />}
     </div>

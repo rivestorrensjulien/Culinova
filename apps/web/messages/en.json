@@ -122,7 +122,8 @@
       "account": "My account",
       "menus": "Menus",
       "shopping": "Shopping",
-      "stock": "Stock"
+      "stock": "Stock",
+      "import": "Import"
     },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
@@ -870,5 +871,57 @@
     "bestBeforeShort": "Use by",
     "lowCount": "{count, plural, one {# item below threshold} other {# items below threshold}}",
     "soonCount": "{count, plural, one {# item to use soon} other {# items to use soon}}"
+  },
+  "Import": {
+    "title": "Import a recipe",
+    "intro": "Paste a recipe’s text or a web page address: AI rewrites it in the Culinova format (weighed in grams, step by step, plating) without changing its substance. An import counts as one recipe of the month.",
+    "url": "Page address (optional)",
+    "urlPlaceholder": "https://…",
+    "text": "Recipe text",
+    "textHint": "Title, ingredients and steps, as you have them. Notes and comments are ignored.",
+    "submit": "Import the recipe",
+    "pending": "Importing: AI is rewriting the recipe (about a minute)…",
+    "errors": {
+      "empty": "Paste a recipe (at least a few lines) or enter a page address.",
+      "url": "This address is not accepted: use the public address of a page (https://…).",
+      "fetch": "The page could not be read. Copy and paste the recipe text instead.",
+      "budget": "The monthly AI budget has been reached: try again next month.",
+      "quota": "You have used your {limit} recipes this month.",
+      "failed": "The import failed. Try again, or simplify the pasted text."
+    }
+  },
+  "Invoices": {
+    "title": "Supplier invoices",
+    "link": "Scan an invoice",
+    "intro": "Take a photo of an invoice (or send the PDF): AI reads each line, matches it to your ingredients and suggests the price per kilo, litre or piece. You confirm line by line.",
+    "file": "Invoice photo or PDF",
+    "fileHint": "JPEG, PNG, WebP or PDF, 4 MB max. Photos are downsized before upload.",
+    "scan": "Read the invoice",
+    "scanning": "Reading the invoice… (up to a minute)",
+    "errors": {
+      "type": "Format not accepted: send a photo (JPEG, PNG, WebP) or a PDF.",
+      "size": "File too large (4 MB max).",
+      "budget": "The monthly AI budget has been reached.",
+      "failed": "The invoice could not be read. Try a sharper, well-framed photo.",
+      "auth": "Your session has expired: sign in again."
+    },
+    "empty": "No invoice read yet.",
+    "back": "All invoices",
+    "unknownSupplier": "Unknown supplier",
+    "lines": "{count, plural, one {# line} other {# lines}}",
+    "pending": "{count, plural, =0 {all done} one {# to confirm} other {# to confirm}}",
+    "label": "Label",
+    "quantity": "Quantity",
+    "ingredient": "Ingredient",
+    "price": "Price",
+    "noMatch": "— None —",
+    "accept": "Confirm",
+    "reject": "Ignore",
+    "accepted": "Confirmed",
+    "rejected": "Ignored",
+    "acceptAll": "Confirm all matched lines",
+    "unitPrice": "{price} each",
+    "invalidPrice": "Choose an ingredient and a valid price.",
+    "date": "Invoice of {date}"
   }
 }

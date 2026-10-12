@@ -76,7 +76,18 @@ export class AnthropicAdapter implements LlmAdapter {
   ): Promise<StructuredGenerationResult<z.infer<T>>> {
     // Seul le schéma JSON est envoyé ; la validation est faite ici, avec Zod.
     const { parse: _parse, ...format } = zodOutputFormat(request.schema);
-    const messages: Anthropic.MessageParam[] = [{ role: "user", content: request.user }];
+    const content: Anthropic.ContentBlockParam[] = [
+      ...(request.attachments ?? []).map(
+        (file): Anthropic.ContentBlockParam =>
+          file.mediaType === "application/pdf"
+            ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: file.data } }
+            : { type: "image", source: { type: "base64", media_type: file.mediaType, data: file.data } },
+      ),
+      { type: "text", text: request.user },
+    ];
+    const messages: Anthropic.MessageParam[] = [
+      { role: "user", content: request.attachments?.length ? content : request.user },
+    ];
     const started = Date.now();
     const usage: AiUsage = {
       provider: this.provider,

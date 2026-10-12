@@ -21,6 +21,8 @@ export interface SaveVersionInput {
   kind?: "dish" | "base";
   /** Poids produit par une base, en grammes. */
   yieldG?: number | null;
+  /** Origine d'une nouvelle recette (par défaut : générée). */
+  source?: "generated" | "imported";
 }
 
 export async function saveRecipeVersion(
@@ -35,7 +37,7 @@ export async function saveRecipeVersion(
       .values({
         ownerId: input.ownerId,
         kind: input.kind ?? "dish",
-        source: "generated",
+        source: input.source ?? "generated",
         originalLanguage: input.languageCode,
         status: "ready",
       })

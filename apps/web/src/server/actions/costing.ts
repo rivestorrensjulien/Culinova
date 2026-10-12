@@ -14,6 +14,7 @@ import {
   estimatePrices,
 } from "../costing/estimate";
 import { confirmIngredient } from "../costing/ingredients";
+import { type DecideResult, decideInvoiceLine } from "../costing/invoices";
 import { type SavePriceResult, savePrice } from "../costing/prices";
 import { getDb } from "../db";
 import { requireUser } from "../session";
@@ -94,5 +95,30 @@ export async function estimateRecipePricesAction(recipeId: string): Promise<Auto
     await getLocale(),
   );
   if (result.ok && result.saved > 0) revalidatePath("/app", "layout");
+  return result;
+}
+
+/** Valide une ligne de facture (prix enregistré pour l'ingrédient choisi) ou l'ignore. */
+export async function decideInvoiceLineAction(
+  lineId: string,
+  decision: { accept: boolean; ingredientId?: string; price?: string },
+): Promise<DecideResult> {
+  const session = await currentUser();
+  if (!uuid.safeParse(lineId).success) return { ok: false, reason: "not_found" };
+  const db = getDb();
+  let result: DecideResult;
+  if (decision.accept) {
+    if (!decision.ingredientId || !uuid.safeParse(decision.ingredientId).success) {
+      return { ok: false, reason: "invalid" };
+    }
+    result = await decideInvoiceLine(db, session.user.id, lineId, {
+      accept: true,
+      ingredientId: decision.ingredientId,
+      price: String(decision.price ?? "").slice(0, 20),
+    });
+  } else {
+    result = await decideInvoiceLine(db, session.user.id, lineId, { accept: false });
+  }
+  if (result.ok && decision.accept) revalidatePath("/app", "layout");
   return result;
 }

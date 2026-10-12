@@ -103,7 +103,9 @@ export async function savePrice(
     price: string;
     supplierName?: string | null;
     /** « ai_estimate » : estimation automatique, jamais enregistrée par-dessus un prix existant. */
-    source?: "manual" | "ai_estimate";
+    source?: "manual" | "ai_estimate" | "invoice";
+    /** Ligne de facture d'où vient le prix. */
+    supplierInvoiceLineId?: string | null;
   },
 ): Promise<SavePriceResult> {
   const source = input.source ?? "manual";
@@ -155,13 +157,14 @@ export async function savePrice(
       newPricePerKg: price,
       changedBy: input.userId,
       source,
+      supplierInvoiceLineId: input.supplierInvoiceLineId ?? null,
     });
     return { ok: true, price } as const;
   });
 }
 
 /** Fournisseur de la personne portant ce nom (créé au besoin) ; null sans nom. */
-async function supplierFor(tx: Tx, userId: string, name: string | null): Promise<string | null> {
+export async function supplierFor(tx: Executor, userId: string, name: string | null): Promise<string | null> {
   const clean = name?.trim();
   if (!clean) return null;
   const [found] = await tx

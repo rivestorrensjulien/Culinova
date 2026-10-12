@@ -269,15 +269,9 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await page.getByLabel("Couverts").fill("8");
   await page.getByRole("button", { name: "Créer le menu" }).click();
   await expect(page.getByTestId("menu-name")).toHaveText("Dîner test");
-  await page
-    .getByLabel("Ajouter une recette")
-    .selectOption({
-      label: await page
-        .getByLabel("Ajouter une recette")
-        .locator("option", { hasText: "Saumon snacké" })
-        .first()
-        .innerText(),
-    });
+  const addRecipe = page.getByLabel("Ajouter une recette");
+  const dish = await addRecipe.locator("option", { hasText: "Saumon snacké" }).first().innerText();
+  await addRecipe.selectOption({ label: dish });
   await page.getByRole("button", { name: "Ajouter au menu" }).click();
   await expect(page.getByTestId("menu-item")).toHaveCount(1);
   await expect(page.getByTestId("menu-item")).toContainText("Saumon snacké");

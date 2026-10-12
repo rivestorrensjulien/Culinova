@@ -273,9 +273,8 @@ export async function exportAccountData(db: Database, userId: string, now = new 
   };
 }
 
-export type DeleteAccountResult =
-  | { ok: true; images: number }
-  | { ok: false; reason: "not_found" | "last_admin" };
+type DeleteAccountFailure = { ok: false; reason: "not_found" | "last_admin" };
+export type DeleteAccountResult = { ok: true; images: number } | DeleteAccountFailure;
 
 /**
  * Supprime définitivement le compte et tout ce qui lui appartient. Sont conservés,

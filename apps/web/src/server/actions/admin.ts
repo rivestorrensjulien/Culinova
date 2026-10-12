@@ -159,10 +159,8 @@ export async function resendMagicLinkAction(formData: FormData): Promise<void> {
 
 // ─── Quotas et budget IA ────────────────────────────────────────────────────
 
-export type AdminFormState =
-  | { status: "idle" }
-  | { status: "saved"; message: string }
-  | { status: "error"; message: string };
+type AdminFormResult = { status: "saved"; message: string } | { status: "error"; message: string };
+export type AdminFormState = { status: "idle" } | AdminFormResult;
 
 const QUOTA_LABELS = {
   recipes: "recettes par mois",

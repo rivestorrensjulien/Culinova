@@ -13,8 +13,9 @@ if (!dir || !output) {
 
 /** Constituants retenus (valeurs pour 100 g), avec le code Ciqual et un motif de contrôle du libellé. */
 const NUTRIENTS = [
-  { key: "kcal", code: "328", pattern: /kcal/i },
-  { key: "kj", code: "327", pattern: /kJ/i },
+  // Énergie réglementaire, ou à défaut l'énergie « N x facteur Jones, avec fibres ».
+  { key: "kcal", code: "328", fallback: "333", pattern: /kcal/i },
+  { key: "kj", code: "327", fallback: "332", pattern: /kJ/i },
   { key: "protein", code: "25000", pattern: /prot/i },
   { key: "carbs", code: "31000", pattern: /glucides|carbohydrate/i },
   { key: "sugars", code: "32000", pattern: /sucres|sugars/i },
@@ -103,16 +104,36 @@ for (const nutrient of NUTRIENTS) {
     process.exit(1);
   }
   console.log(`::notice::${nutrient.key} = ${nutrient.code} · ${label}`);
+  if (nutrient.fallback) {
+    const backup = constants.get(nutrient.fallback);
+    const backupLabel = backup?.const_nom_fr ?? backup?.const_nom_eng ?? "";
+    if (backup && nutrient.pattern.test(backupLabel)) {
+      console.log(`::notice::${nutrient.key} (à défaut) = ${nutrient.fallback} · ${backupLabel}`);
+    } else {
+      delete nutrient.fallback;
+    }
+  }
 }
 
 const index = new Map(NUTRIENTS.map((n, i) => [n.code, i]));
+const fallbackIndex = new Map(NUTRIENTS.flatMap((n, i) => (n.fallback ? [[n.fallback, i]] : [])));
 const values = new Map();
+const backups = new Map();
 for (const compo of records(readXml(compoPath), "COMPO")) {
   const position = index.get(compo.const_code);
-  if (position === undefined) continue;
-  const row = values.get(compo.alim_code) ?? new Array(NUTRIENTS.length).fill(null);
-  row[position] = value(compo.teneur);
-  values.set(compo.alim_code, row);
+  const backupPosition = fallbackIndex.get(compo.const_code);
+  const target = position !== undefined ? values : backupPosition !== undefined ? backups : null;
+  if (!target) continue;
+  const row = target.get(compo.alim_code) ?? new Array(NUTRIENTS.length).fill(null);
+  row[position ?? backupPosition] = value(compo.teneur);
+  target.set(compo.alim_code, row);
+}
+for (const [code, backup] of backups) {
+  const row = values.get(code) ?? new Array(NUTRIENTS.length).fill(null);
+  backup.forEach((v, i) => {
+    if (row[i] === null && v !== null) row[i] = v;
+  });
+  values.set(code, row);
 }
 
 const foods = records(readXml(alimPath), "ALIM")

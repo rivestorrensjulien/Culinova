@@ -184,6 +184,16 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   // Une seule fiche recette affichée (pas de liste en double après la mise à jour).
   await expect(page.getByTestId("recipe-view")).toHaveCount(1);
   await expect(page.getByTestId("upstream")).toContainText("À commencer environ 2 h 15 avant le service.");
+
+  // Nutrition : l'IA propose une correspondance Ciqual par ingrédient, la personne valide.
+  const nutrition = page.getByTestId("nutrition");
+  await nutrition.getByRole("button", { name: "Calculer les valeurs nutritionnelles" }).click();
+  await expect(nutrition.getByTestId("nutrient-kcal")).toContainText("kcal", { timeout: 20_000 });
+  await nutrition.getByText("Correspondances avec la table Ciqual").click();
+  await expect(nutrition.getByTestId("nutrition-matches")).toContainText("Riz blanc, cru");
+  await nutrition.getByRole("button", { name: "Tout valider" }).click();
+  await expect(nutrition.getByRole("button", { name: "Tout valider" })).toHaveCount(0);
+
   await yuzu.getByRole("link", { name: "Voir la recette maison" }).click();
   await expect(page.getByTestId("recipe-name")).toHaveText("Yuzu kosho maison");
   await expect(page.getByTestId("base-quantity")).toHaveText("4 g");

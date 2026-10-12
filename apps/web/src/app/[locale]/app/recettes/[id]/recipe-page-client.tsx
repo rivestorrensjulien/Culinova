@@ -3,6 +3,7 @@
 import { Button, Card, CardBody, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { NutritionCard } from "@/components/recipe/nutrition-card";
 import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { baseGenerationStatusAction, makeHomemadeAction } from "@/server/actions/bases";
@@ -241,6 +242,15 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         }
       />
       {viewingOld || isBase ? null : <PricingCard key={`pricing-${recipe.versionId}`} recipe={recipe} />}
+      {viewingOld ? null : (
+        <NutritionCard
+          recipe={recipe}
+          onChanged={async () => {
+            const view = await recipeViewAction(recipe.recipeId).catch(() => null);
+            if (view) setRecipe(view);
+          }}
+        />
+      )}
       {isBase ? null : (
         <section className="flex flex-col gap-4">
           <h2 className="font-display text-3xl">{t("questions.social")}</h2>

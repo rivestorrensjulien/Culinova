@@ -15,5 +15,6 @@ export * from "./identity";
 export * from "./ingredients";
 export * from "./kitchen";
 export * from "./legal";
+export * from "./nutrition";
 export * from "./recipes";
 export * from "./settings";

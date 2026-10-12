@@ -533,5 +533,45 @@
     "yield": "Rendement : {grams} g",
     "usedIn": "Utilisée dans : {names}",
     "notUsed": "Utilisée dans aucune recette"
+  },
+  "Nutrition": {
+    "title": "Valeurs nutritionnelles",
+    "subtitle": "Calculées à partir de la table Ciqual de l'ANSES, ingrédient par ingrédient.",
+    "compute": "Calculer les valeurs nutritionnelles",
+    "computing": "Recherche des aliments dans la table Ciqual…",
+    "computeHint": "L'IA propose un aliment de référence pour chaque ingrédient ; vous pourrez vérifier et corriger. Gratuit.",
+    "nutrient": "Pour",
+    "per100g": "100 g",
+    "perPortion": "1 portion",
+    "nutrients": {
+      "kcal": "Énergie",
+      "kj": "Énergie (kJ)",
+      "fat": "Matières grasses",
+      "saturated": "dont acides gras saturés",
+      "carbs": "Glucides",
+      "sugars": "dont sucres",
+      "fiber": "Fibres alimentaires",
+      "protein": "Protéines",
+      "salt": "Sel"
+    },
+    "coverage": "Calcul sur {counted} {counted, plural, one {ingrédient} other {ingrédients}} sur {total}.",
+    "complete": "Compléter ({count, plural, one {# ingrédient} other {# ingrédients}} sans correspondance)",
+    "toValidate": "{count, plural, one {# correspondance proposée par l'IA est à vérifier} other {# correspondances proposées par l'IA sont à vérifier}} : ouvrez la liste ci-dessous.",
+    "validateAll": "Tout valider",
+    "matchesTitle": "Correspondances avec la table Ciqual",
+    "homemade": "fait maison (calculé d'après sa recette)",
+    "noMatchYet": "pas encore de correspondance",
+    "ignored": "ignoré dans le calcul",
+    "statusProposed": "à vérifier",
+    "change": "Changer",
+    "searchLabel": "Rechercher un aliment (ex. riz blanc cru)",
+    "search": "Rechercher",
+    "ignore": "Ne pas compter cet ingrédient",
+    "source": "Valeurs indicatives, pour des ingrédients crus. Sources : table Ciqual 2025 de l'ANSES (Licence Ouverte) et USDA FoodData Central.",
+    "errors": {
+      "budget": "Les analyses IA sont suspendues jusqu'au mois prochain (budget mensuel atteint).",
+      "failed": "La recherche des correspondances a échoué. Réessayez dans un instant.",
+      "no_table": "La table Ciqual n'est pas encore chargée : réessayez après le prochain déploiement."
+    }
   }
 }

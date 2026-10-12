@@ -5,6 +5,7 @@ import * as s from "@culinova/db/schema";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { loadPricingContext, type PricingContext } from "../costing/pricing";
 import { computeRecipeCost, type RecipeCost } from "../costing/recipe-cost";
+import { computeRecipeNutrition, type NutritionView } from "../nutrition/recipe-nutrition";
 import { getQuotaLimits } from "../quotas";
 
 /** Préparation de « Mes bases » utilisée par une ligne d'ingrédient. */
@@ -108,6 +109,8 @@ export interface RecipeView {
   cost: RecipeCost;
   /** Réglages de chiffrage du compte et paramètres de prix de la recette. */
   pricing: PricingContext;
+  /** Valeurs nutritionnelles (par portion et pour 100 g) et correspondances avec la table Ciqual. */
+  nutrition: NutritionView;
 }
 
 export async function loadRecipeView(
@@ -198,6 +201,10 @@ export async function loadRecipeView(
     ),
     recipe.kind === "base" ? loadBaseInfo(db, userId, recipe.id) : null,
   ]);
+  const nutrition = await computeRecipeNutrition(db, userId, version.id, version.servings, {
+    language: recipe.originalLanguage,
+    yieldG: baseInfo?.yieldG ?? null,
+  });
 
   const order = ["generic", "instagram", "tiktok", "pinterest", "linkedin"];
   return {
@@ -274,6 +281,7 @@ export async function loadRecipeView(
     pendingGenerationId: pending?.id ?? null,
     cost,
     pricing,
+    nutrition,
   };
 }
 

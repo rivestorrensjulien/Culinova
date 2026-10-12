@@ -4,6 +4,7 @@ export * from "./factory";
 export * from "./fake";
 export * from "./models";
 export * from "./prompts/base";
+export * from "./prompts/nutrition";
 export * from "./prompts/prices";
 export * from "./prompts/recipe";
 export * from "./prompts/request";

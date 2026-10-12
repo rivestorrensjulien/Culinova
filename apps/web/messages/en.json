@@ -533,5 +533,45 @@
     "yield": "Yield: {grams} g",
     "usedIn": "Used in: {names}",
     "notUsed": "Not used in any recipe"
+  },
+  "Nutrition": {
+    "title": "Nutrition facts",
+    "subtitle": "Calculated from the ANSES Ciqual table, ingredient by ingredient.",
+    "compute": "Calculate nutrition facts",
+    "computing": "Looking up foods in the Ciqual table…",
+    "computeHint": "The AI suggests a reference food for each ingredient; you can check and correct it. Free.",
+    "nutrient": "Per",
+    "per100g": "100 g",
+    "perPortion": "1 serving",
+    "nutrients": {
+      "kcal": "Energy",
+      "kj": "Energy (kJ)",
+      "fat": "Fat",
+      "saturated": "of which saturates",
+      "carbs": "Carbohydrate",
+      "sugars": "of which sugars",
+      "fiber": "Fibre",
+      "protein": "Protein",
+      "salt": "Salt"
+    },
+    "coverage": "Calculated from {counted} of {total} ingredients.",
+    "complete": "Complete ({count, plural, one {# ingredient} other {# ingredients}} without a match)",
+    "toValidate": "{count, plural, one {# match suggested by the AI needs} other {# matches suggested by the AI need}} checking: open the list below.",
+    "validateAll": "Approve all",
+    "matchesTitle": "Matches with the Ciqual table",
+    "homemade": "homemade (calculated from its recipe)",
+    "noMatchYet": "no match yet",
+    "ignored": "left out of the calculation",
+    "statusProposed": "to check",
+    "change": "Change",
+    "searchLabel": "Search for a food (e.g. white rice raw)",
+    "search": "Search",
+    "ignore": "Leave this ingredient out",
+    "source": "Indicative values, for raw ingredients. Sources: ANSES Ciqual 2025 table (Open Licence) and USDA FoodData Central.",
+    "errors": {
+      "budget": "AI analyses are paused until next month (monthly budget reached).",
+      "failed": "Finding the matches failed. Please try again in a moment.",
+      "no_table": "The Ciqual table is not loaded yet: try again after the next deployment."
+    }
   }
 }

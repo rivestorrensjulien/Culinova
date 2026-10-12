@@ -1,6 +1,8 @@
 /**
  * Données de départ, idempotentes : relancer le seed met à jour sans dupliquer.
  */
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { and, eq, sql } from "drizzle-orm";
 import type { Database } from "../index";
 import * as s from "../schema";
@@ -226,12 +228,67 @@ async function seedAccessAndLegal(tx: Tx) {
 }
 
 /** Crée ou met à jour toutes les données de référence. */
+/** Fichier produit par la tâche GitHub « Données Ciqual » (scripts/ciqual-convert.mjs). */
+interface CiqualFile {
+  version: string;
+  columns: string[];
+  foods: Array<Array<string | number | null>>;
+}
+
+/**
+ * Table Ciqual de l'ANSES (aliments et valeurs nutritionnelles pour 100 g).
+ * Rechargée seulement quand la version du fichier change.
+ */
+async function seedNutrition(tx: Tx) {
+  const path = fileURLToPath(new URL("./data/ciqual.json", import.meta.url));
+  if (!existsSync(path)) return;
+  const table = JSON.parse(readFileSync(path, "utf8")) as CiqualFile;
+  const [current] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(s.nutritionFoods)
+    .where(and(eq(s.nutritionFoods.source, "ciqual"), eq(s.nutritionFoods.version, table.version)));
+  if (current?.n === table.foods.length) return;
+
+  const nutrientColumns = table.columns.slice(3);
+  const rows = table.foods.map((food) => {
+    const per100g: s.NutritionValues = {};
+    nutrientColumns.forEach((key, i) => {
+      const value = food[3 + i];
+      if (typeof value === "number") per100g[key as keyof s.NutritionValues] = value;
+    });
+    return {
+      source: "ciqual" as const,
+      code: String(food[0]),
+      nameFr: food[1] === null ? null : String(food[1]),
+      nameEn: food[2] === null ? null : String(food[2]),
+      per100g,
+      version: table.version,
+    };
+  });
+  for (let i = 0; i < rows.length; i += 500) {
+    await tx
+      .insert(s.nutritionFoods)
+      .values(rows.slice(i, i + 500))
+      .onConflictDoUpdate({
+        target: [s.nutritionFoods.source, s.nutritionFoods.code],
+        set: {
+          nameFr: sql`excluded.name_fr`,
+          nameEn: sql`excluded.name_en`,
+          per100g: sql`excluded.per_100g`,
+          version: sql`excluded.version`,
+          updatedAt: new Date(),
+        },
+      });
+  }
+}
+
 export async function seed(db: Database): Promise<void> {
   await db.transaction(async (tx) => {
     await seedReference(tx);
     await seedGeography(tx);
     await seedIngredients(tx);
     await seedAccessAndLegal(tx);
+    await seedNutrition(tx);
   });
 }
 

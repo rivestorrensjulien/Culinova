@@ -325,7 +325,24 @@ export function fakeBase(user: string): GeneratedBase {
   };
 }
 
+/** Correspondances factices : le premier candidat de chaque ingrédient (ou aucun). */
+export function fakeNutritionMatches(user: string) {
+  const matches: Array<{ id: string; code: string | null; englishName: string }> = [];
+  for (const line of user.split("\n")) {
+    const item = /^- (\S+) · (.+)$/.exec(line);
+    if (item) {
+      matches.push({ id: item[1]!, code: null, englishName: item[2]! });
+      continue;
+    }
+    const candidate = /^ {2}· (\S+) · /.exec(line);
+    const last = matches.at(-1);
+    if (candidate && last && last.code === null) last.code = candidate[1]!;
+  }
+  return { matches };
+}
+
 const defaultResponder: Responder = (request) => {
+  if (request.promptId.startsWith("nutrition.")) return fakeNutritionMatches(request.user);
   if (request.promptId.startsWith("base.")) return fakeBase(request.user);
   if (request.promptId.startsWith("social.")) return fakeSocial(request.user);
   if (request.promptId.startsWith("prices.")) return fakePriceEstimates(request.user);

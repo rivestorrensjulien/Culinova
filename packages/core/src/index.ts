@@ -4,6 +4,7 @@ export * from "./homemade";
 export * from "./ingredient-names";
 export * from "./margins";
 export * from "./money";
+export * from "./nutrition";
 export * from "./portions";
 export * from "./pricing-sheet";
 export * from "./quotas";

@@ -24,6 +24,7 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { getAiBudgetCap, getAiSpend, recordAiSpend } from "../quotas";
+import { autoEstimate } from "../costing/estimate";
 import { saveRecipeVersion } from "./persist";
 import type { GenerationOutcome } from "./run";
 
@@ -103,6 +104,7 @@ export async function runBaseGeneration(
   db: Database,
   ai: LlmAdapter,
   generation: typeof s.aiGenerations.$inferSelect,
+  options: { estimatePrices?: boolean } = {},
 ): Promise<GenerationOutcome> {
   const lineId = generation.inputRef?.startsWith("line:") ? generation.inputRef.slice(5) : null;
   try {
@@ -159,8 +161,6 @@ export async function runBaseGeneration(
       await tx
         .update(s.aiGenerations)
         .set({
-          status: "succeeded",
-          finishedAt: new Date(),
           output: { baseRecipeId: created!.id, recipeId: version.recipeId, base },
           provider: result.usage.provider,
           model: result.usage.model,
@@ -174,7 +174,14 @@ export async function runBaseGeneration(
       return version;
     });
     await recordAiSpend(db, result.usage.costUsdMicros);
-    return saved ? "succeeded" : "failed";
+    // Prix des ingrédients de la base estimés avant d'annoncer qu'elle est prête.
+    if (options.estimatePrices)
+      await autoEstimate(db, ai, generation.userId!, saved.versionId, request.language);
+    await db
+      .update(s.aiGenerations)
+      .set({ status: "succeeded", finishedAt: new Date() })
+      .where(eq(s.aiGenerations.id, generation.id));
+    return "succeeded";
   } catch (error) {
     const usage = error instanceof AiGenerationError ? error.usage : undefined;
     const code = error instanceof AiGenerationError ? error.code : "unexpected";

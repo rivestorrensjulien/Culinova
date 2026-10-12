@@ -28,14 +28,23 @@ describe("fiche de prix", () => {
     expect(sheet.energyCounted).toBe(true);
   });
 
-  it("conseille un prix à partir du coût matière par portion et du coefficient", () => {
+  it("conseille un prix : matière × coefficient, plus main-d'œuvre et énergie", () => {
     const { suggested } = pricingSheet(base);
+    // 3,00 € × 3,5 = 10,50 € ; + 2,50 € de main-d'œuvre + 0,06 € d'énergie = 13,06 € HT.
+    expect(suggested.priceExclTaxCents).toBe(1306);
+    expect(suggested.priceInclTaxCents).toBe(1437);
+    expect(suggested.onMaterial.grossMarginCents).toBe(1006);
+    expect(suggested.foodCostRatio).toBeCloseTo(300 / 1306, 4);
+    // Le prix conseillé couvre toujours le coût de revient : marge = matière × (coefficient − 1).
+    expect(suggested.netMarginCents).toBe(750);
+  });
+
+  it("reste au coefficient seul tant que main-d'œuvre et énergie ne sont pas comptées", () => {
+    const { suggested } = pricingSheet({ ...base, hourlyRateCents: null, kwhPriceCents: null });
     expect(suggested.priceExclTaxCents).toBe(1050);
     expect(suggested.priceInclTaxCents).toBe(1155);
-    expect(suggested.onMaterial.grossMarginCents).toBe(750);
     expect(suggested.onMaterial.markupRate).toBeCloseTo(0.7143, 4);
-    expect(suggested.foodCostRatio).toBeCloseTo(0.2857, 4);
-    expect(suggested.netMarginCents).toBe(1050 - 556);
+    expect(suggested.netMarginCents).toBe(750);
   });
 
   it("analyse un prix de vente fixé (15 € TTC à 10 %)", () => {

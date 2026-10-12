@@ -411,7 +411,10 @@
     "editTitle": "Modifier la recette",
     "editHint": "Ex. « remplace le poulet par du poisson », « version sans gluten », « sans four »",
     "editApply": "Appliquer la modification",
-    "editOther": "Proposer une autre recette"
+    "editOther": "Proposer une autre recette",
+    "costEstimated": "{count, plural, one {# prix estimé par l'IA, à confirmer :} other {# prix estimés par l'IA, à confirmer :}}",
+    "costCheckPrices": "Vérifier les prix",
+    "costEstimating": "Estimation par l'IA des prix manquants…"
   },
   "Ingredients": {
     "title": "Mes ingrédients",
@@ -455,7 +458,8 @@
       "high": "fiable",
       "medium": "à vérifier",
       "low": "très variable"
-    }
+    },
+    "estimatedPrice": "Estimé par l'IA · enregistrez pour confirmer"
   },
   "Pricing": {
     "title": "Prix de vente et marges",
@@ -482,7 +486,7 @@
     "marginRate": "Taux de marge",
     "realCoefficient": "Coefficient réel",
     "coefficient": "Coefficient multiplicateur",
-    "coefficientHint": "Prix HT = coût matière × coefficient (souvent entre 3 et 4).",
+    "coefficientHint": "Appliqué au coût matière (souvent entre 3 et 4) ; la main-d'œuvre et l'énergie s'ajoutent au prix conseillé.",
     "vatRate": "TVA",
     "vatHint": "10 % sur place, 5,5 % à emporter, 20 % pour les boissons alcoolisées.",
     "sellingPrice": "Prix de vente TTC d'une portion (€)",
@@ -502,14 +506,20 @@
       "sellingPrice": "Le prix de vente doit être un montant positif, par exemple 14,90.",
       "labor": "Le temps de travail doit être un nombre de minutes (24 h au plus).",
       "energy": "Les temps d'utilisation doivent être des nombres de minutes (24 h au plus)."
-    }
+    },
+    "suggestedHint": "Matière × {coefficient}, plus main-d'œuvre et énergie : le coût de revient est toujours couvert.",
+    "suggestedHintMaterial": "Matière × {coefficient}. Indiquez votre coût horaire pour inclure la main-d'œuvre.",
+    "belowCost": "Ce prix ne couvre pas le coût de revient d'une portion ({cost}).",
+    "estimating": "Estimation par l'IA des prix manquants…",
+    "estimatedNote": "Calculé avec {count, plural, one {# prix estimé} other {# prix estimés}} par l'IA : confirmez-les dans Ingrédients pour un chiffrage juste.",
+    "checkPrices": "Vérifier les prix"
   },
   "Settings": {
     "title": "Réglages de chiffrage",
     "intro": "Ces valeurs servent à calculer le coût de revient et le prix conseillé de toutes vos recettes. Vous pouvez les ajuster recette par recette.",
     "defaultsTitle": "Valeurs par défaut",
     "coefficient": "Coefficient multiplicateur",
-    "coefficientHint": "Prix HT = coût matière × coefficient (souvent entre 3 et 4).",
+    "coefficientHint": "Appliqué au coût matière (souvent entre 3 et 4) ; la main-d'œuvre et l'énergie s'ajoutent au prix conseillé.",
     "vatRate": "TVA par défaut",
     "vatHint": "10 % sur place, 5,5 % à emporter, 20 % pour les boissons alcoolisées.",
     "hourlyRate": "Coût horaire de la main-d'œuvre (€ / heure)",

@@ -136,29 +136,35 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await page.getByRole("link", { name: "Ouvrir la recette" }).click();
   await expect(page.getByTestId("recipe-name")).toContainText("Saumon snacké");
 
-  // Chiffrage : sans prix, la recette invite à les renseigner ; un prix saisi met le coût à jour.
-  await expect(page.getByTestId("cost")).toContainText("Renseignez le prix de vos ingrédients");
-  await page.getByRole("link", { name: "Renseigner les prix" }).click();
+  // Chiffrage : les prix manquants ont été estimés par l'IA pendant la génération, « à confirmer ».
+  await expect(page.getByTestId("cost-estimated")).toContainText("estimés par l'IA");
+  await expect(page.getByTestId("cost-estimated")).toContainText("Riz à sushi");
+  await page.getByTestId("cost-estimated").getByRole("link", { name: "Vérifier les prix" }).click();
   await expect(page.getByRole("heading", { name: "Mes ingrédients" })).toBeVisible();
-  await page.getByLabel("Prix de Riz à sushi").fill("4");
-  await page
-    .getByTestId("price-row")
-    .filter({ hasText: "Riz à sushi" })
-    .getByRole("button", { name: "Enregistrer" })
-    .click();
-  await expect(page.getByTestId("price-row").filter({ hasText: "Riz à sushi" })).toContainText("Enregistré");
+  const riceRow = page.getByTestId("price-row").filter({ hasText: "Riz à sushi" });
+  await expect(riceRow).toContainText("Estimé par l'IA");
+  await page.getByLabel("Prix de Riz à sushi").fill("8");
+  await riceRow.getByRole("button", { name: "Enregistrer" }).click();
+  await expect(riceRow).toContainText("Enregistré");
   await page.getByRole("link", { name: "Retour à la recette" }).click();
-  await expect(page.getByTestId("cost-total")).toContainText("1,20");
-  await expect(page.getByTestId("cost-portion")).toContainText("0,30");
+  await expect(page.getByTestId("cost-estimated")).not.toContainText("Riz à sushi");
 
-  // Prix de vente : 0,30 € × 3,5 = 1,05 € HT, soit 1,16 € TTC (TVA 10 %).
+  // Prix de vente : coût matière d'une portion × 3,5 (pas encore de main-d'œuvre), TVA 10 %.
+  const cents = (text: string | null) =>
+    Math.round(Number(text!.replace(/[^\d,]/g, "").replace(",", ".")) * 100);
+  const shown = (value: number) => (value / 100).toFixed(2).replace(".", ",");
+  const portion = cents(await page.getByTestId("cost-portion").textContent());
+  expect(portion).toBeGreaterThan(0);
+  const suggestedHt = Math.round(portion * 3.5);
   const recipeUrl = page.url();
   const pricing = page.getByTestId("pricing");
-  await expect(pricing.getByTestId("suggested-ttc")).toContainText("1,16");
+  await expect(pricing.getByTestId("suggested-ttc")).toContainText(
+    shown(Math.round((suggestedHt * 11) / 10)),
+  );
   const sellingPrice = pricing.getByLabel("Prix de vente TTC d'une portion (€)");
   await sellingPrice.fill("5");
-  // 5 € TTC = 4,55 € HT ; marge brute = 4,55 − 0,30 = 4,25 €.
-  await expect(pricing.getByTestId("actual-margin")).toContainText("4,25");
+  // 5 € TTC = 4,55 € HT ; marge brute = 4,55 € − coût matière d'une portion.
+  await expect(pricing.getByTestId("actual-margin")).toContainText(shown(455 - portion));
   await pricing.getByRole("button", { name: "Enregistrer ces paramètres" }).click();
   await expect(pricing).toContainText("Paramètres de prix enregistrés.");
   await page.reload();

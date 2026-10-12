@@ -112,6 +112,9 @@ export const suppliers = pgTable("suppliers", {
   ...timestamps,
 });
 
+/** Origine d'un prix : saisi, facture, référence globale, ou estimé par l'IA (à confirmer). */
+export type PriceSource = "manual" | "invoice" | "reference" | "ai_estimate";
+
 /** Prix d'un ingrédient. Un prix propre à la personne prime sur le prix de référence global. */
 export const ingredientPrices = pgTable(
   "ingredient_prices",
@@ -128,7 +131,7 @@ export const ingredientPrices = pgTable(
     packaging: text("packaging"),
     validFrom: tz("valid_from").notNull().defaultNow(),
     isCurrent: boolean("is_current").notNull().default(true),
-    source: text("source").$type<"manual" | "invoice" | "reference">().notNull(),
+    source: text("source").$type<PriceSource>().notNull(),
     ...timestamps,
   },
   (t) => [index("ingredient_prices_lookup_idx").on(t.ingredientId, t.ownerId, t.isCurrent)],
@@ -181,7 +184,7 @@ export const priceHistory = pgTable(
     newPricePerKg: numeric("new_price_per_kg", { precision: 12, scale: 4 }).notNull(),
     changedAt: tz("changed_at").notNull().defaultNow(),
     changedBy: uuid("changed_by").references(() => users.id, { onDelete: "set null" }),
-    source: text("source").$type<"manual" | "invoice" | "reference">().notNull(),
+    source: text("source").$type<PriceSource>().notNull(),
     supplierInvoiceLineId: uuid("supplier_invoice_line_id").references(() => supplierInvoiceLines.id, {
       onDelete: "set null",
     }),

@@ -1,7 +1,7 @@
 "use client";
 
 import { pricingSheet } from "@culinova/core";
-import { Button, Card, CardBody, cx, Field, Input, Notice, Select } from "@culinova/ui";
+import { Button, Card, CardBody, cx, Field, Input, Notice, Select, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
@@ -15,7 +15,14 @@ import type { RecipeView as RecipeData } from "@/server/generation/view";
  * et marges, recalculés en direct pendant la saisie. Seuls les paramètres
  * (coefficient, TVA, prix de vente, temps) sont enregistrés.
  */
-export function PricingCard({ recipe }: { recipe: RecipeData }) {
+export function PricingCard({
+  recipe,
+  estimatingPrices = false,
+}: {
+  recipe: RecipeData;
+  /** Estimation automatique des prix manquants en cours. */
+  estimatingPrices?: boolean;
+}) {
   const t = useTranslations("Pricing");
   const format = useFormatter();
   const { settings, appliances, pricing } = recipe.pricing;
@@ -77,7 +84,13 @@ export function PricingCard({ recipe }: { recipe: RecipeData }) {
       <Card data-testid="pricing">
         <CardBody className="flex flex-col gap-2 text-sm">
           <h3 className="font-display text-xl">{t("title")}</h3>
-          <p className="text-muted">{t("needPrices")}</p>
+          {estimatingPrices ? (
+            <p className="flex items-center gap-2 text-muted">
+              <Spinner /> {t("estimating")}
+            </p>
+          ) : (
+            <p className="text-muted">{t("needPrices")}</p>
+          )}
         </CardBody>
       </Card>
     );
@@ -130,8 +143,20 @@ export function PricingCard({ recipe }: { recipe: RecipeData }) {
           <p className="text-muted">{t("subtitle", { count: recipe.servings })}</p>
         </div>
 
-        {recipe.cost.missing.length > 0 ? (
+        {estimatingPrices ? (
+          <p className="flex items-center gap-2 text-muted">
+            <Spinner /> {t("estimating")}
+          </p>
+        ) : recipe.cost.missing.length > 0 ? (
           <Notice tone="warning">{t("incomplete", { count: recipe.cost.missing.length })}</Notice>
+        ) : null}
+        {recipe.cost.estimated.length > 0 ? (
+          <Notice tone="info">
+            {t("estimatedNote", { count: recipe.cost.estimated.length })}{" "}
+            <Link href={`/app/ingredients?recette=${recipe.recipeId}`} className="font-medium underline">
+              {t("checkPrices")}
+            </Link>
+          </Notice>
         ) : null}
 
         <div className="grid gap-6 lg:grid-cols-3">
@@ -160,6 +185,11 @@ export function PricingCard({ recipe }: { recipe: RecipeData }) {
             <h4 className="font-medium">
               {t("suggestedTitle", { coefficient: format.number(effectiveCoefficient) })}
             </h4>
+            <p className="text-xs text-muted">
+              {sheet.laborCounted || sheet.energyCounted
+                ? t("suggestedHint", { coefficient: format.number(effectiveCoefficient) })
+                : t("suggestedHintMaterial", { coefficient: format.number(effectiveCoefficient) })}
+            </p>
             <dl className="flex flex-col divide-y divide-border">
               <Row label={t("priceHt")} value={euros(sheet.suggested.priceExclTaxCents)} />
               <Row
@@ -180,6 +210,9 @@ export function PricingCard({ recipe }: { recipe: RecipeData }) {
 
           <section className="flex flex-col gap-2" data-testid="actual">
             <h4 className="font-medium">{t("actualTitle")}</h4>
+            {actual && actual.netMarginCents < 0 ? (
+              <Notice tone="warning">{t("belowCost", { cost: euros(sheet.perPortion.totalCents) })}</Notice>
+            ) : null}
             {actual ? (
               <dl className="flex flex-col divide-y divide-border">
                 <Row label={t("priceHt")} value={euros(actual.priceExclTaxCents)} />

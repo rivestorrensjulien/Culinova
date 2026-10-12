@@ -176,7 +176,8 @@ describe.skipIf(!hasTestDb)("réglages de chiffrage et prix de vente", () => {
       sellingPriceTtcCents: view.pricing.pricing!.sellingPriceTtcCents,
     });
     expect(sheet.perPortion).toEqual({ materialCents: 30, laborCents: 250, energyCents: 6, totalCents: 286 });
-    expect(sheet.suggested.priceExclTaxCents).toBe(120);
+    // 0,30 € × 4 = 1,20 €, plus 2,50 € de main-d'œuvre et 0,06 € d'énergie.
+    expect(sheet.suggested.priceExclTaxCents).toBe(120 + 250 + 6);
     expect(sheet.actual).toMatchObject({ priceExclTaxCents: 1364, priceInclTaxCents: 1500 });
   });
 });

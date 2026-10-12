@@ -7,7 +7,7 @@ import { createTestUser, hasTestDb, testDb } from "@/test/db";
 import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { loadRecipeView } from "../generation/view";
-import { estimatePrices } from "./estimate";
+import { estimateMissingPrices, estimatePrices, unpricedIngredientIds } from "./estimate";
 import { listMyIngredients } from "./ingredients";
 import { priceHistoryOf, readPriceInput, savePrice } from "./prices";
 import { computeRecipeCost } from "./recipe-cost";
@@ -46,6 +46,62 @@ describe("saisie d'un prix", () => {
     expect(readPriceInput("-3")).toBeNull();
     expect(readPriceInput("abc")).toBeNull();
     expect(readPriceInput("")).toBeNull();
+  });
+});
+
+describe.skipIf(!hasTestDb)("estimation automatique des prix manquants", () => {
+  it("chiffre la recette avec des prix estimés, à confirmer, sans écraser un prix saisi", async () => {
+    const db = testDb();
+    const user = await createTestUser();
+    const recipe = await recipeFor(user.id);
+    const rice = recipe.ingredients.find((i) => i.label === "Riz à sushi")!;
+    const [line] = await db
+      .select({ ingredientId: s.recipeIngredients.ingredientId })
+      .from(s.recipeIngredients)
+      .where(eq(s.recipeIngredients.id, rice.id));
+    const riceId = line!.ingredientId!;
+    // Un prix déjà saisi n'est jamais remplacé par une estimation.
+    await savePrice(db, { userId: user.id, ingredientId: riceId, price: "6" });
+
+    const before = await unpricedIngredientIds(db, user.id, recipe.versionId);
+    expect(before).not.toContain(riceId);
+    const result = await estimateMissingPrices(db, new FakeLlmAdapter(), user.id, recipe.versionId);
+    expect(result).toEqual({ ok: true, saved: before.length });
+
+    const cost = await computeRecipeCost(db, user.id, recipe.versionId, recipe.servings);
+    expect(cost.pricedCount).toBeGreaterThan(1);
+    expect(cost.estimated.length).toBeGreaterThan(0);
+    expect(cost.estimated.length).toBeLessThanOrEqual(before.length);
+    expect(cost.estimated.some((e) => e.label === "Riz à sushi")).toBe(false);
+    const prices = await priceHistoryOf(db, user.id, riceId);
+    expect(prices[0]).toMatchObject({ newPrice: "6.0000", source: "manual" });
+
+    // Rien à refaire ensuite ; confirmer un prix (l'enregistrer) le sort des estimations.
+    expect(await unpricedIngredientIds(db, user.id, recipe.versionId)).toEqual([]);
+    const confirmedId = cost.estimated[0]!.ingredientId!;
+    const row = (await listMyIngredients(db, user.id, { recipeId: recipe.recipeId })).find(
+      (r) => r.id === confirmedId,
+    )!;
+    expect(row.priceEstimated).toBe(true);
+    await savePrice(db, { userId: user.id, ingredientId: confirmedId, price: row.price! });
+    const after = await computeRecipeCost(db, user.id, recipe.versionId, recipe.servings);
+    expect(after.estimated.length).toBe(cost.estimated.length - 1);
+  });
+
+  it("estime pendant la génération quand l'application le demande", async () => {
+    const db = testDb();
+    const user = await createTestUser();
+    const [draft] = await db
+      .insert(s.recipeDrafts)
+      .values({ userId: user.id, state, wizardStep: 9 })
+      .returning();
+    const started = await startRecipeGeneration(db, { userId: user.id, draftId: draft!.id });
+    if (!started.ok) throw new Error(started.reason);
+    await runGeneration(db, new FakeLlmAdapter(), started.generationId, { estimatePrices: true });
+    const [row] = await db.select().from(s.recipeDrafts).where(eq(s.recipeDrafts.id, draft!.id));
+    const view = (await loadRecipeView(db, row!.recipeId!, user.id))!;
+    expect(view.cost.missing.filter((m) => m.reason === "price")).toEqual([]);
+    expect(view.cost.estimated.length).toBeGreaterThan(0);
   });
 });
 

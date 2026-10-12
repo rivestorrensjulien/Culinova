@@ -24,6 +24,7 @@ import {
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
+import { autoEstimate } from "../costing/estimate";
 import { recordAiSpend, releaseQuota } from "../quotas";
 import { runImageGeneration } from "../images/generate";
 import { runBaseGeneration } from "./base";
@@ -38,10 +39,16 @@ export function userFacingError(error: unknown): string {
   return "unexpected";
 }
 
+export interface RunOptions {
+  /** Estime par l'IA le prix des ingrédients qui n'en ont pas (activé dans l'application). */
+  estimatePrices?: boolean;
+}
+
 export async function runGeneration(
   db: Database,
   ai: LlmAdapter,
   generationId: string,
+  options: RunOptions = {},
 ): Promise<GenerationOutcome> {
   // Passage en cours (idempotent : une relance ne refait pas une génération terminée).
   const [generation] = await db
@@ -49,7 +56,7 @@ export async function runGeneration(
     .set({ status: "running", startedAt: new Date() })
     .where(and(eq(s.aiGenerations.id, generationId), inArray(s.aiGenerations.status, ["queued", "running"])))
     .returning();
-  if (generation?.kind === "base") return runBaseGeneration(db, ai, generation);
+  if (generation?.kind === "base") return runBaseGeneration(db, ai, generation, options);
   if (generation?.kind === "image") return runImageGeneration(db, ai, generation);
   if (!generation || !["recipe", "regeneration", "edit"].includes(generation.kind)) return "skipped";
 
@@ -135,13 +142,18 @@ export async function runGeneration(
     });
     await recordAiSpend(db, result.usage.costUsdMicros);
 
-    // 2. … puis le contenu social (facultatif) …
-    await generateSocial(db, ai, {
-      userId: generation.userId,
-      versionId: saved.versionId,
-      recipe,
-      language: request.language,
-    });
+    // 2. … puis, en parallèle, le contenu social et l'estimation des prix manquants (facultatifs) …
+    await Promise.all([
+      generateSocial(db, ai, {
+        userId: generation.userId,
+        versionId: saved.versionId,
+        recipe,
+        language: request.language,
+      }),
+      options.estimatePrices && generation.userId
+        ? autoEstimate(db, ai, generation.userId, saved.versionId, request.language)
+        : null,
+    ]);
 
     // 3. … et seulement alors, la génération est annoncée comme terminée.
     await db

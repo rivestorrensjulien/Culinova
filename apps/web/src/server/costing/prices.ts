@@ -23,8 +23,10 @@ export interface CurrentPrice {
   price: string;
   unit: PriceUnit;
   supplierName: string | null;
-  /** Prix saisi par la personne (sinon prix de référence global). */
+  /** Prix propre à la personne (sinon prix de référence global). */
   own: boolean;
+  /** Prix estimé par l'IA, pas encore confirmé par la personne. */
+  estimated: boolean;
   validFrom: Date;
 }
 
@@ -41,6 +43,7 @@ export async function currentPrices(
       ingredientId: s.ingredientPrices.ingredientId,
       price: s.ingredientPrices.pricePerKg,
       ownerId: s.ingredientPrices.ownerId,
+      source: s.ingredientPrices.source,
       validFrom: s.ingredientPrices.validFrom,
       supplierName: s.suppliers.name,
       referenceUnit: s.ingredients.referenceUnit,
@@ -65,6 +68,7 @@ export async function currentPrices(
       unit: priceUnitOf(row.referenceUnit),
       supplierName: row.supplierName,
       own,
+      estimated: row.source === "ai_estimate",
       validFrom: row.validFrom,
     });
   }
@@ -84,7 +88,8 @@ export function readPriceInput(input: string): string | null {
   }
 }
 
-export type SavePriceResult = { ok: true; price: string } | { ok: false; reason: "invalid" | "not_found" };
+type SavePriceFailure = { ok: false; reason: "invalid" | "not_found" | "exists" };
+export type SavePriceResult = { ok: true; price: string } | SavePriceFailure;
 
 /**
  * Enregistre le prix d'un ingrédient pour une personne : l'ancien prix est
@@ -92,8 +97,16 @@ export type SavePriceResult = { ok: true; price: string } | { ok: false; reason:
  */
 export async function savePrice(
   db: Database,
-  input: { userId: string; ingredientId: string; price: string; supplierName?: string | null },
+  input: {
+    userId: string;
+    ingredientId: string;
+    price: string;
+    supplierName?: string | null;
+    /** « ai_estimate » : estimation automatique, jamais enregistrée par-dessus un prix existant. */
+    source?: "manual" | "ai_estimate";
+  },
 ): Promise<SavePriceResult> {
+  const source = input.source ?? "manual";
   const price = readPriceInput(input.price);
   if (!price) return { ok: false, reason: "invalid" };
   return db.transaction(async (tx) => {
@@ -110,6 +123,7 @@ export async function savePrice(
     if (!ingredient) return { ok: false, reason: "not_found" } as const;
 
     const previous = (await currentPrices(tx, input.userId, [input.ingredientId])).get(input.ingredientId);
+    if (source === "ai_estimate" && previous) return { ok: false, reason: "exists" } as const;
     const supplierId = await supplierFor(tx, input.userId, input.supplierName ?? null);
 
     await tx
@@ -129,7 +143,7 @@ export async function savePrice(
         ownerId: input.userId,
         supplierId,
         pricePerKg: price,
-        source: "manual",
+        source,
         isCurrent: true,
       })
       .returning({ id: s.ingredientPrices.id });
@@ -140,7 +154,7 @@ export async function savePrice(
       oldPricePerKg: previous?.price ?? null,
       newPricePerKg: price,
       changedBy: input.userId,
-      source: "manual",
+      source,
     });
     return { ok: true, price } as const;
   });

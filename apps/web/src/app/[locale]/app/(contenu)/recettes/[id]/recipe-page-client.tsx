@@ -11,6 +11,7 @@ import { PhotoCard } from "@/components/recipe/photo-card";
 import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { baseGenerationStatusAction, makeHomemadeAction } from "@/server/actions/bases";
+import { estimateRecipePricesAction } from "@/server/actions/costing";
 import { SocialContentView } from "@/components/recipe/social-content";
 import {
   generationFailureAction,
@@ -62,6 +63,21 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
     const view = await recipeViewAction(recipeId, versionNo).catch(() => null);
     if (view) setRecipe(view);
   }, [recipeId, versionNo]);
+  // Prix manquants : estimés automatiquement par l'IA à l'ouverture (une fois par visite).
+  const [estimatingPrices, setEstimatingPrices] = useState(false);
+  const estimateTried = useRef(false);
+  const needsPrices = recipe.cost.missing.some((m) => m.reason === "price" || m.reason === "base");
+  useEffect(() => {
+    if (estimateTried.current || viewingOld || pending || !needsPrices) return;
+    estimateTried.current = true;
+    setEstimatingPrices(true);
+    void estimateRecipePricesAction(recipeId)
+      .catch(() => null)
+      .then(async (result) => {
+        if (result?.ok && result.saved > 0) await reload();
+        setEstimatingPrices(false);
+      });
+  }, [needsPrices, viewingOld, pending, recipeId, reload]);
   const [instruction, setInstruction] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -279,7 +295,13 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
           )
         }
       />
-      {viewingOld || isBase ? null : <PricingCard key={`pricing-${recipe.versionId}`} recipe={recipe} />}
+      {viewingOld || isBase ? null : (
+        <PricingCard
+          key={`pricing-${recipe.versionId}`}
+          recipe={recipe}
+          estimatingPrices={estimatingPrices}
+        />
+      )}
       {viewingOld ? null : <NutritionCard recipe={recipe} onChanged={reload} />}
       {isBase ? null : (
         <section className="flex flex-col gap-4">

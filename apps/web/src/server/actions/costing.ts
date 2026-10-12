@@ -1,11 +1,18 @@
 "use server";
 
 import { createLlmAdapter } from "@culinova/ai";
+import * as s from "@culinova/db/schema";
+import { and, eq } from "drizzle-orm";
 import { getLocale } from "next-intl/server";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { audit } from "../audit";
-import { type EstimateResult, estimatePrices } from "../costing/estimate";
+import {
+  type AutoEstimateResult,
+  type EstimateResult,
+  estimateMissingPrices,
+  estimatePrices,
+} from "../costing/estimate";
 import { confirmIngredient } from "../costing/ingredients";
 import { type SavePriceResult, savePrice } from "../costing/prices";
 import { getDb } from "../db";
@@ -64,4 +71,28 @@ export async function estimatePricesAction(ingredientIds: string[]): Promise<Est
     ids,
     await getLocale(),
   );
+}
+
+/**
+ * Estimation automatique des prix manquants d'une recette (version active et bases maison),
+ * lancée à l'ouverture d'une recette qui en a encore. Prix enregistrés « à confirmer ».
+ */
+export async function estimateRecipePricesAction(recipeId: string): Promise<AutoEstimateResult> {
+  const session = await currentUser();
+  if (!uuid.safeParse(recipeId).success) return { ok: false, reason: "failed" };
+  const db = getDb();
+  const [recipe] = await db
+    .select({ versionId: s.recipes.currentVersionId })
+    .from(s.recipes)
+    .where(and(eq(s.recipes.id, recipeId), eq(s.recipes.ownerId, session.user.id)));
+  if (!recipe?.versionId) return { ok: false, reason: "failed" };
+  const result = await estimateMissingPrices(
+    db,
+    createLlmAdapter(process.env, { effort: "low" }),
+    session.user.id,
+    recipe.versionId,
+    await getLocale(),
+  );
+  if (result.ok && result.saved > 0) revalidatePath("/app", "layout");
+  return result;
 }

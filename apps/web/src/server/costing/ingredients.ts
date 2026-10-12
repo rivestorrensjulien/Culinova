@@ -16,6 +16,8 @@ export interface IngredientRow {
   own: boolean;
   price: string | null;
   priceIsOwn: boolean;
+  /** Prix estimé par l'IA, à confirmer. */
+  priceEstimated: boolean;
   supplierName: string | null;
   priceUpdatedAt: string | null;
   /** Recettes (version active) qui l'utilisent. */
@@ -113,6 +115,7 @@ export async function listMyIngredients(
         own: d.ownerId === userId,
         price: price?.price ?? null,
         priceIsOwn: price?.own ?? false,
+        priceEstimated: price?.estimated ?? false,
         supplierName: price?.supplierName ?? null,
         priceUpdatedAt: price?.validFrom.toISOString() ?? null,
         recipes: [...(recipesByIngredient.get(d.id) ?? new Map())].map(([id, name]) => ({ id, name })),

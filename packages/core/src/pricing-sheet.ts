@@ -2,8 +2,10 @@
  * Fiche de prix d'une recette : coût de revient (matière, main-d'œuvre, énergie),
  * prix de vente conseillé et marges. Aide à la décision, jamais un prix imposé.
  *
- * Convention de la restauration : le coefficient multiplicateur s'applique au
- * coût matière par portion (prix HT conseillé = coût matière × coefficient).
+ * Prix HT conseillé = coût matière × coefficient + main-d'œuvre + énergie (par portion).
+ * Le coefficient multiplicateur de la restauration s'applique au coût matière ; quand la
+ * main-d'œuvre et l'énergie sont renseignées, elles s'y ajoutent, pour que le prix conseillé
+ * couvre toujours le coût de revient complet (marge après main-d'œuvre = matière × (coef − 1)).
  * La main-d'œuvre et l'énergie sont comptées pour tout le lot (la recette pour
  * N personnes), puis réparties par portion.
  */
@@ -57,7 +59,7 @@ export interface PricingSheet {
   perPortion: PortionCosts;
   laborCounted: boolean;
   energyCounted: boolean;
-  /** Prix conseillé (coût matière par portion × coefficient). */
+  /** Prix conseillé (coût matière par portion × coefficient + main-d'œuvre + énergie). */
   suggested: PriceMargins;
   /** Prix fixé par la personne, s'il existe. */
   actual: PriceMargins | null;
@@ -110,7 +112,10 @@ export function pricingSheet(input: PricingSheetInput): PricingSheet {
   };
   perPortion.totalCents = perPortion.materialCents + perPortion.laborCents + perPortion.energyCents;
 
-  const suggestedPrice = priceFromCoefficient(perPortion.materialCents, input.coefficient);
+  const suggestedPrice =
+    priceFromCoefficient(perPortion.materialCents, input.coefficient) +
+    perPortion.laborCents +
+    perPortion.energyCents;
   return {
     batch,
     perPortion,

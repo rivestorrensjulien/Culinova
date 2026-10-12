@@ -332,6 +332,20 @@ export function RecipeView({
                   </Link>
                 </div>
               ) : null}
+              {recipe.cost.estimated.length > 0 ? (
+                <div className="flex flex-col gap-1" data-testid="cost-estimated">
+                  <p className="text-muted">
+                    {t("costEstimated", { count: recipe.cost.estimated.length })}{" "}
+                    {recipe.cost.estimated.map((m) => m.label).join(", ")}.
+                  </p>
+                  <Link
+                    href={`/app/ingredients?recette=${recipe.recipeId}`}
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {t("costCheckPrices")}
+                  </Link>
+                </div>
+              ) : null}
             </CardBody>
           </Card>
         </div>

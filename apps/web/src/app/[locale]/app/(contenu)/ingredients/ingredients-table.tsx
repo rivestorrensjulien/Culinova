@@ -47,7 +47,13 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
       next.delete(id);
       return next;
     });
-    update(id, { price, priceIsOwn: true, supplierName, priceUpdatedAt: new Date().toISOString() });
+    update(id, {
+      price,
+      priceIsOwn: true,
+      priceEstimated: false,
+      supplierName,
+      priceUpdatedAt: new Date().toISOString(),
+    });
   };
 
   const estimate = async () => {
@@ -227,7 +233,7 @@ function PriceRow({
         ) : null}
         {row.price ? (
           <span className="text-xs text-muted">
-            {row.priceIsOwn ? t("ownPrice") : t("referencePrice")}
+            {row.priceEstimated ? t("estimatedPrice") : row.priceIsOwn ? t("ownPrice") : t("referencePrice")}
             {row.priceUpdatedAt ? ` · ${formatDate(row.priceUpdatedAt)}` : ""}
           </span>
         ) : null}

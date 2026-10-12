@@ -18,7 +18,7 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { getAiBudgetCap, getAiSpend, recordAiSpend } from "../quotas";
-import { priceUnitOf, readPriceInput } from "./prices";
+import { currentPrices, priceUnitOf, readPriceInput, savePrice } from "./prices";
 
 /** Coût maximal estimé d'un appel (40 ingrédients), pour la vérification du plafond. */
 const ESTIMATE_COST_USD_MICROS = 60_000;
@@ -32,7 +32,8 @@ export interface PriceProposal {
 }
 
 export type EstimateResult =
-  { ok: true; proposals: PriceProposal[] } | { ok: false; reason: "empty" | "budget" | "failed" };
+  | { ok: true; proposals: PriceProposal[] }
+  | { ok: false; reason: "empty" | "budget" | "failed" };
 
 export async function estimatePrices(
   db: Database,
@@ -138,5 +139,95 @@ export async function estimatePrices(
       .where(eq(s.aiGenerations.id, generation!.id));
     if (usage?.costUsdMicros) await recordAiSpend(db, usage.costUsdMicros);
     return { ok: false, reason: "failed" };
+  }
+}
+
+/**
+ * Ingrédients d'une version de recette (et de ses bases maison) qui n'ont encore aucun prix.
+ */
+export async function unpricedIngredientIds(
+  db: Database,
+  userId: string,
+  versionId: string,
+  depth = 0,
+): Promise<string[]> {
+  const rows = await db
+    .select({
+      ingredientId: s.recipeIngredients.ingredientId,
+      baseVersionId: s.recipes.currentVersionId,
+    })
+    .from(s.recipeIngredients)
+    .leftJoin(s.baseRecipes, eq(s.baseRecipes.id, s.recipeIngredients.baseRecipeId))
+    .leftJoin(s.recipes, and(eq(s.recipes.id, s.baseRecipes.recipeId), eq(s.recipes.ownerId, userId)))
+    .where(eq(s.recipeIngredients.recipeVersionId, versionId));
+  const ids = new Set<string>();
+  for (const row of rows) {
+    if (row.baseVersionId) {
+      // Base maison : ce sont ses propres ingrédients qui comptent (une base dans une base au plus).
+      if (depth < 1) {
+        for (const id of await unpricedIngredientIds(db, userId, row.baseVersionId, depth + 1)) ids.add(id);
+      }
+    } else if (row.ingredientId) {
+      ids.add(row.ingredientId);
+    }
+  }
+  if (depth > 0) return [...ids];
+  const prices = await currentPrices(db, userId, [...ids]);
+  return [...ids].filter((id) => !prices.has(id));
+}
+
+export type AutoEstimateResult = { ok: true; saved: number } | { ok: false; reason: "budget" | "failed" };
+
+/**
+ * Estimation automatique : les ingrédients sans prix reçoivent un prix estimé par l'IA,
+ * enregistré comme « à confirmer » (jamais par-dessus un prix existant). La personne le
+ * confirme ou le corrige dans « Ingrédients ».
+ */
+export async function estimateMissingPrices(
+  db: Database,
+  ai: LlmAdapter,
+  userId: string,
+  versionId: string,
+  languageCode = "fr",
+): Promise<AutoEstimateResult> {
+  const ids = await unpricedIngredientIds(db, userId, versionId);
+  let saved = 0;
+  for (let i = 0; i < ids.length; i += PRICE_ESTIMATE_MAX_ITEMS) {
+    const result = await estimatePrices(
+      db,
+      ai,
+      userId,
+      ids.slice(i, i + PRICE_ESTIMATE_MAX_ITEMS),
+      languageCode,
+    );
+    if (!result.ok) {
+      if (result.reason === "empty") continue;
+      return saved > 0 ? { ok: true, saved } : { ok: false, reason: result.reason };
+    }
+    for (const proposal of result.proposals) {
+      const outcome = await savePrice(db, {
+        userId,
+        ingredientId: proposal.ingredientId,
+        price: proposal.price,
+        source: "ai_estimate",
+      });
+      if (outcome.ok) saved += 1;
+    }
+  }
+  return { ok: true, saved };
+}
+
+/** Estimation des prix manquants : une erreur n'empêche jamais la recette d'être prête. */
+export async function autoEstimate(
+  db: Database,
+  ai: LlmAdapter,
+  userId: string,
+  versionId: string,
+  language: string,
+): Promise<void> {
+  try {
+    await estimateMissingPrices(db, ai, userId, versionId, language);
+  } catch (error) {
+    console.error(`Prix non estimés : ${error instanceof Error ? error.message : String(error)}`);
   }
 }

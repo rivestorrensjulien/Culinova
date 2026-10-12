@@ -411,7 +411,10 @@
     "editTitle": "Change the recipe",
     "editHint": "E.g. “swap the chicken for fish”, “gluten-free version”, “no oven”",
     "editApply": "Apply the change",
-    "editOther": "Suggest another recipe"
+    "editOther": "Suggest another recipe",
+    "costEstimated": "{count, plural, one {# price estimated by AI, to confirm:} other {# prices estimated by AI, to confirm:}}",
+    "costCheckPrices": "Check prices",
+    "costEstimating": "AI is estimating missing prices…"
   },
   "Ingredients": {
     "title": "My ingredients",
@@ -455,7 +458,8 @@
       "high": "reliable",
       "medium": "to check",
       "low": "highly variable"
-    }
+    },
+    "estimatedPrice": "Estimated by AI · save to confirm"
   },
   "Pricing": {
     "title": "Selling price and margins",
@@ -482,7 +486,7 @@
     "marginRate": "Markup on cost",
     "realCoefficient": "Actual multiplier",
     "coefficient": "Multiplier",
-    "coefficientHint": "Price excl. VAT = food cost × multiplier (often between 3 and 4).",
+    "coefficientHint": "Applied to the ingredient cost (usually 3 to 4); labour and energy are added to the suggested price.",
     "vatRate": "VAT",
     "vatHint": "France: 10 % dine-in, 5.5 % takeaway, 20 % alcoholic drinks.",
     "sellingPrice": "Selling price per portion, incl. VAT (€)",
@@ -502,14 +506,20 @@
       "sellingPrice": "The selling price must be a positive amount, e.g. 14.90.",
       "labor": "Working time must be a number of minutes (24 h at most).",
       "energy": "Usage times must be numbers of minutes (24 h at most)."
-    }
+    },
+    "suggestedHint": "Ingredients × {coefficient}, plus labour and energy: the full cost is always covered.",
+    "suggestedHintMaterial": "Ingredients × {coefficient}. Set your hourly rate to include labour.",
+    "belowCost": "This price does not cover the cost of a portion ({cost}).",
+    "estimating": "AI is estimating missing prices…",
+    "estimatedNote": "Calculated with {count, plural, one {# price} other {# prices}} estimated by AI: confirm them in Ingredients for accurate costing.",
+    "checkPrices": "Check prices"
   },
   "Settings": {
     "title": "Costing settings",
     "intro": "These values are used to compute the cost and suggested price of all your recipes. You can adjust them recipe by recipe.",
     "defaultsTitle": "Defaults",
     "coefficient": "Multiplier",
-    "coefficientHint": "Price excl. VAT = food cost × multiplier (often between 3 and 4).",
+    "coefficientHint": "Applied to the ingredient cost (usually 3 to 4); labour and energy are added to the suggested price.",
     "vatRate": "Default VAT",
     "vatHint": "France: 10 % dine-in, 5.5 % takeaway, 20 % alcoholic drinks.",
     "hourlyRate": "Labour cost (€ / hour)",

@@ -20,6 +20,8 @@ export interface RecipeCost {
    * ou préparation maison (« base ») dont des ingrédients n'ont pas encore de prix.
    */
   missing: Array<{ ingredientId: string | null; label: string; reason: "price" | "conversion" | "base" }>;
+  /** Ingrédients chiffrés avec un prix estimé par l'IA, pas encore confirmé (base maison : sa ligne). */
+  estimated: Array<{ ingredientId: string | null; label: string }>;
 }
 
 /** Profondeur maximale des bases imbriquées (une base dans une base). */
@@ -56,6 +58,7 @@ export async function computeRecipeCost(
   const bases = await baseCosts(db, userId, rows, depth);
   const lines: CostLine[] = [];
   const missing: RecipeCost["missing"] = [];
+  const estimated: RecipeCost["estimated"] = [];
   let homemadeCents = 0;
   let homemadeCount = 0;
 
@@ -72,6 +75,8 @@ export async function computeRecipeCost(
         divRound(BigInt(base.cost.totalCents) * BigInt(Math.round(grams * 1000)), BigInt(base.yieldG * 1000)),
       );
       homemadeCount += 1;
+      if (base.cost.estimated.length > 0)
+        estimated.push({ ingredientId: row.ingredientId, label: row.label });
       if (base.cost.missing.length > 0) {
         missing.push({ ingredientId: row.ingredientId, label: row.label, reason: "base" });
       }
@@ -99,6 +104,7 @@ export async function computeRecipeCost(
       // Vérifie que la conversion est possible avant de compter la ligne.
       materialCost([line], 1);
       lines.push(line);
+      if (price.estimated) estimated.push({ ingredientId: row.ingredientId, label: row.label });
     } catch {
       missing.push({ ingredientId: row.ingredientId, label: row.label, reason: "conversion" });
     }
@@ -112,6 +118,7 @@ export async function computeRecipeCost(
     pricedCount: lines.length + homemadeCount,
     lineCount: rows.filter((r) => r.ingredientId || r.baseRecipeId).length,
     missing,
+    estimated,
   };
 }
 

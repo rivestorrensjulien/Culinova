@@ -8,7 +8,7 @@ import { runGeneration } from "@/server/generation/run";
 export const maxDuration = 300;
 
 const recipeGeneration = createRecipeGenerationFunction((generationId) =>
-  runGeneration(getDb(), createLlmAdapter(), generationId),
+  runGeneration(getDb(), createLlmAdapter(), generationId, { estimatePrices: true }),
 );
 
 export const { GET, POST, PUT } = serve({ client: inngest, functions: [...baseFunctions, recipeGeneration] });

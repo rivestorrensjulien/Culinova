@@ -19,6 +19,6 @@ export async function dispatchGeneration(generationId: string): Promise<void> {
     return;
   }
   after(async () => {
-    await runGeneration(getDb(), createLlmAdapter(), generationId);
+    await runGeneration(getDb(), createLlmAdapter(), generationId, { estimatePrices: true });
   });
 }

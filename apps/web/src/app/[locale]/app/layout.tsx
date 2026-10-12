@@ -57,6 +57,9 @@ export default async function AppLayout({
             <Link href="/app/courses" className="rounded-full px-3 py-1.5 hover:bg-raised">
               {t("nav.shopping")}
             </Link>
+            <Link href="/app/stocks" className="rounded-full px-3 py-1.5 hover:bg-raised">
+              {t("nav.stock")}
+            </Link>
             <Link href="/app/ingredients" className="rounded-full px-3 py-1.5 hover:bg-raised">
               {t("nav.ingredients")}
             </Link>

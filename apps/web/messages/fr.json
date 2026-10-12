@@ -121,7 +121,8 @@
       "settings": "Réglages",
       "account": "Mon compte",
       "menus": "Menus",
-      "shopping": "Courses"
+      "shopping": "Courses",
+      "stock": "Stocks"
     },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
@@ -768,7 +769,9 @@
     "timerDone": "Terminé !",
     "timers": "Minuteurs en cours",
     "keepAwake": "L’écran reste allumé pendant la préparation. Flèches ← → pour changer d’étape.",
-    "done": "C’est prêt. Bon service !"
+    "done": "C’est prêt. Bon service !",
+    "consume": "Retirer les ingrédients de mon stock",
+    "consumed": "{count, plural, =0 {Aucun de ces ingrédients n’est dans votre stock.} one {Stock mis à jour (# article).} other {Stock mis à jour (# articles).}}"
   },
   "Menus": {
     "title": "Menus",
@@ -824,6 +827,48 @@
     "from": "Pour : {list}",
     "print": "Imprimer",
     "fromRecipe": "Liste de courses",
-    "creating": "Création…"
+    "creating": "Création…",
+    "allInStock": "Tout est déjà dans votre stock : aucune liste n’a été créée.",
+    "toStock": "Ranger les articles cochés dans le stock",
+    "stocked": "{count, plural, =0 {Aucun article coché.} one {# article rangé dans le stock.} other {# articles rangés dans le stock.}}",
+    "stockHint": "Votre stock a été déduit des quantités."
+  },
+  "Stock": {
+    "title": "Stocks",
+    "intro": "Ce que vous avez en réserve. Il est déduit des nouvelles listes de courses et peut être mis à jour à la fin d’une préparation.",
+    "addTitle": "Ajouter au stock",
+    "ingredient": "Ingrédient",
+    "quantity": "Quantité",
+    "unit": "Unité",
+    "bestBefore": "À consommer avant (facultatif)",
+    "min": "Seuil d’alerte (facultatif)",
+    "minHint": "Dans la même unité que la quantité.",
+    "add": "Ajouter",
+    "added": "Ajouté au stock.",
+    "invalid": "Choisissez un ingrédient et une quantité valide.",
+    "empty": "Votre stock est vide.",
+    "noIngredient": "Créez d’abord une recette : ses ingrédients pourront être ajoutés au stock.",
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "cl": "cl",
+      "l": "l",
+      "piece": "pièce(s)"
+    },
+    "baseUnit": {
+      "mass": "g",
+      "volume": "ml",
+      "count": "pièce(s)"
+    },
+    "low": "Stock bas",
+    "expired": "Date dépassée",
+    "soon": "À consommer vite",
+    "update": "Mettre à jour",
+    "remove": "Retirer",
+    "minShort": "Seuil",
+    "bestBeforeShort": "DLC",
+    "lowCount": "{count, plural, one {# article sous le seuil} other {# articles sous le seuil}}",
+    "soonCount": "{count, plural, one {# article à consommer vite} other {# articles à consommer vite}}"
   }
 }

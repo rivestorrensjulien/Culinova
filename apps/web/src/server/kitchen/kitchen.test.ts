@@ -9,7 +9,14 @@ import { savePrice } from "../costing/prices";
 import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { addMenuItem, createMenu, loadMenu, shoppingListForMenu, updateMenuItem } from "./menus";
-import { buildShoppingNeeds, loadShoppingList, setShoppingItemChecked } from "./shopping";
+import {
+  buildShoppingNeeds,
+  createShoppingList,
+  deductStock,
+  loadShoppingList,
+  setShoppingItemChecked,
+} from "./shopping";
+import { addToStock, consumeStock, listStock, stockFromShoppingList } from "./stock";
 
 const state: WizardState = {
   ...emptyWizardState("fr"),
@@ -93,5 +100,60 @@ describe.skipIf(!hasTestDb)("menus et listes de courses", () => {
     // Les recettes d'une autre personne sont ignorées.
     const other = await createTestUser();
     expect(await buildShoppingNeeds(db, other.id, [{ recipeId, servings: 4 }])).toEqual([]);
+  });
+
+  it("déduit le stock des courses, le remplit et le consomme", async () => {
+    const db = testDb();
+    const user = await createTestUser();
+    const { recipeId, riceId } = await recipeFor(user.id);
+    const soon = new Date(Date.now() + 2 * 86_400_000);
+    expect(
+      await addToStock(db, user.id, {
+        ingredientId: riceId,
+        quantity: { dimension: "mass", value: 200 },
+        bestBefore: soon,
+        min: 250,
+      }),
+    ).toBe(true);
+    let [item] = await listStock(db, user.id);
+    expect(item).toMatchObject({ quantity: { dimension: "mass", value: 200 }, low: true, expiring: "soon" });
+
+    // 300 g nécessaires pour 4, 200 g en stock : il reste 100 g à acheter.
+    const needs = await deductStock(
+      db,
+      user.id,
+      await buildShoppingNeeds(db, user.id, [{ recipeId, servings: 4 }]),
+    );
+    expect(needs.find((n) => n.ingredientId === riceId)!.quantity.value).toBe(100);
+    // Pour 2 personnes (150 g), le riz est couvert : il disparaît de la liste.
+    const small = await deductStock(
+      db,
+      user.id,
+      await buildShoppingNeeds(db, user.id, [{ recipeId, servings: 2 }]),
+    );
+    expect(small.some((n) => n.ingredientId === riceId)).toBe(false);
+
+    // Les courses cochées rejoignent le stock.
+    const listId = (await createShoppingList(db, user.id, {
+      name: "Courses",
+      source: "recipes",
+      entries: [{ recipeId, servings: 4 }],
+    }))!;
+    const list = (await loadShoppingList(db, user.id, listId))!;
+    const riceItem = list.groups.flatMap((g) => g.items).find((i) => i.ingredientId === riceId)!;
+    await setShoppingItemChecked(db, user.id, riceItem.id, true);
+    expect(await stockFromShoppingList(db, user.id, listId)).toBe(1);
+    [item] = await listStock(db, user.id);
+    expect(item!.quantity.value).toBe(300);
+    expect(item!.low).toBe(false);
+
+    // Préparer la recette consomme le riz, sans descendre sous zéro.
+    expect(
+      await consumeStock(db, user.id, [
+        { ingredientId: riceId, quantity: { dimension: "mass", value: 1000 } },
+      ]),
+    ).toBe(1);
+    [item] = await listStock(db, user.id);
+    expect(item!.quantity.value).toBe(0);
   });
 });

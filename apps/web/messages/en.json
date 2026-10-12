@@ -121,7 +121,8 @@
       "settings": "Settings",
       "account": "My account",
       "menus": "Menus",
-      "shopping": "Shopping"
+      "shopping": "Shopping",
+      "stock": "Stock"
     },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
@@ -768,7 +769,9 @@
     "timerDone": "Done!",
     "timers": "Running timers",
     "keepAwake": "The screen stays on while you cook. Use ← → to change steps.",
-    "done": "It’s ready. Enjoy!"
+    "done": "It’s ready. Enjoy!",
+    "consume": "Remove the ingredients from my stock",
+    "consumed": "{count, plural, =0 {None of these ingredients is in your stock.} one {Stock updated (# item).} other {Stock updated (# items).}}"
   },
   "Menus": {
     "title": "Menus",
@@ -824,6 +827,48 @@
     "from": "For: {list}",
     "print": "Print",
     "fromRecipe": "Shopping list",
-    "creating": "Creating…"
+    "creating": "Creating…",
+    "allInStock": "Everything is already in your stock: no list was created.",
+    "toStock": "Put checked items into stock",
+    "stocked": "{count, plural, =0 {No item checked.} one {# item added to stock.} other {# items added to stock.}}",
+    "stockHint": "Your stock has been deducted from the quantities."
+  },
+  "Stock": {
+    "title": "Stock",
+    "intro": "What you have in store. It is deducted from new shopping lists and can be updated when you finish cooking.",
+    "addTitle": "Add to stock",
+    "ingredient": "Ingredient",
+    "quantity": "Quantity",
+    "unit": "Unit",
+    "bestBefore": "Use by (optional)",
+    "min": "Alert threshold (optional)",
+    "minHint": "In the same unit as the quantity.",
+    "add": "Add",
+    "added": "Added to stock.",
+    "invalid": "Choose an ingredient and a valid quantity.",
+    "empty": "Your stock is empty.",
+    "noIngredient": "Create a recipe first: its ingredients can then be added to your stock.",
+    "units": {
+      "g": "g",
+      "kg": "kg",
+      "ml": "ml",
+      "cl": "cl",
+      "l": "l",
+      "piece": "piece(s)"
+    },
+    "baseUnit": {
+      "mass": "g",
+      "volume": "ml",
+      "count": "piece(s)"
+    },
+    "low": "Low stock",
+    "expired": "Past date",
+    "soon": "Use soon",
+    "update": "Update",
+    "remove": "Remove",
+    "minShort": "Threshold",
+    "bestBeforeShort": "Use by",
+    "lowCount": "{count, plural, one {# item below threshold} other {# items below threshold}}",
+    "soonCount": "{count, plural, one {# item to use soon} other {# items to use soon}}"
   }
 }

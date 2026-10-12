@@ -5,7 +5,11 @@ import { Button, Card, CardBody, cx } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { deleteShoppingListAction, toggleShoppingItemAction } from "@/server/actions/kitchen";
+import {
+  deleteShoppingListAction,
+  stockFromListAction,
+  toggleShoppingItemAction,
+} from "@/server/actions/kitchen";
 import type { ShoppingListView } from "@/server/kitchen/shopping";
 
 /** Liste de courses à cocher, rangée par rayon ; les cases cochées sont enregistrées. */
@@ -17,6 +21,8 @@ export function ShoppingChecklist({ list }: { list: ShoppingListView }) {
     () => new Set(list.groups.flatMap((g) => g.items.filter((i) => i.checked).map((i) => i.id))),
   );
   const count = list.groups.reduce((sum, g) => sum + g.items.length, 0);
+  const [stocking, setStocking] = useState(false);
+  const [stocked, setStocked] = useState<number | null>(null);
   const euros = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
 
   const toggle = (itemId: string) => {
@@ -119,6 +125,26 @@ export function ShoppingChecklist({ list }: { list: ShoppingListView }) {
             {list.unpricedCount > 0 ? (
               <span className="text-muted">{t("unpriced", { count: list.unpricedCount })}</span>
             ) : null}
+            <span className="text-muted">{t("stockHint")}</span>
+            <div className="mt-3 flex flex-col items-start gap-2 border-t border-border pt-3 print:hidden">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={stocking || stocked !== null || checked.size === 0}
+                onClick={async () => {
+                  setStocking(true);
+                  setStocked(await stockFromListAction(list.id).catch(() => 0));
+                  setStocking(false);
+                }}
+              >
+                {t("toStock")}
+              </Button>
+              {stocked !== null ? (
+                <span className="text-sm" data-testid="stocked">
+                  {t("stocked", { count: stocked })}
+                </span>
+              ) : null}
+            </div>
           </CardBody>
         </Card>
       </div>

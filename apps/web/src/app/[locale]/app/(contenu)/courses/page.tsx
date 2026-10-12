@@ -1,4 +1,4 @@
-import { Card, CardBody } from "@culinova/ui";
+import { Card, CardBody, Notice } from "@culinova/ui";
 import type { Metadata } from "next";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -15,8 +15,15 @@ export async function generateMetadata({
   return { title: (await getTranslations({ locale, namespace: "Shopping" }))("title") };
 }
 
-export default async function ShoppingListsPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function ShoppingListsPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ complet?: string }>;
+}) {
   const { locale } = await params;
+  const { complet } = await searchParams;
   setRequestLocale(locale);
   const session = await requireUser(locale);
   const t = await getTranslations("Shopping");
@@ -28,6 +35,7 @@ export default async function ShoppingListsPage({ params }: { params: Promise<{ 
         <h1 className="font-display text-4xl">{t("title")}</h1>
         <p className="mt-2 max-w-2xl text-muted">{t("intro")}</p>
       </div>
+      {complet ? <Notice tone="success">{t("allInStock")}</Notice> : null}
       {lists.length === 0 ? (
         <p className="text-muted">{t("empty")}</p>
       ) : (

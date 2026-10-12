@@ -4,6 +4,7 @@ import { Button, cx } from "@culinova/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { consumeRecipeAction } from "@/server/actions/kitchen";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 import { platingText } from "./format";
 import { useRecipeText } from "./use-recipe-text";
@@ -66,6 +67,8 @@ export function CookingMode({ recipe }: { recipe: RecipeData }) {
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [timers, setTimers] = useState<Timer[]>([]);
   const [now, setNow] = useState(() => Date.now());
+  const [consuming, setConsuming] = useState(false);
+  const [consumed, setConsumed] = useState<number | null>(null);
   const steps = recipe.steps;
   const last = steps.length;
   const exitHref = `/app/recettes/${recipe.recipeId}`;
@@ -322,6 +325,24 @@ export function CookingMode({ recipe }: { recipe: RecipeData }) {
                 <p className="text-xl leading-relaxed">{platingText(recipe.plating)}</p>
               ) : null}
               <p className="text-muted">{t("done")}</p>
+              <div className="flex flex-col items-start gap-2">
+                <Button
+                  variant="secondary"
+                  disabled={consumed !== null || consuming}
+                  onClick={async () => {
+                    setConsuming(true);
+                    setConsumed(await consumeRecipeAction(recipe.recipeId, servings).catch(() => 0));
+                    setConsuming(false);
+                  }}
+                >
+                  {t("consume")}
+                </Button>
+                {consumed !== null ? (
+                  <p className="text-sm" data-testid="consumed">
+                    {t("consumed", { count: consumed })}
+                  </p>
+                ) : null}
+              </div>
             </>
           )}
         </div>

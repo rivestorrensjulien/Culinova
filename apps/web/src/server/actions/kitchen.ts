@@ -1,5 +1,6 @@
 "use server";
 
+import { toBase } from "@culinova/core";
 import { revalidatePath } from "next/cache";
 import { getLocale } from "next-intl/server";
 import { z } from "zod";
@@ -16,7 +17,19 @@ import {
   updateMenu,
   updateMenuItem,
 } from "../kitchen/menus";
-import { createShoppingList, deleteShoppingList, setShoppingItemChecked } from "../kitchen/shopping";
+import {
+  buildShoppingNeeds,
+  createShoppingList,
+  deleteShoppingList,
+  setShoppingItemChecked,
+} from "../kitchen/shopping";
+import {
+  addToStock,
+  consumeStock,
+  removeStockItem,
+  stockFromShoppingList,
+  updateStockItem,
+} from "../kitchen/stock";
 import { requireUser } from "../session";
 
 const uuid = z.uuid();
@@ -116,7 +129,8 @@ export async function menuShoppingListAction(formData: FormData): Promise<void> 
   const menuId = uuid.safeParse(formData.get("menuId"));
   const listId = menuId.success ? await shoppingListForMenu(getDb(), session.user.id, menuId.data) : null;
   revalidatePath("/app/courses", "layout");
-  return redirect({ href: listId ? `/app/courses/${listId}` : "/app/courses", locale });
+  // Tout est déjà en stock : aucune liste n'est créée.
+  return redirect({ href: listId ? `/app/courses/${listId}` : "/app/courses?complet=1", locale });
 }
 
 /** Liste de courses d'une recette, pour le nombre de personnes affiché. */
@@ -150,4 +164,95 @@ export async function deleteShoppingListAction(formData: FormData): Promise<void
   if (id.success) await deleteShoppingList(getDb(), session.user.id, id.data);
   revalidatePath("/app/courses", "layout");
   return redirect({ href: "/app/courses", locale: await getLocale() });
+}
+
+// ─── Stocks ─────────────────────────────────────────────────────────────────
+
+export type StockFormState = { status: "idle" } | { status: "saved" } | { status: "error" };
+
+const STOCK_UNITS = ["g", "kg", "ml", "cl", "l", "piece"] as const;
+const dateField = z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]);
+const amount = z.coerce.number().min(0).max(10_000_000);
+const optionalAmount = z.union([z.literal(""), amount]);
+
+function readDate(value: string): Date | null {
+  return value ? new Date(`${value}T12:00:00Z`) : null;
+}
+
+export async function addStockAction(_prev: StockFormState, formData: FormData): Promise<StockFormState> {
+  const session = await currentUser();
+  const parsed = z
+    .object({
+      ingredientId: uuid,
+      quantity: amount,
+      unit: z.enum(STOCK_UNITS),
+      bestBefore: dateField,
+      min: optionalAmount,
+    })
+    .safeParse({
+      ingredientId: formData.get("ingredientId"),
+      quantity: String(formData.get("quantity") ?? "").replace(",", "."),
+      unit: formData.get("unit"),
+      bestBefore: formData.get("bestBefore") ?? "",
+      min: String(formData.get("min") ?? "").replace(",", "."),
+    });
+  if (!parsed.success) return { status: "error" };
+  const { ingredientId, quantity, unit, bestBefore, min } = parsed.data;
+  const base = toBase(quantity, unit);
+  const ok = await addToStock(getDb(), session.user.id, {
+    ingredientId,
+    quantity: base,
+    bestBefore: readDate(bestBefore),
+    min: min === "" ? null : toBase(min, unit).value,
+  });
+  revalidatePath("/app/stocks");
+  return ok ? { status: "saved" } : { status: "error" };
+}
+
+export async function updateStockAction(formData: FormData): Promise<void> {
+  const session = await currentUser();
+  const parsed = z
+    .object({ itemId: uuid, value: amount, min: optionalAmount, bestBefore: dateField })
+    .safeParse({
+      itemId: formData.get("itemId"),
+      value: String(formData.get("value") ?? "").replace(",", "."),
+      min: String(formData.get("min") ?? "").replace(",", "."),
+      bestBefore: formData.get("bestBefore") ?? "",
+    });
+  if (parsed.success) {
+    await updateStockItem(getDb(), session.user.id, parsed.data.itemId, {
+      value: parsed.data.value,
+      min: parsed.data.min === "" ? null : parsed.data.min,
+      bestBefore: readDate(parsed.data.bestBefore),
+    });
+  }
+  revalidatePath("/app/stocks");
+}
+
+export async function removeStockAction(formData: FormData): Promise<void> {
+  const session = await currentUser();
+  const itemId = uuid.safeParse(formData.get("itemId"));
+  if (itemId.success) await removeStockItem(getDb(), session.user.id, itemId.data);
+  revalidatePath("/app/stocks");
+}
+
+/** Range les articles cochés d'une liste dans le stock ; renvoie leur nombre. */
+export async function stockFromListAction(listId: string): Promise<number> {
+  const session = await currentUser();
+  if (!uuid.safeParse(listId).success) return 0;
+  const count = await stockFromShoppingList(getDb(), session.user.id, listId);
+  revalidatePath("/app/stocks");
+  return count;
+}
+
+/** Retire du stock les ingrédients d'une recette préparée ; renvoie le nombre d'articles touchés. */
+export async function consumeRecipeAction(recipeId: string, servings: number): Promise<number> {
+  const session = await currentUser();
+  const count = Math.round(servings);
+  if (!uuid.safeParse(recipeId).success || !(count >= 1 && count <= 1000)) return 0;
+  const db = getDb();
+  const needs = await buildShoppingNeeds(db, session.user.id, [{ recipeId, servings: count }]);
+  const touched = await consumeStock(db, session.user.id, needs);
+  revalidatePath("/app/stocks");
+  return touched;
 }

@@ -14,6 +14,7 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 import { currentPrices } from "../costing/prices";
+import { availableStock, stockKey } from "./stock";
 
 export interface ShoppingEntry {
   recipeId: string;
@@ -132,13 +133,31 @@ export async function buildShoppingNeeds(
   });
 }
 
-/** Crée une liste de courses à partir de recettes (ou d'un menu). */
+/** Retire des besoins ce qui est déjà en stock ; un besoin couvert disparaît. */
+export async function deductStock(
+  db: Database,
+  userId: string,
+  needs: ShoppingNeed[],
+): Promise<ShoppingNeed[]> {
+  const stock = await availableStock(
+    db,
+    userId,
+    needs.map((n) => n.ingredientId),
+  );
+  return needs.flatMap((need) => {
+    const available = stock.get(stockKey(need.ingredientId, need.quantity.dimension)) ?? 0;
+    const value = Math.round((need.quantity.value - available) * 1000) / 1000;
+    return value > 0 ? [{ ...need, quantity: { dimension: need.quantity.dimension, value } }] : [];
+  });
+}
+
+/** Crée une liste de courses à partir de recettes (ou d'un menu), stock déduit. */
 export async function createShoppingList(
   db: Database,
   userId: string,
   input: { name: string; source: "recipes" | "menu"; entries: readonly ShoppingEntry[] },
 ): Promise<string | null> {
-  const needs = await buildShoppingNeeds(db, userId, input.entries);
+  const needs = await deductStock(db, userId, await buildShoppingNeeds(db, userId, input.entries));
   if (needs.length === 0) return null;
   return db.transaction(async (tx) => {
     const [list] = await tx

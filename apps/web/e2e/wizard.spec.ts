@@ -286,6 +286,12 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(page.getByTestId("shopping-progress")).toHaveText(`1 sur ${itemCount} articles`);
   await page.reload();
   await expect(page.getByTestId("shopping-progress")).toHaveText(`1 sur ${itemCount} articles`);
+  // Les articles cochés rejoignent le stock.
+  await page.getByRole("button", { name: "Ranger les articles cochés dans le stock" }).click();
+  await expect(page.getByTestId("stocked")).toHaveText("1 article rangé dans le stock.");
+  await page.goto("/app/stocks");
+  await expect(page.getByTestId("stock-item")).toHaveCount(1);
+  await expect(page.getByTestId("stock-item")).toContainText(/riz à sushi/i);
   await page.goto(recipeUrl);
 
   // Modification par instruction : nouvelle version ciblée (2e et dernière régénération).

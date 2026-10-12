@@ -62,6 +62,7 @@ packages/ui         Système de design (clair / sombre)
 - [ ] **J5 · Bibliothèque, versions, traductions** (Ctrl+K, modification par instruction). Déjà fait en avance : consultation des versions d'une recette et retour à une version précédente (page recette, action `restoreVersionAction`, tracée dans le journal d'audit).
 - [ ] **J6 · Administration et juridique** (mentions légales, CGU, confidentialité, cookies, export / suppression du compte).
 - [ ] **J7 · Outils pro** (courses, stocks, menus, fiche technique PDF, mode préparation, import, scan de factures, contenu social).
+  - **Préparation de l'agent de publication** (décision de Julien, projet séparé à venir qui publiera sur TikTok et Instagram) : une porte d'accès sécurisée réservée à l'agent (clé secrète en variable d'environnement, recettes de l'administrateur uniquement : textes Instagram et TikTok, photo 9:16 par lien temporaire) et un statut de publication par recette (« à publier », « publié sur TikTok / Instagram le… »). Étude : https://claude.ai/code/artifact/86c4fd65-c073-4329-934d-29aa5a4b9df4
 - [ ] **J8 · Page d'accueil (demande d'invitation) et PWA.**
 
 À la fin de chaque jalon : expliquer ce qui est fait, comment le lancer, ce qui reste ; cocher la case ci-dessus.

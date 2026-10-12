@@ -80,7 +80,7 @@ describe.skipIf(!hasTestDb)("mon compte", () => {
     const root = await mkdtemp(join(tmpdir(), "culinova-account-"));
     const storage = new LocalStorage(root);
     const key = `${user.id}/photo/source.jpg`;
-    await storage.put(key, new Uint8Array([1, 2, 3]), "image/jpeg");
+    await storage.put(key, new Uint8Array([1, 2, 3]));
     await db.insert(s.recipeImages).values({
       recipeVersionId: recipe.currentVersionId!,
       format: "source",

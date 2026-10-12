@@ -1,6 +1,7 @@
 export * from "./costs";
 export * from "./display";
 export * from "./homemade";
+export * from "./images";
 export * from "./ingredient-names";
 export * from "./margins";
 export * from "./money";

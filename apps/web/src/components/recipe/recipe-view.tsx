@@ -14,6 +14,7 @@ export function RecipeView({
   onMakeHomemade,
   pendingLineIds,
   initialTargetG,
+  photo,
 }: {
   recipe: RecipeData;
   actions?: ReactNode;
@@ -23,6 +24,8 @@ export function RecipeView({
   pendingLineIds?: ReadonlySet<string>;
   /** Base : quantité à préparer demandée par la recette principale, en grammes. */
   initialTargetG?: number;
+  /** Photo de la recette (au-dessus des ingrédients). */
+  photo?: ReactNode;
 }) {
   const t = useTranslations("Recipe");
   const format = useFormatter();
@@ -147,7 +150,7 @@ export function RecipeView({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
         <div className="flex flex-col gap-6">
-          {/* La photo (jalon J4) prendra place ici, au-dessus des ingrédients ; pas de cadre vide en attendant. */}
+          {photo}
           <Card>
             <CardBody className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-3">

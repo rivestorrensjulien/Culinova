@@ -272,7 +272,7 @@
     "regenerateRemaining": "{count, plural, =0 {No regenerations left} one {# regeneration left} other {# regenerations left}}",
     "regenerating": "New version in progress…",
     "regenerateImage": "Regenerate the image",
-    "imageSoon": "The recipe photo is coming soon.",
+    "imageSoon": "You can then create the photo from the recipe page.",
     "noSocial": "Social media content could not be generated for this recipe."
   },
   "Recipe": {
@@ -572,6 +572,36 @@
       "budget": "AI analyses are paused until next month (monthly budget reached).",
       "failed": "Finding the matches failed. Please try again in a moment.",
       "no_table": "The Ciqual table is not loaded yet: try again after the next deployment."
+    }
+  },
+  "Photo": {
+    "alt": "Photo of the recipe “{name}”",
+    "formats": "Formats",
+    "format": {
+      "1x1": "Square 1:1",
+      "4x5": "Portrait 4:5",
+      "9x16": "Story 9:16",
+      "16x9": "Landscape 16:9"
+    },
+    "download": "Download this format ({width} × {height})",
+    "downloadHd": "HD image",
+    "emptyTitle": "No photo yet",
+    "emptyHint": "The photo is created from the recipe's plating, then cropped into 4 formats for social media.",
+    "generate": "Generate the photo",
+    "regenerate": "New photo",
+    "pending": "Creating the photo… (about 30 seconds)",
+    "left": "{count, plural, =0 {No photos left this month} one {# photo left this month} other {# photos left this month}}",
+    "unavailable": "Photo creation is not enabled on this site yet.",
+    "errors": {
+      "quota": "You have used your {limit} photos this month. The counter resets on the 1st of next month.",
+      "budget": "Generations are paused until next month (monthly budget reached).",
+      "busy": "A photo is already being created.",
+      "not_found": "Recipe not found: reload the page.",
+      "unavailable": "Photo creation is not enabled on this site yet.",
+      "refusal": "The image was blocked by the safety filter. Your credit was not used: try again.",
+      "provider_error": "The image service is temporarily unavailable. Your credit was not used: try again.",
+      "invalid_output": "No image was returned. Your credit was not used: try again.",
+      "unexpected": "Something went wrong. Your credit was not used: try again."
     }
   }
 }

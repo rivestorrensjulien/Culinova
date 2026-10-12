@@ -56,8 +56,9 @@ export class AiGenerationError extends Error {
 
 export interface ImageGenerationRequest {
   prompt: string;
-  /** Format de l'image HD source (les autres formats sont recadrés à partir d'elle). */
-  aspectRatio: "16:9" | "1:1";
+  /** Taille de l'image HD source en pixels (les formats sont ensuite recadrés à partir d'elle). */
+  width: number;
+  height: number;
   seed?: number;
 }
 
@@ -66,9 +67,12 @@ export interface ImageGenerationResult {
   url: string;
   width: number;
   height: number;
+  seed: number | null;
   usage: AiUsage;
 }
 
 export interface ImageAdapter {
+  readonly provider: string;
+  readonly model: string;
   generate(request: ImageGenerationRequest): Promise<ImageGenerationResult>;
 }

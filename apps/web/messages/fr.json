@@ -272,7 +272,7 @@
     "regenerateRemaining": "{count, plural, =0 {Plus de régénération possible} one {# régénération restante} other {# régénérations restantes}}",
     "regenerating": "Nouvelle version en cours…",
     "regenerateImage": "Régénérer l'image",
-    "imageSoon": "La photo de la recette arrive bientôt.",
+    "imageSoon": "La photo se crée ensuite depuis la page de la recette.",
     "noSocial": "Le contenu pour les réseaux sociaux n'a pas pu être généré pour cette recette."
   },
   "Recipe": {
@@ -572,6 +572,36 @@
       "budget": "Les analyses IA sont suspendues jusqu'au mois prochain (budget mensuel atteint).",
       "failed": "La recherche des correspondances a échoué. Réessayez dans un instant.",
       "no_table": "La table Ciqual n'est pas encore chargée : réessayez après le prochain déploiement."
+    }
+  },
+  "Photo": {
+    "alt": "Photo de la recette « {name} »",
+    "formats": "Formats",
+    "format": {
+      "1x1": "Carré 1:1",
+      "4x5": "Portrait 4:5",
+      "9x16": "Story 9:16",
+      "16x9": "Paysage 16:9"
+    },
+    "download": "Télécharger ce format ({width} × {height})",
+    "downloadHd": "Image HD",
+    "emptyTitle": "Pas encore de photo",
+    "emptyHint": "La photo est créée d'après le dressage de la recette, puis déclinée en 4 formats pour les réseaux sociaux.",
+    "generate": "Générer la photo",
+    "regenerate": "Nouvelle photo",
+    "pending": "Photo en cours de création… (environ 30 secondes)",
+    "left": "{count, plural, =0 {Plus aucune photo disponible ce mois-ci} one {# photo disponible ce mois-ci} other {# photos disponibles ce mois-ci}}",
+    "unavailable": "La création de photos n'est pas encore activée sur ce site.",
+    "errors": {
+      "quota": "Vous avez utilisé vos {limit} photos du mois. Le compteur repart à zéro le 1er du mois prochain.",
+      "budget": "Les générations sont suspendues jusqu'au mois prochain (budget mensuel atteint).",
+      "busy": "Une photo est déjà en cours de création.",
+      "not_found": "Recette introuvable : rechargez la page.",
+      "unavailable": "La création de photos n'est pas encore activée sur ce site.",
+      "refusal": "L'image a été bloquée par le filtre de sécurité. Votre crédit n'a pas été décompté : réessayez.",
+      "provider_error": "Le service d'images est momentanément indisponible. Votre crédit n'a pas été décompté : réessayez.",
+      "invalid_output": "Aucune image n'a été renvoyée. Votre crédit n'a pas été décompté : réessayez.",
+      "unexpected": "Une erreur est survenue. Votre crédit n'a pas été décompté : réessayez."
     }
   }
 }

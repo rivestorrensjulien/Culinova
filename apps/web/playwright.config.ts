@@ -46,6 +46,8 @@ export default defineConfig({
       // IA factice : réponses déterministes, sans clé ni coût.
       AI_PROVIDER: "fake",
       AI_FAKE_DELAY_MS: "1500",
+      // Photos factices, stockées dans un dossier local.
+      IMAGE_STORAGE_DIR: join(tmpdir(), "culinova-e2e-images"),
     },
   },
 });

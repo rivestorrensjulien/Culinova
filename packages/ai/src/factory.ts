@@ -1,7 +1,8 @@
-import type { LlmAdapter } from "./adapters";
+import type { ImageAdapter, LlmAdapter } from "./adapters";
 import { AnthropicAdapter } from "./anthropic";
 import { FakeLlmAdapter } from "./fake";
-import { DEFAULT_RECIPE_MODEL } from "./models";
+import { FakeImageAdapter, FalImageAdapter } from "./fal";
+import { DEFAULT_IMAGE_MODEL, DEFAULT_RECIPE_MODEL, IMAGE_COST_USD_MICROS } from "./models";
 
 /**
  * Choisit l'adaptateur selon l'environnement :
@@ -29,5 +30,25 @@ export function createLlmAdapter(
     effort:
       options.effort ??
       ((env.AI_RECIPE_EFFORT as "low" | "medium" | "high" | "xhigh" | "max" | undefined) || "high"),
+  });
+}
+
+/**
+ * Adaptateur d'images : FLUX1.1 [pro] via fal.ai si FAL_KEY est définie ; sinon, hors
+ * production (ou avec AI_PROVIDER=fake), une image factice.
+ */
+export function createImageAdapter(env: Record<string, string | undefined> = process.env): ImageAdapter {
+  const key = env.FAL_KEY?.trim();
+  if (env.AI_PROVIDER === "fake" || !key) {
+    if (env.NODE_ENV === "production" && env.AI_PROVIDER !== "fake") {
+      throw new Error("FAL_KEY n'est pas définie : impossible de générer des images en production.");
+    }
+    return new FakeImageAdapter();
+  }
+  const cost = Number(env.IMAGE_COST_USD_MICROS);
+  return new FalImageAdapter({
+    apiKey: key,
+    model: env.AI_IMAGE_MODEL || DEFAULT_IMAGE_MODEL,
+    costUsdMicros: Number.isFinite(cost) && cost > 0 ? cost : IMAGE_COST_USD_MICROS,
   });
 }

@@ -41,5 +41,14 @@ export function costUsdMicros(model: string, usage: TokenUsage): number {
   );
 }
 
+/** Image HD source : carrée, la plus grande taille acceptée (multiple de 32), pour recadrer les 4 formats. */
+export const IMAGE_SOURCE_SIZE = 1440;
+
+/**
+ * Estimation prudente du coût d'une image FLUX1.1 [pro] (environ 0,04 $ par mégapixel,
+ * arrondi au mégapixel supérieur : 1440 × 1440 ≈ 2,1 Mpx → 3 Mpx). Modifiable par IMAGE_COST_USD_MICROS.
+ */
+export const IMAGE_COST_USD_MICROS = 120_000;
+
 /** Estimation prudente d'une génération de recette (pour le contrôle du budget avant l'appel). */
 export const RECIPE_GENERATION_ESTIMATE_USD_MICROS = 150_000;

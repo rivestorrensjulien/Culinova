@@ -343,7 +343,16 @@ export function fakeNutritionMatches(user: string) {
   return { matches };
 }
 
+/** Prompt photo factice, assez long pour passer le contrôle. */
+export function fakeImagePrompt(user: string) {
+  const name = /"name": "([^"]+)"/.exec(user)?.[1] ?? "dish";
+  return {
+    prompt: `Editorial food photograph of ${name}, ${Array(40).fill("warm natural light").join(" ")}.`,
+  };
+}
+
 const defaultResponder: Responder = (request) => {
+  if (request.promptId.startsWith("image.")) return fakeImagePrompt(request.user);
   if (request.promptId.startsWith("nutrition.")) return fakeNutritionMatches(request.user);
   if (request.promptId.startsWith("base.")) return fakeBase(request.user);
   if (request.promptId.startsWith("social.")) return fakeSocial(request.user);

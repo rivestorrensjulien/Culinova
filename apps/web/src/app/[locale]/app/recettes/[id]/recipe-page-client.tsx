@@ -2,8 +2,9 @@
 
 import { Button, Card, CardBody, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { NutritionCard } from "@/components/recipe/nutrition-card";
+import { PhotoCard } from "@/components/recipe/photo-card";
 import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { baseGenerationStatusAction, makeHomemadeAction } from "@/server/actions/bases";
@@ -44,6 +45,13 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
       ),
   );
   const isBase = recipe.kind === "base";
+  // Recharge la recette affichée (après une photo, une correspondance nutritionnelle…).
+  const recipeId = recipe.recipeId;
+  const versionNo = recipe.versionNo;
+  const reload = useCallback(async () => {
+    const view = await recipeViewAction(recipeId, versionNo).catch(() => null);
+    if (view) setRecipe(view);
+  }, [recipeId, versionNo]);
   const [instruction, setInstruction] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -193,11 +201,11 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         initialTargetG={targetG}
         pendingLineIds={new Set(pendingBases.keys())}
         {...(viewingOld || isBase ? {} : { onMakeHomemade: makeHomemade })}
+        photo={<PhotoCard recipe={recipe} onChanged={reload} canGenerate={!viewingOld} />}
         actions={
-          isBase ? undefined : (
+          isBase || viewingOld ? undefined : (
             <Card>
               <CardBody className="flex flex-col gap-3">
-                <p className="text-sm text-muted">{t("imageSoon")}</p>
                 {viewingOld ? null : pending ? (
                   <p className="flex items-center gap-2 text-sm">
                     <Spinner /> {t("regenerating")}
@@ -242,15 +250,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         }
       />
       {viewingOld || isBase ? null : <PricingCard key={`pricing-${recipe.versionId}`} recipe={recipe} />}
-      {viewingOld ? null : (
-        <NutritionCard
-          recipe={recipe}
-          onChanged={async () => {
-            const view = await recipeViewAction(recipe.recipeId).catch(() => null);
-            if (view) setRecipe(view);
-          }}
-        />
-      )}
+      {viewingOld ? null : <NutritionCard recipe={recipe} onChanged={reload} />}
       {isBase ? null : (
         <section className="flex flex-col gap-4">
           <h2 className="font-display text-3xl">{t("questions.social")}</h2>

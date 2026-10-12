@@ -196,6 +196,15 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await nutrition.getByRole("button", { name: "Tout valider" }).click();
   await expect(nutrition.getByRole("button", { name: "Tout valider" })).toHaveCount(0);
 
+  // Photo : créée d'après le dressage, déclinée en 4 formats (1 crédit d'image).
+  const photo = page.getByTestId("photo");
+  await expect(photo.getByTestId("images-left")).toHaveText("10 photos disponibles ce mois-ci");
+  await photo.getByRole("button", { name: "Générer la photo" }).click();
+  await expect(photo.getByTestId("photo-image")).toBeVisible({ timeout: 30_000 });
+  await expect(photo.getByTestId("images-left")).toHaveText("9 photos disponibles ce mois-ci");
+  await photo.getByRole("button", { name: "Story 9:16" }).click();
+  await expect(photo.getByRole("link", { name: "Télécharger ce format (810 × 1440)" })).toBeVisible();
+
   await yuzu.getByRole("link", { name: "Voir la recette maison" }).click();
   await expect(page.getByTestId("recipe-name")).toHaveText("Yuzu kosho maison");
   await expect(page.getByTestId("base-quantity")).toHaveText("4 g");

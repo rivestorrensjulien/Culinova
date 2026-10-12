@@ -6,7 +6,8 @@ import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { loadPricingContext, type PricingContext } from "../costing/pricing";
 import { computeRecipeCost, type RecipeCost } from "../costing/recipe-cost";
 import { computeRecipeNutrition, type NutritionView } from "../nutrition/recipe-nutrition";
-import { getQuotaLimits } from "../quotas";
+import { imagesAvailable } from "../images/storage";
+import { getMonthlyUsage, getQuotaLimits } from "../quotas";
 
 /** Préparation de « Mes bases » utilisée par une ligne d'ingrédient. */
 export interface HomemadeBase {
@@ -111,6 +112,22 @@ export interface RecipeView {
   pricing: PricingContext;
   /** Valeurs nutritionnelles (par portion et pour 100 g) et correspondances avec la table Ciqual. */
   nutrition: NutritionView;
+  /** Photo de la version (image HD et ses 4 recadrages), génération en cours et crédits d'images. */
+  images: RecipeImages;
+}
+
+export type ImageFormatName = "1:1" | "4:5" | "9:16" | "16:9";
+
+export interface RecipeImages {
+  current: {
+    id: string;
+    prompt: string | null;
+    formats: Array<{ format: ImageFormatName; id: string; width: number; height: number }>;
+  } | null;
+  pendingGenerationId: string | null;
+  quota: { used: number; limit: number | null };
+  /** Faux si le fournisseur d'images ou le stockage n'est pas configuré. */
+  available: boolean;
 }
 
 export async function loadRecipeView(
@@ -201,6 +218,7 @@ export async function loadRecipeView(
     ),
     recipe.kind === "base" ? loadBaseInfo(db, userId, recipe.id) : null,
   ]);
+  const images = await loadRecipeImages(db, userId, recipe.id, version.id, limits.images);
   const nutrition = await computeRecipeNutrition(db, userId, version.id, version.servings, {
     language: recipe.originalLanguage,
     yieldG: baseInfo?.yieldG ?? null,
@@ -282,6 +300,56 @@ export async function loadRecipeView(
     cost,
     pricing,
     nutrition,
+    images,
+  };
+}
+
+/** Photo principale de la version et ses recadrages ; génération de photo en cours. */
+async function loadRecipeImages(
+  db: Database,
+  userId: string,
+  recipeId: string,
+  versionId: string,
+  limit: number | null,
+): Promise<RecipeImages> {
+  const [rows, [pending], usage] = await Promise.all([
+    db
+      .select()
+      .from(s.recipeImages)
+      .where(and(eq(s.recipeImages.recipeVersionId, versionId), eq(s.recipeImages.status, "ready"))),
+    db
+      .select({ id: s.aiGenerations.id })
+      .from(s.aiGenerations)
+      .where(
+        and(
+          eq(s.aiGenerations.recipeId, recipeId),
+          eq(s.aiGenerations.kind, "image"),
+          inArray(s.aiGenerations.status, ["queued", "running"]),
+        ),
+      ),
+    getMonthlyUsage(db, userId),
+  ]);
+  const source = rows.find((row) => row.format === "source" && row.isPrimary) ?? null;
+  const order: ImageFormatName[] = ["4:5", "1:1", "9:16", "16:9"];
+  return {
+    current: source
+      ? {
+          id: source.id,
+          prompt: source.prompt,
+          formats: rows
+            .filter((row) => row.sourceImageId === source.id && row.format !== "source")
+            .map((row) => ({
+              format: row.format as ImageFormatName,
+              id: row.id,
+              width: row.width ?? 0,
+              height: row.height ?? 0,
+            }))
+            .sort((a, b) => order.indexOf(a.format) - order.indexOf(b.format)),
+        }
+      : null,
+    pendingGenerationId: pending?.id ?? null,
+    quota: { used: usage.used.images, limit },
+    available: imagesAvailable(),
   };
 }
 

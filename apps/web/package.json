@@ -31,6 +31,7 @@
     "react-markdown": "^10.1.0",
     "resend": "^6.32.0",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
     "zod": "^4.6.5"
   },
   "devDependencies": {

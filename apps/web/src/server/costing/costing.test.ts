@@ -128,6 +128,13 @@ describe.skipIf(!hasTestDb)("prix des ingrédients et coût matière", () => {
     ).toEqual({ ok: true, price: "4.0000" });
     let cost = await computeRecipeCost(db, user.id, recipe.versionId, recipe.servings);
     expect(cost).toMatchObject({ totalCents: 120, perPortionCents: 30, pricedCount: 1 });
+    expect(cost.lines[rice.id]).toEqual({
+      cents: 120,
+      price: "4.0000",
+      unit: "kg",
+      estimated: false,
+      homemade: false,
+    });
     expect(cost.missing.some((m) => m.label === "Riz à sushi")).toBe(false);
 
     // Nouveau prix : le coût suit, l'ancien prix reste dans l'historique.

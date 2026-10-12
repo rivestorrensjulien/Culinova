@@ -172,6 +172,30 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
     "5,00",
   );
 
+  // Fiche technique imprimable (PDF) : ingrédients, coûts, progression.
+  await page.getByRole("link", { name: "Fiche technique (PDF)" }).click();
+  const sheet = page.getByTestId("technical-sheet");
+  await expect(sheet.getByRole("heading", { name: "Saumon snacké" })).toBeVisible();
+  await expect(sheet.getByTestId("sheet-line")).toHaveCount(8);
+  await expect(page.getByRole("button", { name: "Imprimer ou enregistrer en PDF" })).toBeVisible();
+  await page.getByLabel("Nombre de portions").fill("8");
+  await expect(sheet).toContainText("Coût matière (8 portions)");
+  await page.getByRole("link", { name: "Retour à la recette" }).click();
+
+  // Mode préparation : mise en place, étapes, minuteur qui continue d'une étape à l'autre.
+  await page.getByRole("link", { name: "Mode préparation" }).click();
+  const cooking = page.getByTestId("cooking-mode");
+  await expect(cooking.getByRole("heading", { name: "Mise en place" })).toBeVisible();
+  await cooking.getByRole("button", { name: "Commencer" }).click();
+  await expect(cooking.getByTestId("prep-step-count")).toHaveText("Étape 1 sur 6");
+  await cooking.getByRole("button", { name: "Lancer le minuteur (5:00)" }).click();
+  await expect(cooking.getByTestId("running-timer")).toContainText("Étape 1");
+  await cooking.getByRole("button", { name: "Suivant" }).click();
+  await expect(cooking.getByTestId("prep-step-count")).toHaveText("Étape 2 sur 6");
+  await expect(cooking.getByTestId("running-timer")).toBeVisible();
+  await cooking.getByRole("button", { name: "Quitter" }).click();
+  await expect(page.getByTestId("recipe-name")).toContainText("Saumon snacké");
+
   // Réglages du compte : coût horaire et appareils courants.
   await page.getByRole("link", { name: "Réglages", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Réglages de chiffrage" })).toBeVisible();

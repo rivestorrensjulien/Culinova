@@ -6,7 +6,7 @@ import { type CostLine, divRound, materialCost, parsePrice } from "@culinova/cor
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
-import { currentPrices } from "./prices";
+import { currentPrices, type PriceUnit } from "./prices";
 
 export interface RecipeCost {
   /** Coût matière total pour le nombre de personnes de la version, en centimes (ingrédients chiffrés seulement). */
@@ -22,6 +22,20 @@ export interface RecipeCost {
   missing: Array<{ ingredientId: string | null; label: string; reason: "price" | "conversion" | "base" }>;
   /** Ingrédients chiffrés avec un prix estimé par l'IA, pas encore confirmé (base maison : sa ligne). */
   estimated: Array<{ ingredientId: string | null; label: string }>;
+  /**
+   * Détail par ligne de la recette (clé : identifiant de la ligne), pour le nombre de
+   * personnes demandé : coût de la ligne, prix unitaire utilisé (base maison : son coût).
+   */
+  lines: Record<string, LineCost>;
+}
+
+export interface LineCost {
+  cents: number;
+  /** Prix par kg, litre ou pièce (« 9.8000 ») ; null pour une base maison. */
+  price: string | null;
+  unit: PriceUnit | null;
+  estimated: boolean;
+  homemade: boolean;
 }
 
 /** Profondeur maximale des bases imbriquées (une base dans une base). */
@@ -38,6 +52,7 @@ export async function computeRecipeCost(
 ): Promise<RecipeCost> {
   const rows = await db
     .select({
+      lineId: s.recipeIngredients.id,
       label: s.recipeIngredients.label,
       ingredientId: s.recipeIngredients.ingredientId,
       g: s.recipeIngredients.quantityG,
@@ -59,6 +74,8 @@ export async function computeRecipeCost(
   const lines: CostLine[] = [];
   const missing: RecipeCost["missing"] = [];
   const estimated: RecipeCost["estimated"] = [];
+  const portions = Math.max(1, Math.round(servings));
+  const lineCosts: Record<string, LineCost> = {};
   let homemadeCents = 0;
   let homemadeCount = 0;
 
@@ -71,9 +88,11 @@ export async function computeRecipeCost(
         missing.push({ ingredientId: row.ingredientId, label: row.label, reason: "base" });
         continue;
       }
-      homemadeCents += Number(
+      const cents = Number(
         divRound(BigInt(base.cost.totalCents) * BigInt(Math.round(grams * 1000)), BigInt(base.yieldG * 1000)),
       );
+      homemadeCents += cents;
+      lineCosts[row.lineId] = { cents, price: null, unit: null, estimated: false, homemade: true };
       homemadeCount += 1;
       if (base.cost.estimated.length > 0)
         estimated.push({ ingredientId: row.ingredientId, label: row.label });
@@ -102,15 +121,21 @@ export async function computeRecipeCost(
     };
     try {
       // Vérifie que la conversion est possible avant de compter la ligne.
-      materialCost([line], 1);
+      const lineCents = materialCost([line], portions).totalCents;
       lines.push(line);
+      lineCosts[row.lineId] = {
+        cents: lineCents,
+        price: price.price,
+        unit: price.unit,
+        estimated: price.estimated,
+        homemade: false,
+      };
       if (price.estimated) estimated.push({ ingredientId: row.ingredientId, label: row.label });
     } catch {
       missing.push({ ingredientId: row.ingredientId, label: row.label, reason: "conversion" });
     }
   }
 
-  const portions = Math.max(1, Math.round(servings));
   const totalCents = materialCost(lines, portions).totalCents + homemadeCents;
   return {
     totalCents,
@@ -119,6 +144,7 @@ export async function computeRecipeCost(
     lineCount: rows.filter((r) => r.ingredientId || r.baseRecipeId).length,
     missing,
     estimated,
+    lines: lineCosts,
   };
 }
 

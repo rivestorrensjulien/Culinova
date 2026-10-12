@@ -1,9 +1,10 @@
 "use client";
 
-import { Button, Card, CardBody, cx, Notice, Spinner, Textarea } from "@culinova/ui";
+import { Button, buttonClasses, Card, CardBody, cx, Notice, Spinner, Textarea } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FavoriteButton } from "@/components/favorite-button";
+import { Link } from "@/i18n/navigation";
 import { applyTranslation } from "@/components/recipe/translation";
 import { TranslationBar } from "@/components/recipe/translation-bar";
 import { NutritionCard } from "@/components/recipe/nutrition-card";
@@ -242,6 +243,24 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
           onShow={setShowTranslation}
           onChanged={reload}
         />
+      )}
+      {viewingOld ? null : (
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/app/recettes/${recipe.recipeId}/preparation`}
+            className={buttonClasses("primary", "sm")}
+          >
+            {tr("cookingMode")}
+          </Link>
+          {isBase ? null : (
+            <Link
+              href={`/app/recettes/${recipe.recipeId}/fiche`}
+              className={buttonClasses("secondary", "sm")}
+            >
+              {tr("technicalSheet")}
+            </Link>
+          )}
+        </div>
       )}
       <RecipeView
         key={`view-${recipe.versionId}`}

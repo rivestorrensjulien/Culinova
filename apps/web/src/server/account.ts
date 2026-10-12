@@ -374,7 +374,18 @@ export async function deleteAccount(
       ip: ctx.ip ?? null,
       userAgent: ctx.userAgent ?? null,
     });
-    // Tout le reste (recettes, versions, photos, prix, réglages, sessions…) suit en cascade.
+    // Les lignes qui pointent vers ses ingrédients et ses bases partent d'abord,
+    // puis ses recettes, menus et listes ; le reste (prix, réglages, sessions…) suit en cascade.
+    await tx.delete(recipeIngredients).where(
+      within(
+        recipeIngredients.recipeVersionId,
+        versions.map((v) => v.id),
+      ),
+    );
+    await tx.delete(menus).where(eq(menus.ownerId, userId));
+    await tx.delete(shoppingLists).where(eq(shoppingLists.ownerId, userId));
+    await tx.delete(inventoryItems).where(eq(inventoryItems.ownerId, userId));
+    await tx.delete(recipes).where(eq(recipes.ownerId, userId));
     await tx.delete(users).where(eq(users.id, userId));
     if (paramsIds.length > 0)
       await tx.delete(generationParams).where(inArray(generationParams.id, paramsIds));

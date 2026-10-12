@@ -67,6 +67,9 @@ describe("fiche de prix", () => {
 
   it("refuse un nombre de portions invalide", () => {
     expect(() => pricingSheet({ ...base, servings: 0 })).toThrow(RangeError);
-    expect(pricingSheet({ ...base, materialCents: 0 }).suggested.foodCostRatio).toBeNull();
+    expect(
+      pricingSheet({ ...base, materialCents: 0, hourlyRateCents: null, kwhPriceCents: null }).suggested
+        .foodCostRatio,
+    ).toBeNull();
   });
 });

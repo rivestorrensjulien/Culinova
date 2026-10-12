@@ -42,7 +42,8 @@ export function NutritionCard({ recipe, onChanged }: { recipe: RecipeData; onCha
   const [results, setResults] = useState<FoodResult[]>([]);
 
   const missing = nutrition.lines.filter((line) => line.status === "none" && line.ingredientId).length;
-  const started = nutrition.lines.some((line) => line.status !== "none");
+  // Une base maison ne suffit pas : il faut au moins une correspondance proposée ou validée.
+  const started = nutrition.lines.some((line) => line.status === "proposed" || line.status === "validated");
 
   const compute = async () => {
     setBusy(true);

@@ -7,7 +7,9 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import ReactMarkdown from "react-markdown";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { fillLegalPlaceholders } from "@/lib/legal";
 import { getDb } from "@/server/db";
+import { getLegalIdentity } from "@/server/legal";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +61,7 @@ export default async function LegalPage({
   if (!DOCUMENTS[document]) notFound();
   const doc = await loadDocument(document, locale);
   const t = await getTranslations("Legal");
+  const identity = doc ? await getLegalIdentity(getDb()) : {};
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -68,11 +71,17 @@ export default async function LegalPage({
           <article className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2">
               {doc.version.startsWith("0.") ? <Badge tone="warning">{t("draft")}</Badge> : null}
-              <span className="text-sm text-muted">{t("version", { version: doc.version })}</span>
+              <span className="text-sm text-muted">
+                {t("version", { version: doc.version })}
+                {doc.publishedAt
+                  ? ` · ${t("updatedOn", { date: doc.publishedAt.toLocaleDateString(locale === "en" ? "en-GB" : "fr-FR", { timeZone: "Europe/Paris", dateStyle: "long" }) })}`
+                  : ""}
+              </span>
             </div>
+            {doc.locale !== locale ? <p className="text-sm text-muted">{t("frenchOnly")}</p> : null}
             <h1 className="font-display text-4xl">{doc.title}</h1>
             <div className="legal-prose">
-              <ReactMarkdown>{doc.bodyMd}</ReactMarkdown>
+              <ReactMarkdown>{fillLegalPlaceholders(doc.bodyMd, identity)}</ReactMarkdown>
             </div>
           </article>
         ) : (

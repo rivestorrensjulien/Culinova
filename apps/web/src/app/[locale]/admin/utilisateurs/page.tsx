@@ -8,6 +8,7 @@ import {
   revokeUserSessionsAction,
   suspendUserAction,
 } from "@/server/actions/admin";
+import { Link } from "@/i18n/navigation";
 import { getDb } from "@/server/db";
 import { requireAdmin } from "@/server/session";
 import { formatDate, formatUsdMicros, tdClass, thClass } from "../format";
@@ -65,7 +66,9 @@ export default async function AdminUsersPage({ params }: { params: Promise<{ loc
             {rows.map((row) => (
               <tr key={row.id} data-testid="user-row">
                 <td className={tdClass}>
-                  <div className="font-medium">{row.email}</div>
+                  <Link href={`/admin/utilisateurs/${row.id}`} className="font-medium hover:underline">
+                    {row.email}
+                  </Link>
                   <div className="text-xs text-muted">
                     {row.name || "—"}
                     {row.role === "admin" ? " · administrateur" : ""}

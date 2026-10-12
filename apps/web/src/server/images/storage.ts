@@ -3,7 +3,7 @@
  * dossier local en développement et dans les tests. Les images ne sont jamais publiques :
  * elles sont servies par l'application, après vérification de la propriétaire.
  */
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, normalize } from "node:path";
 
@@ -11,6 +11,8 @@ export interface ImageStorage {
   readonly kind: "supabase" | "local";
   put(key: string, bytes: Uint8Array, contentType: string): Promise<void>;
   get(key: string): Promise<Uint8Array | null>;
+  /** Supprime des fichiers (sans erreur s'ils n'existent plus). */
+  remove(keys: string[]): Promise<void>;
 }
 
 export const IMAGE_BUCKET = "recipe-images";
@@ -74,6 +76,21 @@ export class SupabaseStorage implements ImageStorage {
     if (!response.ok) throw new Error(`Lecture de l'image impossible (${response.status})`);
     return new Uint8Array(await response.arrayBuffer());
   }
+
+  async remove(keys: string[]) {
+    // L'API accepte des lots ; on reste prudent avec 500 fichiers par appel.
+    for (let i = 0; i < keys.length; i += 500) {
+      const batch = keys.slice(i, i + 500).map(safeKey);
+      const response = await this.fetchImpl(`${this.url}/storage/v1/object/${this.bucket}`, {
+        method: "DELETE",
+        headers: this.headers({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ prefixes: batch }),
+      });
+      if (!response.ok && response.status !== 404) {
+        throw new Error(`Suppression des images impossible (${response.status})`);
+      }
+    }
+  }
 }
 
 export class LocalStorage implements ImageStorage {
@@ -96,6 +113,10 @@ export class LocalStorage implements ImageStorage {
     } catch {
       return null;
     }
+  }
+
+  async remove(keys: string[]) {
+    await Promise.all(keys.map((key) => rm(this.path(key), { force: true })));
   }
 }
 

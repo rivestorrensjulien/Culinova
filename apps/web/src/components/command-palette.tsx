@@ -21,6 +21,7 @@ const PAGES = [
   { key: "bases", href: "/app/bases" },
   { key: "ingredients", href: "/app/ingredients" },
   { key: "settings", href: "/app/reglages" },
+  { key: "account", href: "/app/compte" },
   { key: "security", href: "/app/compte/securite" },
 ] as const;
 

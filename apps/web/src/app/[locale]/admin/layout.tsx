@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/utilisateurs", label: "Utilisateurs" },
   { href: "/admin/invitations", label: "Invitations" },
   { href: "/admin/journal", label: "Journal" },
+  { href: "/admin/reglages", label: "Réglages" },
 ] as const;
 
 /** Administration : rôle administrateur + second facteur validé pour la session. */

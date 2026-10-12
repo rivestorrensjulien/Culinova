@@ -6,6 +6,8 @@ import { timestamps } from "./_shared";
 export const SETTING_KEYS = {
   defaultQuotas: "quotas.defaults",
   monthlyAiBudget: "ai.monthly_budget_usd_micros",
+  /** Identité de l'éditeur, reprise dans les mentions légales et la politique de confidentialité. */
+  legalIdentity: "legal.identity",
 } as const;
 
 /** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */

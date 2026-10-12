@@ -165,6 +165,9 @@ export function createAuth(db: Database, options: { nextCookies?: boolean } = {}
             if (!user || user.banned || user.deletedAt) return false;
           },
           after: async (session) => {
+            // Session « en tant que » ouverte par un administrateur : ce n'est pas une connexion de la personne.
+            const impersonatorId = (session as { impersonatedBy?: string | null }).impersonatedBy ?? null;
+            if (impersonatorId) return;
             await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, session.userId));
             await audit(db, {
               actorId: session.userId,

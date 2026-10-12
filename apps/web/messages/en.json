@@ -17,7 +17,9 @@
     "backHome": "Back to home",
     "legal": {
       "cgu": "Terms of use",
-      "privacy": "Privacy"
+      "privacy": "Privacy",
+      "cookies": "Cookies",
+      "notice": "Legal notice"
     }
   },
   "Home": {
@@ -43,7 +45,8 @@
     "reasons": {
       "lien": "This sign-in link is no longer valid (expired or already used). Request a new one.",
       "session": "Your session was closed. Please sign in again.",
-      "invitation": "Account creation failed: the invitation is no longer valid. Contact the person who invited you."
+      "invitation": "Account creation failed: the invitation is no longer valid. Contact the person who invited you.",
+      "supprime": "Your account and all its data have been deleted. Thank you for using Culinova."
     }
   },
   "Verify": {
@@ -115,7 +118,8 @@
       "recipes": "My recipes",
       "bases": "My bases",
       "ingredients": "Ingredients",
-      "settings": "Settings"
+      "settings": "Settings",
+      "account": "My account"
     },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
@@ -129,6 +133,7 @@
     "resets": "Resets on {date}.",
     "regenerations": "Plus up to {count} text regenerations per recipe.",
     "impersonating": "You are signed in as {email} (administration).",
+    "stopImpersonating": "Back to administration",
     "createCta": "Create a recipe",
     "recentRecipes": "Your latest recipes"
   },
@@ -144,7 +149,9 @@
   "Legal": {
     "draft": "Draft document",
     "version": "Version {version}",
-    "missing": "This document will be published soon."
+    "missing": "This document will be published soon.",
+    "updatedOn": "updated {date}",
+    "frenchOnly": "This document is available in French only; the French version is authoritative."
   },
   "Wizard": {
     "title": "Create a recipe",
@@ -658,5 +665,41 @@
       "budget": "Translations are paused until next month (monthly budget reached).",
       "failed": "Translation failed. Please try again in a moment."
     }
+  },
+  "Consent": {
+    "title": "Our terms are changing",
+    "intro": "Before you continue, please read the new versions of the following documents:",
+    "item": "{title} — version {version}",
+    "accept": "I have read and accept these new versions",
+    "submit": "Continue",
+    "refuse": "If you do not accept them, you can download your data or delete your account from “My account”."
+  },
+  "Account": {
+    "title": "My account",
+    "intro": "Your details, your data and your account security.",
+    "profileTitle": "Profile",
+    "email": "Email address",
+    "name": "Display name",
+    "nameHint": "Used to greet you in the app.",
+    "save": "Save",
+    "saved": "Profile saved.",
+    "since": "Member since {date}",
+    "securityTitle": "Security",
+    "securityText": "Signed-in devices and remote sign-out.",
+    "securityLink": "Manage my sessions",
+    "consentsTitle": "Accepted documents",
+    "consentItem": "{title} — version {version}, on {date}",
+    "consentsEmpty": "No document recorded.",
+    "exportTitle": "Download my data",
+    "exportText": "A JSON file with your profile, your recipes and all their versions, translations, bases, ingredients, prices, settings, favourites, usage and consents. Photos are listed with their download address.",
+    "exportButton": "Download my data",
+    "deleteTitle": "Delete my account",
+    "deleteText": "Permanent and immediate deletion: recipes, photos, prices, settings and sessions. Your invitation code cannot be reused. Remember to download your data first.",
+    "deleteConfirm": "To confirm, type your email address",
+    "deleteButton": "Permanently delete my account",
+    "deleteMismatch": "The address you typed does not match this account.",
+    "deleteLastAdmin": "You are the only administrator: appoint another one before deleting this account.",
+    "deleteImpersonating": "Not possible during an “act as” session.",
+    "deleteFailed": "Deletion failed. Please try again in a moment."
   }
 }

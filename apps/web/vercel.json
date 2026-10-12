@@ -2,5 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "regions": ["dub1"],
-  "buildCommand": "pnpm --filter @culinova/db db:deploy && pnpm build"
+  "buildCommand": "pnpm --filter @culinova/db db:deploy && pnpm build",
+  "crons": [{ "path": "/api/cron/purge", "schedule": "17 3 * * *" }]
 }

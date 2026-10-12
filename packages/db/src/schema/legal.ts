@@ -114,7 +114,7 @@ export const emailTemplates = pgTable(
   (t) => [uniqueIndex("email_templates_unique").on(t.key, t.locale, t.version)],
 );
 
-/** Journal d'audit des actions sensibles. Jamais modifié, jamais supprimé. */
+/** Journal d'audit des actions sensibles. Jamais modifié ; effacé après 12 mois (purge quotidienne). */
 export const auditLogs = pgTable(
   "audit_logs",
   {

@@ -18,7 +18,7 @@ export async function generateMetadata({
   return { title: (await getTranslations({ locale, namespace: "SignIn" }))("title") };
 }
 
-const REASONS = ["lien", "session", "invitation"] as const;
+const REASONS = ["lien", "session", "invitation", "supprime"] as const;
 
 export default async function SignInPage({
   params,
@@ -35,7 +35,9 @@ export default async function SignInPage({
   const t = await getTranslations("SignIn");
   return (
     <AuthShell title={t("title")}>
-      {reason ? <Notice tone="warning">{t(`reasons.${reason}`)}</Notice> : null}
+      {reason ? (
+        <Notice tone={reason === "supprime" ? "success" : "warning"}>{t(`reasons.${reason}`)}</Notice>
+      ) : null}
       <p className="text-sm text-muted">{t("intro")}</p>
       <SignInForm />
       <p className="text-sm text-muted">

@@ -17,7 +17,9 @@
     "backHome": "Retour à l'accueil",
     "legal": {
       "cgu": "Conditions d'utilisation",
-      "privacy": "Confidentialité"
+      "privacy": "Confidentialité",
+      "cookies": "Cookies",
+      "notice": "Mentions légales"
     }
   },
   "Home": {
@@ -43,7 +45,8 @@
     "reasons": {
       "lien": "Ce lien de connexion n'est plus valable (expiré ou déjà utilisé). Demandez-en un nouveau.",
       "session": "Votre session a été fermée. Reconnectez-vous.",
-      "invitation": "La création du compte a échoué : l'invitation n'est plus valable. Contactez la personne qui vous a invité·e."
+      "invitation": "La création du compte a échoué : l'invitation n'est plus valable. Contactez la personne qui vous a invité·e.",
+      "supprime": "Votre compte a été supprimé, avec toutes ses données. Merci d’avoir utilisé Culinova."
     }
   },
   "Verify": {
@@ -115,7 +118,8 @@
       "recipes": "Mes recettes",
       "bases": "Mes bases",
       "ingredients": "Ingrédients",
-      "settings": "Réglages"
+      "settings": "Réglages",
+      "account": "Mon compte"
     },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
@@ -129,6 +133,7 @@
     "resets": "Remise à zéro le {date}.",
     "regenerations": "Et jusqu'à {count} régénérations de texte par recette.",
     "impersonating": "Vous êtes connecté·e en tant que {email} (administration).",
+    "stopImpersonating": "Revenir à l’administration",
     "createCta": "Créer une recette",
     "recentRecipes": "Vos dernières recettes"
   },
@@ -144,7 +149,9 @@
   "Legal": {
     "draft": "Document provisoire",
     "version": "Version {version}",
-    "missing": "Ce document sera publié prochainement."
+    "missing": "Ce document sera publié prochainement.",
+    "updatedOn": "mise à jour le {date}",
+    "frenchOnly": ""
   },
   "Wizard": {
     "title": "Créer une recette",
@@ -658,5 +665,41 @@
       "budget": "Les traductions sont suspendues jusqu'au mois prochain (budget mensuel atteint).",
       "failed": "La traduction a échoué. Réessayez dans un instant."
     }
+  },
+  "Consent": {
+    "title": "Nos conditions évoluent",
+    "intro": "Avant de continuer, prenez connaissance des nouvelles versions des documents suivants :",
+    "item": "{title} — version {version}",
+    "accept": "J’ai lu et j’accepte ces nouvelles versions",
+    "submit": "Continuer",
+    "refuse": "Si vous ne les acceptez pas, vous pouvez télécharger vos données ou supprimer votre compte depuis « Mon compte »."
+  },
+  "Account": {
+    "title": "Mon compte",
+    "intro": "Vos informations, vos données et la sécurité de votre compte.",
+    "profileTitle": "Profil",
+    "email": "Adresse e-mail",
+    "name": "Nom affiché",
+    "nameHint": "Utilisé pour vous saluer dans l’application.",
+    "save": "Enregistrer",
+    "saved": "Profil enregistré.",
+    "since": "Membre depuis le {date}",
+    "securityTitle": "Sécurité",
+    "securityText": "Appareils connectés et déconnexion à distance.",
+    "securityLink": "Gérer mes sessions",
+    "consentsTitle": "Documents acceptés",
+    "consentItem": "{title} — version {version}, le {date}",
+    "consentsEmpty": "Aucun document enregistré.",
+    "exportTitle": "Télécharger mes données",
+    "exportText": "Un fichier JSON avec votre profil, vos recettes et toutes leurs versions, traductions, bases, ingrédients, prix, réglages, favoris, consommation et consentements. Les photos sont listées avec leur adresse de téléchargement.",
+    "exportButton": "Télécharger mes données",
+    "deleteTitle": "Supprimer mon compte",
+    "deleteText": "Suppression définitive et immédiate : recettes, photos, prix, réglages et sessions. Votre code d’invitation ne pourra pas être réutilisé. Pensez à télécharger vos données avant.",
+    "deleteConfirm": "Pour confirmer, saisissez votre adresse e-mail",
+    "deleteButton": "Supprimer définitivement mon compte",
+    "deleteMismatch": "L’adresse saisie ne correspond pas à celle du compte.",
+    "deleteLastAdmin": "Vous êtes le seul administrateur : nommez-en un autre avant de supprimer ce compte.",
+    "deleteImpersonating": "Impossible pendant une session « en tant que ».",
+    "deleteFailed": "La suppression n’a pas abouti. Réessayez dans un instant."
   }
 }

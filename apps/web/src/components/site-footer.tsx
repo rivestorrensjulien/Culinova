@@ -1,6 +1,13 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
+const LINKS = [
+  { key: "notice", href: "/legal/mentions-legales" },
+  { key: "cgu", href: "/legal/cgu" },
+  { key: "privacy", href: "/legal/confidentialite" },
+  { key: "cookies", href: "/legal/cookies" },
+] as const;
+
 export async function SiteFooter() {
   const t = await getTranslations("Common");
   return (
@@ -9,13 +16,12 @@ export async function SiteFooter() {
         <span>
           {t("brand")} · {t("tagline")}
         </span>
-        <nav className="flex gap-4">
-          <Link href="/legal/cgu" className="hover:text-foreground">
-            {t("legal.cgu")}
-          </Link>
-          <Link href="/legal/confidentialite" className="hover:text-foreground">
-            {t("legal.privacy")}
-          </Link>
+        <nav className="flex flex-wrap gap-x-4 gap-y-1">
+          {LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className="hover:text-foreground">
+              {t(`legal.${link.key}`)}
+            </Link>
+          ))}
         </nav>
       </div>
     </footer>

@@ -9,10 +9,21 @@ import * as s from "../schema";
 import { SETTING_KEYS } from "../schema";
 import { COUNTRIES, CUISINES, REGIONS } from "./data/geography";
 import { dietsFor, INGREDIENT_CATEGORIES, INGREDIENTS } from "./data/ingredients";
-import { LEGAL_DRAFTS, PROCESSING_REGISTER } from "./data/legal";
+import { LEGAL_DOCUMENTS, PROCESSING_REGISTER } from "./data/legal";
 import { INFLUENCES, LANGUAGES, MEAL_MOMENTS, STYLES } from "./data/reference";
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+/** Compare deux numéros de version « 1.0 », « 1.2 », « 0.1 » (négatif si a < b). */
+export function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (diff !== 0) return diff;
+  }
+  return 0;
+}
 type TranslationTable =
   | typeof s.mealMomentTranslations
   | typeof s.culinaryInfluenceTranslations
@@ -204,9 +215,10 @@ async function seedAccessAndLegal(tx: Tx) {
     ])
     .onConflictDoNothing({ target: s.siteSettings.key });
 
-  for (const doc of LEGAL_DRAFTS) {
-    const existing = await tx
-      .select({ id: s.legalDocuments.id })
+  // Documents juridiques : une version plus récente que celle en vigueur la remplace.
+  for (const doc of LEGAL_DOCUMENTS) {
+    const [current] = await tx
+      .select({ id: s.legalDocuments.id, version: s.legalDocuments.version })
       .from(s.legalDocuments)
       .where(
         and(
@@ -215,16 +227,25 @@ async function seedAccessAndLegal(tx: Tx) {
           eq(s.legalDocuments.isCurrent, true),
         ),
       );
-    if (existing.length === 0) {
+    if (current && compareVersions(current.version, doc.version) >= 0) continue;
+    if (current) {
       await tx
-        .insert(s.legalDocuments)
-        .values({ ...doc, locale: "fr", publishedAt: new Date(), isCurrent: true })
-        .onConflictDoNothing();
+        .update(s.legalDocuments)
+        .set({ isCurrent: false, updatedAt: new Date() })
+        .where(eq(s.legalDocuments.id, current.id));
     }
+    await tx
+      .insert(s.legalDocuments)
+      .values({ ...doc, locale: "fr", publishedAt: new Date(), isCurrent: true })
+      .onConflictDoUpdate({
+        target: [s.legalDocuments.type, s.legalDocuments.locale, s.legalDocuments.version],
+        set: { title: doc.title, bodyMd: doc.bodyMd, isCurrent: true, updatedAt: new Date() },
+      });
   }
 
-  const registerCount = await tx.select({ n: sql<number>`count(*)::int` }).from(s.processingRegister);
-  if (registerCount[0]?.n === 0) await tx.insert(s.processingRegister).values(PROCESSING_REGISTER);
+  // Registre des traitements : reflète toujours la dernière description.
+  await tx.delete(s.processingRegister);
+  await tx.insert(s.processingRegister).values(PROCESSING_REGISTER);
 }
 
 /** Crée ou met à jour toutes les données de référence. */

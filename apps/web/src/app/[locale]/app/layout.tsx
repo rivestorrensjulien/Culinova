@@ -5,6 +5,7 @@ import { CommandButton, CommandPalette } from "@/components/command-palette";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
+import { stopImpersonatingAction } from "@/server/actions/admin";
 import { signOutAction } from "@/server/actions/auth";
 import { requireUser } from "@/server/session";
 
@@ -26,8 +27,13 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-dvh flex-col">
       {session.impersonatedBy ? (
-        <div className="bg-warning px-4 py-2 text-center text-sm font-medium text-background">
+        <div className="flex flex-wrap items-center justify-center gap-3 bg-warning px-4 py-2 text-center text-sm font-medium text-background">
           {t("impersonating", { email: session.user.email })}
+          <form action={stopImpersonatingAction}>
+            <button type="submit" className="cursor-pointer underline underline-offset-2">
+              {t("stopImpersonating")}
+            </button>
+          </form>
         </div>
       ) : null}
       <SiteHeader homeHref="/app">
@@ -50,8 +56,8 @@ export default async function AppLayout({
           <Link href="/app/reglages" className="rounded-full px-3 py-1.5 hover:bg-raised">
             {t("nav.settings")}
           </Link>
-          <Link href="/app/compte/securite" className="rounded-full px-3 py-1.5 hover:bg-raised">
-            {t("nav.security")}
+          <Link href="/app/compte" className="rounded-full px-3 py-1.5 hover:bg-raised">
+            {t("nav.account")}
           </Link>
           {session.user.role === "admin" && !session.impersonatedBy ? (
             <Link href="/admin" className="rounded-full px-3 py-1.5 hover:bg-raised">

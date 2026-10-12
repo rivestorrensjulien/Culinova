@@ -1,19 +1,24 @@
 "use server";
 
 import { renderInvitationEmail, sendEmail } from "@culinova/emails";
-import { invitations, users } from "@culinova/db/schema";
-import { and, eq, isNotNull } from "drizzle-orm";
+import { impersonationSessions, invitations, users } from "@culinova/db/schema";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getLocale } from "next-intl/server";
 import { z } from "zod";
+import { readQuotaForm, overridesFrom, readUsdToMicros } from "@/lib/admin-forms";
+import { redirect } from "@/i18n/navigation";
 import { createInvitation, restoreInvitation, revokeInvitation } from "../access/invitations";
 import { type ActorContext, reactivateUser, revokeAllSessions, suspendUser } from "../access/users";
 import { audit } from "../audit";
 import { appUrl, localePrefix } from "../auth";
 import { getDb } from "../db";
 import { requestMeta } from "../request";
-import { getAuth, requireAdmin } from "../session";
+import { LEGAL_IDENTITY_FIELDS, parseLegalIdentity } from "@/lib/legal";
+import { saveAiBudgetCap, saveDefaultQuotas, saveUserQuotaOverrides } from "../admin-settings";
+import { saveLegalIdentity } from "../legal";
+import { getAuth, getCurrentSession, requireAdmin } from "../session";
 
 async function adminContext(): Promise<ActorContext> {
   const session = await requireAdmin(await getLocale());
@@ -150,4 +155,124 @@ export async function resendMagicLinkAction(formData: FormData): Promise<void> {
   });
   await audit(db, { ...ctx, action: "user.magic_link.resend", entity: "user", entityId: userId });
   revalidatePath("/admin/journal");
+}
+
+// ─── Quotas et budget IA ────────────────────────────────────────────────────
+
+export type AdminFormState =
+  | { status: "idle" }
+  | { status: "saved"; message: string }
+  | { status: "error"; message: string };
+
+const QUOTA_LABELS = {
+  recipes: "recettes par mois",
+  images: "images par mois",
+  regenerations: "régénérations par recette",
+} as const;
+
+export async function saveDefaultQuotasAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const ctx = await adminContext();
+  const read = readQuotaForm(formData);
+  if (!read.ok) return { status: "error", message: `Valeur invalide : ${QUOTA_LABELS[read.field]}.` };
+  await saveDefaultQuotas(getDb(), read.value, ctx);
+  revalidatePath("/admin", "layout");
+  return { status: "saved", message: "Quotas par défaut enregistrés." };
+}
+
+export async function saveAiBudgetAction(_prev: AdminFormState, formData: FormData): Promise<AdminFormState> {
+  const ctx = await adminContext();
+  const read = readUsdToMicros(formData.get("cap"));
+  if (!read.ok)
+    return { status: "error", message: "Indiquez un montant en dollars, par exemple 50 ou 12,50." };
+  await saveAiBudgetCap(getDb(), read.value, ctx);
+  revalidatePath("/admin", "layout");
+  return { status: "saved", message: "Plafond de budget IA enregistré." };
+}
+
+export async function saveUserQuotasAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const ctx = await adminContext();
+  const userId = idFrom(formData);
+  const read = readQuotaForm(formData);
+  if (!read.ok) return { status: "error", message: `Valeur invalide : ${QUOTA_LABELS[read.field]}.` };
+  await saveUserQuotaOverrides(getDb(), userId, overridesFrom(read.value), ctx);
+  revalidatePath("/admin", "layout");
+  return { status: "saved", message: "Quotas de la personne enregistrés." };
+}
+
+/** Identité de l'éditeur reprise dans les mentions légales et la politique de confidentialité. */
+export async function saveLegalIdentityAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const ctx = await adminContext();
+  const raw = Object.fromEntries(LEGAL_IDENTITY_FIELDS.map((f) => [f.key, formData.get(f.key)]));
+  await saveLegalIdentity(getDb(), parseLegalIdentity(raw), ctx);
+  revalidatePath("/", "layout");
+  return {
+    status: "saved",
+    message: "Informations légales enregistrées : les pages juridiques sont à jour.",
+  };
+}
+
+// ─── Se connecter en tant que ───────────────────────────────────────────────
+
+/** Ouvre une session au nom de la personne (1 h au plus), tracée dans le journal d'audit. */
+export async function impersonateUserAction(formData: FormData): Promise<void> {
+  const ctx = await adminContext();
+  const userId = idFrom(formData);
+  if (userId === ctx.actorId) throw new Error("Vous êtes déjà connecté·e à votre propre compte.");
+  const db = getDb();
+  const [user] = await db
+    .select({ role: users.role, banned: users.banned })
+    .from(users)
+    .where(eq(users.id, userId));
+  if (!user || user.banned || user.role === "admin") {
+    throw new Error("Impossible de se connecter en tant que cette personne.");
+  }
+  await getAuth().api.impersonateUser({ body: { userId }, headers: await headers() });
+  await db.insert(impersonationSessions).values({ adminId: ctx.actorId!, userId });
+  await audit(db, {
+    ...ctx,
+    impersonatorId: ctx.actorId,
+    action: "user.impersonate.start",
+    entity: "user",
+    entityId: userId,
+  });
+  return redirect({ href: "/app", locale: await getLocale() });
+}
+
+/** Termine la session « en tant que » et revient à l'administration. */
+export async function stopImpersonatingAction(): Promise<void> {
+  const locale = await getLocale();
+  const session = await getCurrentSession();
+  if (!session?.impersonatedBy) return redirect({ href: "/app", locale });
+  const { ip, userAgent } = await requestMeta();
+  const db = getDb();
+  await db
+    .update(impersonationSessions)
+    .set({ endedAt: new Date() })
+    .where(
+      and(
+        eq(impersonationSessions.adminId, session.impersonatedBy),
+        eq(impersonationSessions.userId, session.user.id),
+        isNull(impersonationSessions.endedAt),
+      ),
+    );
+  await audit(db, {
+    actorId: session.impersonatedBy,
+    impersonatorId: session.impersonatedBy,
+    action: "user.impersonate.stop",
+    entity: "user",
+    entityId: session.user.id,
+    ip,
+    userAgent,
+  });
+  await getAuth().api.stopImpersonating({ headers: await headers() });
+  return redirect({ href: "/admin/utilisateurs", locale });
 }

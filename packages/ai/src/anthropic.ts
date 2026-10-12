@@ -149,7 +149,7 @@ export class AnthropicAdapter implements LlmAdapter {
       messages.push({ role: "assistant", content: response.content });
       messages.push({
         role: "user",
-        content: `La réponse ne respecte pas les règles :\n- ${lastProblems.join("\n- ")}\nCorrige ces points et renvoie la recette complète.`,
+        content: `La réponse ne respecte pas les règles :\n- ${lastProblems.join("\n- ")}\nCorrige ces points et renvoie la réponse complète.`,
       });
     }
     throw new AiGenerationError(

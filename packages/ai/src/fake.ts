@@ -251,7 +251,9 @@ export function fakeSocial(user: string): SocialContent {
     instagramCaption: english
       ? "Golden outside, silky inside 🔥 Save it for the weekend!"
       : "Doré dehors, fondant dedans 🔥 Enregistre-la pour ce week-end !",
-    tiktok: english ? "Watch the torch do its magic…" : "Regardez le chalumeau faire son œuvre…",
+    tiktok: english
+      ? "Hook (0-3 s): Watch the torch do its magic…\nPlan 1: Lay out the ingredients\nPlan 2: Torch the salmon\nPlan 3: Plate it up and save the recipe"
+      : "Accroche (0-3 s) : Regardez le chalumeau faire son œuvre…\nPlan 1 : Disposer les ingrédients sur le plan de travail\nPlan 2 : Saisir le saumon au chalumeau\nPlan 3 : Dresser l'assiette et inviter à enregistrer la recette",
     pinterest: english
       ? "Torched salmon sushi rice bowl recipe"
       : "Recette saumon mi-cuit riz vinaigré gingembre",

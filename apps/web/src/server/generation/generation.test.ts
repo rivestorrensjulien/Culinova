@@ -95,7 +95,7 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
     ]) {
       expect(prompt).toContain(expected);
     }
-    expect(ai.calls[1]!.promptId).toBe("social.generate@2");
+    expect(ai.calls[1]!.promptId).toBe("social.generate@3");
 
     const finished = await draftRow(draft.id);
     expect(finished).toMatchObject({ status: "done", error: null });

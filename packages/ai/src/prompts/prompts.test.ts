@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { fakeRecipe } from "../fake";
+import { fakeRecipe, fakeSocial } from "../fake";
 import { buildRecipePrompt, buildRegenerationPrompt, RECIPE_PROMPT_VERSION } from "./recipe";
 import { isFusion, type RecipeRequest } from "./request";
-import { buildSocialPrompt } from "./social";
+import { buildSocialPrompt, socialProblems } from "./social";
 
 const japanese = {
   label: "Japonaise",
@@ -105,7 +105,21 @@ describe("prompt de recette", () => {
 
   it("demande un script TikTok structuré, sans nombre d'ingrédients", () => {
     const { system } = buildSocialPrompt(fakeRecipe("Nombre de personnes : 4"), "fr");
-    expect(system).toContain("une scène par ligne");
+    expect(system).toContain("une ligne par scène");
+    expect(system).toContain("commence par un verbe à l'infinitif");
+    expect(system).toContain("aucune répétition ni redondance");
     expect(system).toContain("Ne donne jamais de nombre d'ingrédients");
+  });
+
+  it("vérifie la structure du script TikTok", () => {
+    expect(socialProblems(fakeSocial("français"))).toEqual([]);
+    expect(
+      socialProblems({ tiktok: "Accroche (0-3 s) : Miam\nPlan 1 : Couper\nPlan 2 : Cuire\nFinal : Dresser" }),
+    ).toEqual([expect.stringContaining("ligne 4 : attendu « Plan 3 : »")]);
+    expect(socialProblems({ tiktok: "Plan 1 : Couper\nPlan 2 : Cuire" })).toEqual([
+      expect.stringContaining("Accroche"),
+      expect.stringContaining("ligne 2 : attendu « Plan 1 : »"),
+      expect.stringContaining("au moins deux plans"),
+    ]);
   });
 });

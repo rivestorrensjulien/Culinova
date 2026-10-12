@@ -17,6 +17,7 @@ import {
   recipeProblems,
   SOCIAL_PROMPT_VERSION,
   socialContentSchema,
+  socialProblems,
 } from "@culinova/ai";
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
@@ -197,6 +198,8 @@ async function generateSocial(
       promptId: SOCIAL_PROMPT_VERSION,
       ...buildSocialPrompt(input.recipe, input.language),
       schema: socialContentSchema,
+      // Script TikTok en anglais : « Hook » au lieu d'« Accroche » ; le contrôle ne s'applique qu'au français.
+      ...(input.language === "fr" ? { validate: socialProblems } : {}),
       maxOutputTokens: 4000,
     });
     await saveSocialContent(db, input.versionId, input.language, result.data);

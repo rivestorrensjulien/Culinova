@@ -180,7 +180,12 @@ export async function runImageGeneration(
     const sourceId = randomUUID();
     const folder = `${generation.userId}/${versionId}/${sourceId}`;
     await storage.put(`${folder}/source.jpg`, source, "image/jpeg");
-    const crops = [];
+    const crops: Array<{
+      format: (typeof IMAGE_FORMATS)[number];
+      key: string;
+      width: number;
+      height: number;
+    }> = [];
     for (const format of IMAGE_FORMATS) {
       const box = centeredCrop(width, height, format);
       const bytes = await sharp(source).extract(box).jpeg({ quality: 88, mozjpeg: true }).toBuffer();

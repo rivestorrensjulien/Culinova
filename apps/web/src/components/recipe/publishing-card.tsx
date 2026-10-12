@@ -59,9 +59,9 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                   ) : status.status === "published" ? (
                     <Badge tone="success">
                       {t("published", {
-                        date: format.dateTime(new Date(status.publishedAt ?? Date.now()), {
-                          dateStyle: "medium",
-                        }),
+                        date: status.publishedAt
+                          ? format.dateTime(new Date(status.publishedAt), { dateStyle: "medium" })
+                          : "",
                       })}
                     </Badge>
                   ) : (

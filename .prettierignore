@@ -5,3 +5,4 @@ pnpm-lock.yaml
 **/.turbo
 **/drizzle
 docs/
+packages/db/src/seed/data/ciqual.json

@@ -1,0 +1,66 @@
+name: Données Ciqual
+
+# Télécharge la table Ciqual (ANSES), la convertit en un fichier compact
+# (packages/db/src/seed/data/ciqual.json) et l'enregistre dans le dépôt.
+# Le fichier est ensuite chargé en base à chaque déploiement (seed).
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: Archive ZIP de la table Ciqual au format XML
+        default: https://ciqual.anses.fr/cms/sites/default/files/inline-files/XML_2020_07_07.zip
+      version:
+        description: Version de la table
+        default: "2020-07-07"
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    name: Import de la table Ciqual
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Fichiers de la version la plus récente (recherche.data.gouv)
+        continue-on-error: true
+        run: |
+          curl -sSL --max-time 30 -o files.json \
+            "https://entrepot.recherche.data.gouv.fr/api/datasets/:persistentId/versions/:latest/files?persistentId=doi:10.57745/RDMHWY" || true
+          node -e '
+            const text = require("fs").readFileSync("files.json", "utf8");
+            try {
+              for (const f of JSON.parse(text).data)
+                console.log(`::notice::${f.dataFile.id} · ${f.label} · ${f.dataFile.contentType} · ${f.dataFile.filesize}`);
+            } catch { console.log(`::notice::Liste indisponible : ${text.slice(0, 300).replace(/\s+/g, " ")}`); }
+          '
+
+      - name: Téléchargement
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+        run: |
+          curl -sSL --fail --max-time 300 -o ciqual.zip "$SOURCE_URL"
+          mkdir -p ciqual && unzip -o -q ciqual.zip -d ciqual
+          find ciqual -type f -printf '::notice::%p (%s octets)\n'
+
+      - name: Conversion
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node packages/db/scripts/ciqual-convert.mjs ciqual packages/db/src/seed/data/ciqual.json "$VERSION"
+
+      - name: Enregistrement dans le dépôt
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packages/db/src/seed/data/ciqual.json
+          if git diff --cached --quiet; then echo "::notice::Aucun changement"; exit 0; fi
+          git commit -m "Mettre à jour la table Ciqual ($VERSION)"
+          git push

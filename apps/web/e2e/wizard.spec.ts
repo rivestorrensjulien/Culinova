@@ -66,6 +66,8 @@ async function fillWizardUpToGeneration(page: Page) {
 }
 
 test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchissement, quota", async ({ page }) => {
+  // Parcours complet (génération, prix, bases maison, nutrition) : plus long que la moyenne.
+  test.setTimeout(150_000);
   await signIn(page, COOK_EMAIL);
   await page.goto("/app/creer");
   await fillWizardUpToGeneration(page);

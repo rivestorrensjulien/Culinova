@@ -69,6 +69,7 @@ export function translationProblems(data: RecipeTranslationOutput, recipe: Gener
   }
   if (data.steps.length !== recipe.steps.length) {
     problems.push(`steps doit compter ${recipe.steps.length} étapes (reçu ${data.steps.length}).`);
+    return problems;
   }
   recipe.steps.forEach((step, index) => {
     const translated = data.steps[index];

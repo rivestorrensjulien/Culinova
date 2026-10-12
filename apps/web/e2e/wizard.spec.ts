@@ -342,7 +342,8 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await page.goto("/app/creer");
   await page.getByRole("button", { name: "Nouvelle recette" }).first().click();
   await fillWizardUpToGeneration(page);
-  await expect(page.getByTestId("remaining")).toHaveText("4 recettes disponibles ce mois-ci");
+  // 2 recettes utilisées : la recette créée et la recette importée.
+  await expect(page.getByTestId("remaining")).toHaveText("3 recettes disponibles ce mois-ci");
   await setRecipesUsed(5); // le quota est atteint pendant que la page est ouverte
   await page.getByRole("button", { name: "Générer la recette" }).click();
   await expect(page.getByRole("alert").filter({ hasText: "recettes du mois" })).toContainText(

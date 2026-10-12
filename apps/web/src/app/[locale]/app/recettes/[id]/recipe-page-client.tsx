@@ -3,6 +3,7 @@
 import { Button, Card, CardBody, cx, Input, Notice, Spinner } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FavoriteButton } from "@/components/favorite-button";
 import { NutritionCard } from "@/components/recipe/nutrition-card";
 import { PhotoCard } from "@/components/recipe/photo-card";
 import { PricingCard } from "@/components/recipe/pricing-card";
@@ -202,6 +203,9 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         pendingLineIds={new Set(pendingBases.keys())}
         {...(viewingOld || isBase ? {} : { onMakeHomemade: makeHomemade })}
         photo={<PhotoCard recipe={recipe} onChanged={reload} canGenerate={!viewingOld} />}
+        titleAction={
+          <FavoriteButton key={recipe.recipeId} recipeId={recipe.recipeId} initial={recipe.favorite} />
+        }
         actions={
           isBase || viewingOld ? undefined : (
             <Card>

@@ -603,5 +603,34 @@
       "invalid_output": "Aucune image n'a été renvoyée. Votre crédit n'a pas été décompté : réessayez.",
       "unexpected": "Une erreur est survenue. Votre crédit n'a pas été décompté : réessayez."
     }
+  },
+  "Library": {
+    "searchLabel": "Rechercher une recette",
+    "searchPlaceholder": "Rechercher : nom, ingrédient ou « poulet rapide sans gluten »",
+    "filters": "Filtres",
+    "favorites": "Favoris",
+    "under1h": "Moins d'1 h",
+    "underMinutes": "Moins de {minutes} min",
+    "count": "{count, plural, =0 {Aucune recette} one {# recette} other {# recettes}}",
+    "reset": "Tout effacer",
+    "sort": "Trier par",
+    "sortRecent": "Les plus récentes",
+    "sortCost": "Coût par portion",
+    "sortTime": "Temps total",
+    "noMatch": "Aucune recette ne correspond à ces critères.",
+    "perPortion": "{price} / portion",
+    "favorite": "Ajouter aux favoris",
+    "unfavorite": "Retirer des favoris"
+  },
+  "Command": {
+    "title": "Recherche rapide",
+    "button": "Rechercher",
+    "placeholder": "Une recette, une base ou une page…",
+    "recipe": "Recette",
+    "base": "Base",
+    "page": "Page",
+    "loading": "Chargement…",
+    "empty": "Aucun résultat.",
+    "help": "↑ ↓ pour choisir · Entrée pour ouvrir · Échap pour fermer"
   }
 }

@@ -15,6 +15,7 @@ export function RecipeView({
   pendingLineIds,
   initialTargetG,
   photo,
+  titleAction,
 }: {
   recipe: RecipeData;
   actions?: ReactNode;
@@ -26,6 +27,8 @@ export function RecipeView({
   initialTargetG?: number;
   /** Photo de la recette (au-dessus des ingrédients). */
   photo?: ReactNode;
+  /** Action à droite du titre (favori). */
+  titleAction?: ReactNode;
 }) {
   const t = useTranslations("Recipe");
   const format = useFormatter();
@@ -96,9 +99,12 @@ export function RecipeView({
           {recipe.versionCount > 1 ? <Badge>{t("version", { number: recipe.versionNo })}</Badge> : null}
           {baseInfo ? <Badge tone="sage">{t("baseBadge")}</Badge> : null}
         </div>
-        <h2 className="font-display text-4xl leading-tight text-balance" data-testid="recipe-name">
-          {recipe.name}
-        </h2>
+        <div className="flex items-start justify-between gap-4">
+          <h2 className="font-display text-4xl leading-tight text-balance" data-testid="recipe-name">
+            {recipe.name}
+          </h2>
+          {titleAction}
+        </div>
         {recipe.description ? <p className="max-w-3xl text-lg text-muted">{recipe.description}</p> : null}
         <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
           {[

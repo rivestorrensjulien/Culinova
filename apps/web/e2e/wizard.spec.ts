@@ -214,6 +214,25 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await page.goto("/app/recettes");
   await expect(page.getByText("Saumon snacké")).toBeVisible();
 
+  // Bibliothèque : recherche en langage courant, favoris, recherche rapide Ctrl+K.
+  const search = page.getByRole("searchbox", { name: "Rechercher une recette" });
+  await search.fill("saumon");
+  await expect(page.getByTestId("library-count")).toContainText("1 recette");
+  await search.fill("saumon rapide");
+  await expect(page.getByTestId("library-count")).toContainText("Aucune recette");
+  await page.getByRole("button", { name: "Tout effacer" }).click();
+  const card = page.getByTestId("library-card").first();
+  await card.getByTestId("favorite").click();
+  await expect(card.getByTestId("favorite")).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "★ Favoris" }).click();
+  await expect(page.getByTestId("library-card")).toHaveCount(1);
+  await page.keyboard.press("Control+k");
+  const palette = page.getByTestId("command-palette");
+  await palette.getByRole("textbox").fill("snacké");
+  await expect(palette.getByRole("option").first()).toContainText("Saumon snacké");
+  await palette.getByRole("textbox").press("Enter");
+  await expect(page.getByTestId("recipe-name")).toContainText("Saumon snacké");
+
   // 6e recette du mois : refusée avec un message clair.
   await page.goto("/app/creer");
   await page.getByRole("button", { name: "Nouvelle recette" }).first().click();

@@ -1,6 +1,7 @@
 import { Button } from "@culinova/ui";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
+import { CommandButton, CommandPalette } from "@/components/command-palette";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
@@ -58,6 +59,7 @@ export default async function AppLayout({
             </Link>
           ) : null}
         </nav>
+        <CommandButton />
         <form action={signOutAction}>
           <Button type="submit" variant="ghost" size="sm">
             {common("signOut")}
@@ -66,6 +68,7 @@ export default async function AppLayout({
       </SiteHeader>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-8">{children}</main>
       <SiteFooter />
+      <CommandPalette />
     </div>
   );
 }

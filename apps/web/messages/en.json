@@ -603,5 +603,34 @@
       "invalid_output": "No image was returned. Your credit was not used: try again.",
       "unexpected": "Something went wrong. Your credit was not used: try again."
     }
+  },
+  "Library": {
+    "searchLabel": "Search recipes",
+    "searchPlaceholder": "Search: name, ingredient or “quick gluten-free chicken”",
+    "filters": "Filters",
+    "favorites": "Favourites",
+    "under1h": "Under 1 h",
+    "underMinutes": "Under {minutes} min",
+    "count": "{count, plural, =0 {No recipes} one {# recipe} other {# recipes}}",
+    "reset": "Clear all",
+    "sort": "Sort by",
+    "sortRecent": "Most recent",
+    "sortCost": "Cost per serving",
+    "sortTime": "Total time",
+    "noMatch": "No recipe matches these filters.",
+    "perPortion": "{price} / serving",
+    "favorite": "Add to favourites",
+    "unfavorite": "Remove from favourites"
+  },
+  "Command": {
+    "title": "Quick search",
+    "button": "Search",
+    "placeholder": "A recipe, a base or a page…",
+    "recipe": "Recipe",
+    "base": "Base",
+    "page": "Page",
+    "loading": "Loading…",
+    "empty": "No results.",
+    "help": "↑ ↓ to choose · Enter to open · Esc to close"
   }
 }

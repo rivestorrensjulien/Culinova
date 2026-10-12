@@ -4,7 +4,7 @@ import { Button, buttonClasses, Card, CardBody, cx, Notice, Spinner, Textarea } 
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FavoriteButton } from "@/components/favorite-button";
-import { Link } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { applyTranslation } from "@/components/recipe/translation";
 import { TranslationBar } from "@/components/recipe/translation-bar";
 import { NutritionCard } from "@/components/recipe/nutrition-card";
@@ -13,6 +13,7 @@ import { PricingCard } from "@/components/recipe/pricing-card";
 import { RecipeView } from "@/components/recipe/recipe-view";
 import { baseGenerationStatusAction, makeHomemadeAction } from "@/server/actions/bases";
 import { estimateRecipePricesAction } from "@/server/actions/costing";
+import { recipeShoppingListAction } from "@/server/actions/kitchen";
 import { SocialContentView } from "@/components/recipe/social-content";
 import {
   generationFailureAction,
@@ -80,6 +81,9 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
       });
   }, [needsPrices, viewingOld, pending, recipeId, reload]);
   const [instruction, setInstruction] = useState("");
+  const [creatingList, setCreatingList] = useState(false);
+  const router = useRouter();
+  const tsh = useTranslations("Shopping");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -259,6 +263,25 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
             >
               {tr("technicalSheet")}
             </Link>
+          )}
+          {isBase ? null : (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={creatingList}
+              onClick={async () => {
+                setCreatingList(true);
+                const listId = await recipeShoppingListAction(
+                  recipe.recipeId,
+                  recipe.servings,
+                  recipe.name,
+                ).catch(() => null);
+                if (listId) router.push(`/app/courses/${listId}`);
+                else setCreatingList(false);
+              }}
+            >
+              {creatingList ? tsh("creating") : tsh("fromRecipe")}
+            </Button>
           )}
         </div>
       )}

@@ -263,6 +263,37 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await palette.getByRole("textbox").press("Enter");
   await expect(page.getByTestId("recipe-name")).toContainText("Saumon snacké");
 
+  // Menu : le plat servi pour 8 couverts, coût par convive, puis liste de courses par rayon.
+  await page.goto("/app/menus");
+  await page.getByLabel("Nom du menu").fill("Dîner test");
+  await page.getByLabel("Couverts").fill("8");
+  await page.getByRole("button", { name: "Créer le menu" }).click();
+  await expect(page.getByTestId("menu-name")).toHaveText("Dîner test");
+  await page
+    .getByLabel("Ajouter une recette")
+    .selectOption({
+      label: await page
+        .getByLabel("Ajouter une recette")
+        .locator("option", { hasText: "Saumon snacké" })
+        .first()
+        .innerText(),
+    });
+  await page.getByRole("button", { name: "Ajouter au menu" }).click();
+  await expect(page.getByTestId("menu-item")).toHaveCount(1);
+  await expect(page.getByTestId("menu-item")).toContainText("Saumon snacké");
+  await expect(page.getByTestId("menu-per-guest")).toContainText("€");
+  await page.getByRole("button", { name: "Créer la liste de courses" }).click();
+  await expect(page.getByRole("heading", { name: "Dîner test" })).toBeVisible();
+  const items = page.getByTestId("shopping-item");
+  await expect(items.first()).toBeVisible();
+  const itemCount = await items.count();
+  await expect(page.getByTestId("shopping-progress")).toHaveText(`0 sur ${itemCount} articles`);
+  await items.filter({ hasText: "Riz à sushi" }).getByRole("checkbox").check();
+  await expect(page.getByTestId("shopping-progress")).toHaveText(`1 sur ${itemCount} articles`);
+  await page.reload();
+  await expect(page.getByTestId("shopping-progress")).toHaveText(`1 sur ${itemCount} articles`);
+  await page.goto(recipeUrl);
+
   // Modification par instruction : nouvelle version ciblée (2e et dernière régénération).
   await page.getByRole("textbox", { name: "Modifier la recette" }).fill("Remplace le saumon par du tofu");
   await page.getByRole("button", { name: "Appliquer la modification" }).click();

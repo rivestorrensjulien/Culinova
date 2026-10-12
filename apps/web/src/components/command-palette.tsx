@@ -19,6 +19,8 @@ const PAGES = [
   { key: "create", href: "/app/creer" },
   { key: "recipes", href: "/app/recettes" },
   { key: "bases", href: "/app/bases" },
+  { key: "menus", href: "/app/menus" },
+  { key: "shopping", href: "/app/courses" },
   { key: "ingredients", href: "/app/ingredients" },
   { key: "settings", href: "/app/reglages" },
   { key: "account", href: "/app/compte" },

@@ -31,9 +31,8 @@ export interface PriceProposal {
   note: string | null;
 }
 
-export type EstimateResult =
-  | { ok: true; proposals: PriceProposal[] }
-  | { ok: false; reason: "empty" | "budget" | "failed" };
+type EstimateFailure = { ok: false; reason: "empty" | "budget" | "failed" };
+export type EstimateResult = { ok: true; proposals: PriceProposal[] } | EstimateFailure;
 
 export async function estimatePrices(
   db: Database,

@@ -351,7 +351,31 @@ export function fakeImagePrompt(user: string) {
   };
 }
 
+/** Traduction factice : le texte d'origine préfixé de la langue, jetons conservés. */
+export function fakeTranslation(user: string) {
+  const english = /Langue cible : anglais/.test(user);
+  const tag = english ? "EN" : "FR";
+  const source = JSON.parse(user.slice(user.indexOf("{"))) as {
+    name: string;
+    description: string;
+    cuisineLabel: string;
+    fusionLabel: string | null;
+    equipment: string[];
+    tips: string[];
+    ingredients: Array<{ ref: string; name: string; displayUnit: string | null }>;
+    steps: Array<{ action: string; expectedResult: string | null }>;
+    platingDescription: string;
+  };
+  return {
+    ...source,
+    name: `${source.name} [${tag}]`,
+    ingredients: source.ingredients.map((i) => ({ ...i, name: `${i.name} [${tag}]` })),
+    steps: source.steps.map((s) => ({ ...s, action: `[${tag}] ${s.action}` })),
+  };
+}
+
 const defaultResponder: Responder = (request) => {
+  if (request.promptId.startsWith("recipe.translate")) return fakeTranslation(request.user);
   if (request.promptId.startsWith("image.")) return fakeImagePrompt(request.user);
   if (request.promptId.startsWith("nutrition.")) return fakeNutritionMatches(request.user);
   if (request.promptId.startsWith("base.")) return fakeBase(request.user);

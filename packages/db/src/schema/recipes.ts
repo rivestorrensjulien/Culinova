@@ -207,6 +207,8 @@ export const recipeTranslations = pgTable(
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
     sourceVersionNo: integer("source_version_no").notNull(),
     status: text("status").$type<"up_to_date" | "outdated">().notNull().default("up_to_date"),
+    /** Traduction relue et validée par la personne (l'IA propose, la personne valide). */
+    validatedAt: tz("validated_at"),
     ...timestamps,
   },
   (t) => [uniqueIndex("recipe_translations_unique").on(t.recipeVersionId, t.languageCode)],

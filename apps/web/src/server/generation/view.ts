@@ -8,6 +8,7 @@ import { computeRecipeCost, type RecipeCost } from "../costing/recipe-cost";
 import { computeRecipeNutrition, type NutritionView } from "../nutrition/recipe-nutrition";
 import { imagesAvailable } from "../images/storage";
 import { isFavorite } from "../library";
+import { loadTranslationState, type TranslationState } from "../translation";
 import { getMonthlyUsage, getQuotaLimits } from "../quotas";
 
 /** Préparation de « Mes bases » utilisée par une ligne d'ingrédient. */
@@ -117,6 +118,8 @@ export interface RecipeView {
   images: RecipeImages;
   /** Recette marquée en favori par la personne. */
   favorite: boolean;
+  /** Version linguistique (traduction proposée par l'IA, à valider). */
+  translation: TranslationState;
 }
 
 export type ImageFormatName = "1:1" | "4:5" | "9:16" | "16:9";
@@ -222,6 +225,7 @@ export async function loadRecipeView(
     recipe.kind === "base" ? loadBaseInfo(db, userId, recipe.id) : null,
   ]);
   const favorite = await isFavorite(db, userId, recipe.id);
+  const translation = await loadTranslationState(db, recipe.id, version.id, recipe.originalLanguage);
   const images = await loadRecipeImages(db, userId, recipe.id, version.id, limits.images);
   const nutrition = await computeRecipeNutrition(db, userId, version.id, version.servings, {
     language: recipe.originalLanguage,
@@ -306,6 +310,7 @@ export async function loadRecipeView(
     nutrition,
     images,
     favorite,
+    translation,
   };
 }
 

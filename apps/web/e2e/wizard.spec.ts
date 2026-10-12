@@ -240,6 +240,16 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(page.getByText("Plus de régénération possible")).toBeVisible();
   await expect(page.getByTestId("photo")).toContainText("La recette a changé");
 
+  // Traduction : proposée par l'IA, à valider, bascule entre l'original et la traduction.
+  const translation = page.getByTestId("translation");
+  await translation.getByRole("button", { name: "Traduire (English)" }).click();
+  await expect(translation).toContainText("Traduction à valider", { timeout: 20_000 });
+  await expect(page.getByTestId("recipe-name")).toContainText("[EN]");
+  await translation.getByRole("button", { name: "Valider la traduction" }).click();
+  await expect(translation).toContainText("Traduction validée");
+  await translation.getByRole("button", { name: "Français · original" }).click();
+  await expect(page.getByTestId("recipe-name")).not.toContainText("[EN]");
+
   // 6e recette du mois : refusée avec un message clair.
   await page.goto("/app/creer");
   await page.getByRole("button", { name: "Nouvelle recette" }).first().click();

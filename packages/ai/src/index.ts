@@ -11,4 +11,5 @@ export * from "./prompts/prices";
 export * from "./prompts/recipe";
 export * from "./prompts/request";
 export * from "./prompts/social";
+export * from "./prompts/translate";
 export * from "./schemas";

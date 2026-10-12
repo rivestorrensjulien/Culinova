@@ -4,6 +4,8 @@ import { Button, Card, CardBody, cx, Notice, Spinner, Textarea } from "@culinova
 import { useFormatter, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FavoriteButton } from "@/components/favorite-button";
+import { applyTranslation } from "@/components/recipe/translation";
+import { TranslationBar } from "@/components/recipe/translation-bar";
 import { NutritionCard } from "@/components/recipe/nutrition-card";
 import { PhotoCard } from "@/components/recipe/photo-card";
 import { PricingCard } from "@/components/recipe/pricing-card";
@@ -48,6 +50,11 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
       ),
   );
   const isBase = recipe.kind === "base";
+  // Version linguistique affichée : l'originale, ou la traduction de la version active.
+  const [showTranslation, setShowTranslation] = useState(false);
+  const translated = recipe.translation.current;
+  const displayed =
+    showTranslation && translated && !viewingOld ? applyTranslation(recipe, translated.payload) : recipe;
   // Recharge la recette affichée (après une photo, une correspondance nutritionnelle…).
   const recipeId = recipe.recipeId;
   const versionNo = recipe.versionNo;
@@ -212,9 +219,17 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
           ) : null}
         </section>
       ) : null}
+      {viewingOld ? null : (
+        <TranslationBar
+          recipe={recipe}
+          showing={showTranslation}
+          onShow={setShowTranslation}
+          onChanged={reload}
+        />
+      )}
       <RecipeView
         key={`view-${recipe.versionId}`}
-        recipe={recipe}
+        recipe={displayed}
         initialTargetG={targetG}
         pendingLineIds={new Set(pendingBases.keys())}
         {...(viewingOld || isBase ? {} : { onMakeHomemade: makeHomemade })}

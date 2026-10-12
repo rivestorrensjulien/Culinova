@@ -9,6 +9,14 @@ import * as s from "@culinova/db/schema";
 import { asc, eq } from "drizzle-orm";
 
 export async function loadGeneratedRecipe(db: Database, versionId: string): Promise<GeneratedRecipe | null> {
+  return (await loadGeneratedRecipeWithIds(db, versionId))?.recipe ?? null;
+}
+
+/** Idem, avec les identifiants des lignes et des étapes (dans l'ordre des références i1, i2…). */
+export async function loadGeneratedRecipeWithIds(
+  db: Database,
+  versionId: string,
+): Promise<{ recipe: GeneratedRecipe; lineIds: string[]; stepIds: string[] } | null> {
   const [version] = await db.select().from(s.recipeVersions).where(eq(s.recipeVersions.id, versionId));
   if (!version) return null;
   const [lines, steps] = await Promise.all([
@@ -25,7 +33,7 @@ export async function loadGeneratedRecipe(db: Database, versionId: string): Prom
   ]);
   const refOf = new Map(lines.map((line, index) => [line.id, `i${index + 1}`]));
   const plating = (version.plating ?? {}) as Partial<GeneratedRecipe["plating"]>;
-  return {
+  const recipe: GeneratedRecipe = {
     name: version.name,
     description: version.description ?? "",
     servings: version.servings,
@@ -73,4 +81,5 @@ export async function loadGeneratedRecipe(db: Database, versionId: string): Prom
     diets: version.diets,
     tips: version.tips,
   };
+  return { recipe, lineIds: lines.map((l) => l.id), stepIds: steps.map((st) => st.id) };
 }

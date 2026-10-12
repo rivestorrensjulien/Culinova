@@ -637,5 +637,26 @@
     "loading": "Chargement…",
     "empty": "Aucun résultat.",
     "help": "↑ ↓ pour choisir · Entrée pour ouvrir · Échap pour fermer"
+  },
+  "Translation": {
+    "language": "Langue de la recette",
+    "names": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "original": "original",
+    "translate": "Traduire ({language})",
+    "update": "Mettre à jour la traduction ({language})",
+    "retranslate": "Retraduire",
+    "translating": "Traduction en cours… (environ 30 secondes)",
+    "toValidate": "Traduction à valider",
+    "validate": "Valider la traduction",
+    "validated": "Traduction validée",
+    "outdated": "La traduction porte sur la version {number} : la recette a changé depuis.",
+    "errors": {
+      "not_found": "Recette introuvable : rechargez la page.",
+      "budget": "Les traductions sont suspendues jusqu'au mois prochain (budget mensuel atteint).",
+      "failed": "La traduction a échoué. Réessayez dans un instant."
+    }
   }
 }

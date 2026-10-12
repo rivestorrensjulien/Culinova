@@ -9,6 +9,7 @@ import type { z } from "zod";
 import {
   AiGenerationError,
   type AiUsage,
+  type Attachment,
   type LlmAdapter,
   type StructuredGenerationRequest,
   type StructuredGenerationResult,
@@ -30,6 +31,14 @@ export interface AnthropicAdapterOptions {
   maxAttempts?: number;
   /** Client injecté (tests). */
   client?: Pick<Anthropic, "messages">;
+}
+
+/** Pièce jointe (photo ou PDF) au format attendu par l'API. */
+function attachmentBlock(file: Attachment): Anthropic.ContentBlockParam {
+  const source = { type: "base64" as const, data: file.data };
+  return file.mediaType === "application/pdf"
+    ? { type: "document", source: { ...source, media_type: "application/pdf" } }
+    : { type: "image", source: { ...source, media_type: file.mediaType } };
 }
 
 function extractText(message: Anthropic.Message): string {
@@ -77,12 +86,7 @@ export class AnthropicAdapter implements LlmAdapter {
     // Seul le schéma JSON est envoyé ; la validation est faite ici, avec Zod.
     const { parse: _parse, ...format } = zodOutputFormat(request.schema);
     const content: Anthropic.ContentBlockParam[] = [
-      ...(request.attachments ?? []).map(
-        (file): Anthropic.ContentBlockParam =>
-          file.mediaType === "application/pdf"
-            ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: file.data } }
-            : { type: "image", source: { type: "base64", media_type: file.mediaType, data: file.data } },
-      ),
+      ...(request.attachments ?? []).map(attachmentBlock),
       { type: "text", text: request.user },
     ];
     const messages: Anthropic.MessageParam[] = [

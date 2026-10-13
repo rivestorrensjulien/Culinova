@@ -119,6 +119,14 @@ export function PhotoCard({
                 {t("downloadHd")}
               </a>
             </div>
+            {current.prompt ? (
+              <details className="text-sm text-muted">
+                <summary className="cursor-pointer hover:text-foreground">{t("promptTitle")}</summary>
+                <p className="mt-2 leading-relaxed" lang="en">
+                  {current.prompt}
+                </p>
+              </details>
+            ) : null}
           </>
         ) : (
           <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2 rounded-lg bg-soft p-6 text-center">

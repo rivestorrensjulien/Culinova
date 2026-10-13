@@ -630,7 +630,8 @@
       "invalid_output": "Aucune image n'a été renvoyée. Votre crédit n'a pas été décompté : réessayez.",
       "unexpected": "Une erreur est survenue. Votre crédit n'a pas été décompté : réessayez."
     },
-    "changedHint": "La recette a changé : créez une photo pour cette version, d'après son nouveau dressage."
+    "changedHint": "La recette a changé : créez une photo pour cette version, d'après son nouveau dressage.",
+    "promptTitle": "Description envoyée au générateur de photo"
   },
   "Library": {
     "searchLabel": "Rechercher une recette",

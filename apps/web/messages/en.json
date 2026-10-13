@@ -630,7 +630,8 @@
       "invalid_output": "No image was returned. Your credit was not used: try again.",
       "unexpected": "Something went wrong. Your credit was not used: try again."
     },
-    "changedHint": "The recipe has changed: create a photo for this version, based on its new plating."
+    "changedHint": "The recipe has changed: create a photo for this version, based on its new plating.",
+    "promptTitle": "Description sent to the photo generator"
   },
   "Library": {
     "searchLabel": "Search recipes",

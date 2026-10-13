@@ -171,6 +171,191 @@
     "closing": {
       "title": "Ready to start cooking?",
       "cta": "Request an invitation"
+    },
+    "demo": {
+      "title": "Try it, just to see",
+      "lead": "Pick a craving, set the number of people: quantities and cost update instantly, just like in the app.",
+      "choose": "Choose an example",
+      "servings": "For {count} people",
+      "people": "{count} people",
+      "perPortion": "Cost per portion",
+      "total": "Total cost",
+      "price": "Suggested price incl. VAT",
+      "note": "Sample sheets prepared in advance. In Culinova, every recipe is created for you and costed with your own prices.",
+      "examples": [
+        {
+          "chip": "Snack · Morocco",
+          "name": "Thousand-hole pancakes, honey and melted butter",
+          "meta": "35 min · easy",
+          "costCents": 62,
+          "priceCents": 350,
+          "ingredients": [
+            {
+              "name": "Fine semolina",
+              "g": 250
+            },
+            {
+              "name": "Flour",
+              "g": 60
+            },
+            {
+              "name": "Warm water",
+              "g": 500
+            },
+            {
+              "name": "Baker's yeast",
+              "g": 7
+            },
+            {
+              "name": "Baking powder",
+              "g": 5
+            },
+            {
+              "name": "Honey",
+              "g": 120
+            },
+            {
+              "name": "Butter",
+              "g": 60
+            }
+          ]
+        },
+        {
+          "chip": "Street food · Japan",
+          "name": "Crispy chicken bao, cucumber pickles",
+          "meta": "50 min · medium",
+          "costCents": 215,
+          "priceCents": 900,
+          "ingredients": [
+            {
+              "name": "Bao buns",
+              "g": 240,
+              "piece": {
+                "g": 60,
+                "one": "bun",
+                "many": "buns"
+              }
+            },
+            {
+              "name": "Chicken thighs",
+              "g": 400
+            },
+            {
+              "name": "Cucumber",
+              "g": 150
+            },
+            {
+              "name": "Rice vinegar",
+              "g": 30
+            },
+            {
+              "name": "Mayonnaise",
+              "g": 60
+            },
+            {
+              "name": "Sriracha",
+              "g": 15
+            },
+            {
+              "name": "Coriander",
+              "g": 10
+            }
+          ]
+        },
+        {
+          "chip": "Dessert · France",
+          "name": "Thin apple tart, salted butter caramel",
+          "meta": "45 min · easy",
+          "costCents": 105,
+          "priceCents": 650,
+          "ingredients": [
+            {
+              "name": "Puff pastry",
+              "g": 230
+            },
+            {
+              "name": "Apples",
+              "g": 600
+            },
+            {
+              "name": "Sugar",
+              "g": 80
+            },
+            {
+              "name": "Salted butter",
+              "g": 50
+            },
+            {
+              "name": "Whipping cream",
+              "g": 100
+            },
+            {
+              "name": "Eggs",
+              "g": 50,
+              "piece": {
+                "g": 50,
+                "one": "egg",
+                "many": "eggs"
+              }
+            }
+          ]
+        },
+        {
+          "chip": "Main · Italy",
+          "name": "Creamy mushroom and parmesan risotto",
+          "meta": "40 min · medium",
+          "costCents": 185,
+          "priceCents": 1400,
+          "ingredients": [
+            {
+              "name": "Arborio rice",
+              "g": 320
+            },
+            {
+              "name": "Button mushrooms",
+              "g": 400
+            },
+            {
+              "name": "Vegetable stock",
+              "g": 1200
+            },
+            {
+              "name": "Parmesan",
+              "g": 80
+            },
+            {
+              "name": "Shallots",
+              "g": 60
+            },
+            {
+              "name": "White wine",
+              "g": 100
+            },
+            {
+              "name": "Butter",
+              "g": 40
+            }
+          ]
+        }
+      ]
+    },
+    "story": {
+      "title": "A real recipe, from idea to plate",
+      "lead": "Here is what Culinova produced for this recipe, unretouched.",
+      "idea": "The idea",
+      "recipe": "The recipe",
+      "costing": "The costing",
+      "photo": "The photo",
+      "social": "Social media",
+      "people": "{count} people",
+      "more": "… and {count, plural, one {# more ingredient} other {# more ingredients}}",
+      "stepsTotal": "{count} steps in total, each with its expected result.",
+      "cost": "Cost price per portion",
+      "price": "Suggested price incl. VAT",
+      "noCost": "The cost is calculated as soon as ingredient prices are known: the AI estimates them, you confirm them.",
+      "photoText": "Created from the plating, then cropped into four formats ready to publish.",
+      "socialText": "Instagram copy written for this recipe:",
+      "cta": "I want to create my own"
     }
   },
   "SignIn": {

@@ -4,6 +4,14 @@ import { expect, test } from "@playwright/test";
 test("demande d'invitation depuis la page d'accueil", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("De l'idée à l'assiette, avec l'IA.");
+  // Démo : le nombre de personnes recalcule le coût total (2,15 € par portion pour les bao).
+  const demo = page.getByTestId("demo-card");
+  await page.getByRole("radio", { name: "Street food · Japon" }).click();
+  await expect(demo).toContainText("Bao au poulet croustillant");
+  await expect(page.getByTestId("demo-total")).toHaveText(/8,60/);
+  await page.getByTestId("demo-servings").fill("10");
+  await expect(page.getByTestId("demo-total")).toHaveText(/21,50/);
+
   await page.getByTestId("hero-request").click();
 
   const form = page.getByTestId("request-form");

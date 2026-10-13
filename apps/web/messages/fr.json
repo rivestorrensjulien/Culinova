@@ -171,6 +171,191 @@
     "closing": {
       "title": "Prêt à passer en cuisine ?",
       "cta": "Demander une invitation"
+    },
+    "demo": {
+      "title": "Essayez, juste pour voir",
+      "lead": "Choisissez une envie, réglez le nombre de personnes : les quantités et le coût se recalculent aussitôt, comme dans l'application.",
+      "choose": "Choisir un exemple",
+      "servings": "Pour {count} personnes",
+      "people": "{count} personnes",
+      "perPortion": "Coût par portion",
+      "total": "Coût total",
+      "price": "Prix conseillé TTC",
+      "note": "Fiches d'exemple préparées à l'avance. Dans Culinova, chaque recette est créée pour vous et chiffrée avec vos propres prix.",
+      "examples": [
+        {
+          "chip": "Goûter · Maroc",
+          "name": "Crêpes mille trous, miel et beurre fondu",
+          "meta": "35 min · facile",
+          "costCents": 62,
+          "priceCents": 350,
+          "ingredients": [
+            {
+              "name": "Semoule fine",
+              "g": 250
+            },
+            {
+              "name": "Farine",
+              "g": 60
+            },
+            {
+              "name": "Eau tiède",
+              "g": 500
+            },
+            {
+              "name": "Levure boulangère",
+              "g": 7
+            },
+            {
+              "name": "Levure chimique",
+              "g": 5
+            },
+            {
+              "name": "Miel",
+              "g": 120
+            },
+            {
+              "name": "Beurre",
+              "g": 60
+            }
+          ]
+        },
+        {
+          "chip": "Street food · Japon",
+          "name": "Bao au poulet croustillant, pickles de concombre",
+          "meta": "50 min · moyen",
+          "costCents": 215,
+          "priceCents": 900,
+          "ingredients": [
+            {
+              "name": "Pains bao",
+              "g": 240,
+              "piece": {
+                "g": 60,
+                "one": "pain",
+                "many": "pains"
+              }
+            },
+            {
+              "name": "Hauts de cuisse de poulet",
+              "g": 400
+            },
+            {
+              "name": "Concombre",
+              "g": 150
+            },
+            {
+              "name": "Vinaigre de riz",
+              "g": 30
+            },
+            {
+              "name": "Mayonnaise",
+              "g": 60
+            },
+            {
+              "name": "Sriracha",
+              "g": 15
+            },
+            {
+              "name": "Coriandre",
+              "g": 10
+            }
+          ]
+        },
+        {
+          "chip": "Dessert · France",
+          "name": "Tarte fine aux pommes, caramel au beurre salé",
+          "meta": "45 min · facile",
+          "costCents": 105,
+          "priceCents": 650,
+          "ingredients": [
+            {
+              "name": "Pâte feuilletée",
+              "g": 230
+            },
+            {
+              "name": "Pommes",
+              "g": 600
+            },
+            {
+              "name": "Sucre",
+              "g": 80
+            },
+            {
+              "name": "Beurre demi-sel",
+              "g": 50
+            },
+            {
+              "name": "Crème entière",
+              "g": 100
+            },
+            {
+              "name": "Œufs",
+              "g": 50,
+              "piece": {
+                "g": 50,
+                "one": "œuf",
+                "many": "œufs"
+              }
+            }
+          ]
+        },
+        {
+          "chip": "Plat · Italie",
+          "name": "Risotto crémeux aux champignons et parmesan",
+          "meta": "40 min · moyen",
+          "costCents": 185,
+          "priceCents": 1400,
+          "ingredients": [
+            {
+              "name": "Riz arborio",
+              "g": 320
+            },
+            {
+              "name": "Champignons de Paris",
+              "g": 400
+            },
+            {
+              "name": "Bouillon de légumes",
+              "g": 1200
+            },
+            {
+              "name": "Parmesan",
+              "g": 80
+            },
+            {
+              "name": "Échalotes",
+              "g": 60
+            },
+            {
+              "name": "Vin blanc",
+              "g": 100
+            },
+            {
+              "name": "Beurre",
+              "g": 40
+            }
+          ]
+        }
+      ]
+    },
+    "story": {
+      "title": "Une vraie recette, de l'idée à l'assiette",
+      "lead": "Voici ce que Culinova a produit pour cette recette, sans retouche.",
+      "idea": "L'idée",
+      "recipe": "La recette",
+      "costing": "Le chiffrage",
+      "photo": "La photo",
+      "social": "Les réseaux",
+      "people": "{count} personnes",
+      "more": "… et {count, plural, one {# autre ingrédient} other {# autres ingrédients}}",
+      "stepsTotal": "{count} étapes au total, avec le résultat attendu à chacune.",
+      "cost": "Coût de revient par portion",
+      "price": "Prix conseillé TTC",
+      "noCost": "Le coût se calcule dès que les prix des ingrédients sont connus : l'IA les estime, vous les confirmez.",
+      "photoText": "Créée d'après le dressage, puis déclinée en quatre formats prêts à publier.",
+      "socialText": "Texte Instagram rédigé pour cette recette :",
+      "cta": "Je veux créer les miennes"
     }
   },
   "SignIn": {

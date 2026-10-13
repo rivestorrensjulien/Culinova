@@ -6,7 +6,10 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
+import { pricingSheet, splitStepText } from "@culinova/core";
+import { ingredientAmount } from "@/components/recipe/format";
 import { audit } from "./audit";
+import { loadRecipeView, type RecipeView } from "./generation/view";
 
 export const SHOWCASE_MAX = 6;
 
@@ -92,4 +95,106 @@ export async function getShowcase(db: Database): Promise<ShowcaseItem[]> {
     const row = rows.find((r) => r.recipeId === id && r.storageKey);
     return row?.storageKey ? [{ ...row, storageKey: row.storageKey }] : [];
   });
+}
+
+export interface ShowcaseStory {
+  recipeId: string;
+  name: string;
+  /** Idée de départ saisie dans l'assistant de création (ou, à défaut, la description). */
+  idea: string | null;
+  servings: number;
+  totalS: number;
+  ingredients: Array<{ label: string; amount: string }>;
+  /** Premières étapes, quantités écrites entre parenthèses. */
+  steps: string[];
+  /** Nombre total d'étapes de la recette. */
+  stepCount: number;
+  costPerPortionCents: number | null;
+  suggestedPriceTtcCents: number | null;
+  imageId: string;
+  caption: string | null;
+  hashtags: string[];
+}
+
+function amountText(ingredient: RecipeView["ingredients"][number], part: number | null = null): string {
+  const amount = ingredientAmount(ingredient, part, 1, 1);
+  const unit = amount.unit === "piece" ? "" : ` ${amount.unit}`;
+  const main = `${amount.value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}${unit}`;
+  return amount.kitchen
+    ? `${main} (${amount.kitchen.value.toLocaleString("fr-FR")} ${amount.kitchen.unit})`
+    : main;
+}
+
+/** Consigne lisible : les jetons de quantité deviennent « (300 g) » après le nom de l'ingrédient. */
+function stepPlainText(view: RecipeView, action: string): string {
+  const byId = new Map(view.ingredients.map((i) => [i.id, i]));
+  return splitStepText(action)
+    .map((segment, index, all) => {
+      if (segment.kind === "text") return segment.text;
+      const ingredient = byId.get(segment.ref);
+      if (!ingredient) return "";
+      const next = all[index + 1];
+      if (next?.kind === "text" && /^\s+(de|d['’])/i.test(next.text))
+        return amountText(ingredient, segment.part);
+      return `(${amountText(ingredient, segment.part).replace(" (", ", ").replace(/\)$/, "")})`;
+    })
+    .join("")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Une recette de la vitrine racontée de bout en bout sur la page d'accueil : idée,
+ * recette pesée, chiffrage, photo et texte Instagram, avec les vraies données.
+ */
+export async function getShowcaseStory(db: Database, item: ShowcaseItem): Promise<ShowcaseStory | null> {
+  const [recipe] = await db
+    .select({ ownerId: s.recipes.ownerId })
+    .from(s.recipes)
+    .where(eq(s.recipes.id, item.recipeId));
+  if (!recipe) return null;
+  const view = await loadRecipeView(db, item.recipeId, recipe.ownerId);
+  if (!view) return null;
+  const [draft] = await db
+    .select({ state: s.recipeDrafts.state })
+    .from(s.recipeDrafts)
+    .where(eq(s.recipeDrafts.recipeId, item.recipeId))
+    .limit(1);
+  const input = typeof draft?.state.input === "string" ? draft.state.input.trim() : "";
+
+  const { settings, appliances, pricing } = view.pricing;
+  const sheet =
+    view.cost.pricedCount === 0
+      ? null
+      : pricingSheet({
+          materialCents: view.cost.totalCents,
+          servings: Math.max(1, Math.round(view.servings)),
+          laborSeconds: pricing?.laborSeconds ?? view.prepS,
+          hourlyRateCents: settings.hourlyRateCents,
+          energy: (pricing?.energyUses ?? []).flatMap((use) => {
+            const appliance = appliances.find((a) => a.id === use.applianceId);
+            return appliance ? [{ powerW: appliance.powerW, seconds: use.seconds }] : [];
+          }),
+          kwhPriceCents: settings.kwhPriceCents,
+          coefficient: pricing?.coefficient ?? settings.coefficient,
+          vatRate: pricing?.vatRate ?? settings.vatRate,
+          sellingPriceTtcCents: null,
+        });
+  const instagram = view.social.find((c) => c.platform === "instagram");
+
+  return {
+    recipeId: item.recipeId,
+    name: view.name,
+    idea: input || view.description,
+    servings: view.servings,
+    totalS: view.prepS + view.cookS + view.restS,
+    ingredients: view.ingredients.map((i) => ({ label: i.label, amount: amountText(i) })),
+    steps: view.steps.slice(0, 3).map((step) => stepPlainText(view, step.action)),
+    stepCount: view.steps.length,
+    costPerPortionCents: sheet ? sheet.perPortion.totalCents : null,
+    suggestedPriceTtcCents: sheet ? sheet.suggested.priceInclTaxCents : null,
+    imageId: item.imageId,
+    caption: instagram?.caption ?? null,
+    hashtags: (instagram?.hashtags ?? []).slice(0, 5),
+  };
 }

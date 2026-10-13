@@ -1,4 +1,5 @@
 import { Card, CardBody, CardDescription, CardTitle } from "@culinova/ui";
+import Image from "next/image";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
 import { formatDuration } from "@/components/recipe/format";
 import { Link } from "@/i18n/navigation";
@@ -27,7 +28,28 @@ export default async function BasesPage({ params }: { params: Promise<{ locale: 
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="bases">
           {bases.map((base) => (
             <li key={base.id}>
-              <Card className="h-full">
+              <Card className="h-full overflow-hidden">
+                <Link
+                  href={`/app/recettes/${base.id}`}
+                  className="relative block aspect-[4/3] bg-soft"
+                  tabIndex={-1}
+                >
+                  {base.imageId ? (
+                    <Image
+                      src={`/api/images/${base.imageId}`}
+                      alt=""
+                      fill
+                      unoptimized
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover"
+                      data-testid="base-photo"
+                    />
+                  ) : (
+                    <span className="absolute inset-0 flex items-center justify-center font-display text-5xl text-soft-foreground/60">
+                      {base.name.charAt(0)}
+                    </span>
+                  )}
+                </Link>
                 <CardBody className="flex flex-col gap-2">
                   <CardTitle>
                     <Link href={`/app/recettes/${base.id}`} className="hover:underline">

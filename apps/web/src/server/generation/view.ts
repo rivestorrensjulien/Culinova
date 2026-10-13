@@ -485,6 +485,7 @@ export async function listBases(db: Database, userId: string) {
     .select({
       id: s.recipes.id,
       baseId: s.baseRecipes.id,
+      versionId: s.recipeVersions.id,
       name: s.recipeVersions.name,
       yieldG: s.baseRecipes.yieldG,
       yieldDisplayQuantity: s.baseRecipes.yieldDisplayQuantity,
@@ -519,8 +520,34 @@ export async function listBases(db: Database, userId: string) {
         isNull(s.recipes.deletedAt),
       ),
     );
+  // Photo de chaque base : recadrage 4:5 de la photo principale de la version active.
+  const images = await db
+    .select({
+      id: s.recipeImages.id,
+      versionId: s.recipeImages.recipeVersionId,
+      format: s.recipeImages.format,
+      sourceId: s.recipeImages.sourceImageId,
+      isPrimary: s.recipeImages.isPrimary,
+    })
+    .from(s.recipeImages)
+    .where(
+      and(
+        inArray(
+          s.recipeImages.recipeVersionId,
+          bases.map((b) => b.versionId),
+        ),
+        eq(s.recipeImages.status, "ready"),
+      ),
+    );
+  const primary = new Set(images.filter((i) => i.format === "source" && i.isPrimary).map((i) => i.id));
+  const imageOf = new Map(
+    images
+      .filter((i) => i.format === "4:5" && i.sourceId && primary.has(i.sourceId))
+      .map((i) => [i.versionId, i.id] as const),
+  );
   return bases.map((base) => ({
     ...base,
+    imageId: imageOf.get(base.versionId) ?? null,
     yieldDisplayQuantity: base.yieldDisplayQuantity === null ? null : Number(base.yieldDisplayQuantity),
     usedIn: uses.filter((u) => u.baseId === base.baseId).map((u) => ({ recipeId: u.recipeId, name: u.name })),
   }));

@@ -108,6 +108,8 @@ describe.skipIf(!hasTestDb)("préparations faites maison", () => {
     expect(
       (await loadRecipeView(db, homemade.base!.recipeId, user.id))!.images.current?.formats,
     ).toHaveLength(4);
+    // …et elle apparaît sur sa carte dans « Mes bases ».
+    expect((await listBases(db, user.id))[0]!.imageId).not.toBeNull();
 
     // Coût : riz 300 g à 4 €/kg = 1,20 € ; base de 150 g à 10 €/kg = 1,50 €, dont 4 g utilisés = 0,04 €.
     const priceOf = async (versionId: string, label: string) => {

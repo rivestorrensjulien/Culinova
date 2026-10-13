@@ -50,7 +50,8 @@
       "sampleCost": "Coût par portion",
       "samplePrice": "Prix conseillé TTC",
       "sampleCostValue": "3,45 €",
-      "samplePriceValue": "14,50 €"
+      "samplePriceValue": "14,50 €",
+      "realLabel": "Recette créée avec Culinova"
     },
     "pillars": {
       "title": "Tout le chemin, de l'idée à l'assiette",

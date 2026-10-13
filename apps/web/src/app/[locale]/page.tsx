@@ -71,6 +71,8 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   // La première photo de la vitrine est racontée de bout en bout ; l'accroche montre la suivante.
   const story = await loadStory(showcase[0]);
   const heroPhoto = showcase[1] ?? showcase[0];
+  // La fiche posée sur la photo d'accroche décrit la recette de cette photo, avec ses vrais chiffres.
+  const heroStory = heroPhoto && heroPhoto === showcase[0] ? story : await loadStory(heroPhoto);
   const format = await getFormatter();
   const euros = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
   const demoExamples = t.raw("demo.examples") as DemoExample[];
@@ -90,10 +92,20 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       aria-label={t("hero.sampleLabel")}
     >
       <p className="text-[11px] font-medium tracking-[0.2em] text-primary uppercase">
-        {t("hero.sampleLabel")}
+        {heroStory ? t("hero.realLabel") : t("hero.sampleLabel")}
       </p>
-      <p className="mt-2 font-display text-lg leading-snug">{t("hero.sampleName")}</p>
-      <p className="mt-1 text-xs text-muted">{t("hero.sampleMeta")}</p>
+      <p className="mt-2 font-display text-lg leading-snug">{heroStory?.name ?? t("hero.sampleName")}</p>
+      <p className="mt-1 text-xs text-muted">
+        {heroStory
+          ? [
+              heroStory.cuisine,
+              t("story.people", { count: heroStory.servings }),
+              heroStory.totalS > 0 ? formatDuration(heroStory.totalS) : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")
+          : t("hero.sampleMeta")}
+      </p>
       {heroPhoto ? null : (
         <>
           <p className="mt-4 text-xs font-medium tracking-wide text-muted uppercase">
@@ -106,16 +118,23 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           </ul>
         </>
       )}
-      <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
-        <div>
-          <dt className="text-xs text-muted">{t("hero.sampleCost")}</dt>
-          <dd className="font-display text-xl">{t("hero.sampleCostValue")}</dd>
-        </div>
-        <div>
-          <dt className="text-xs text-muted">{t("hero.samplePrice")}</dt>
-          <dd className="font-display text-xl text-primary">{t("hero.samplePriceValue")}</dd>
-        </div>
-      </dl>
+      {heroStory &&
+      (heroStory.costPerPortionCents === null || heroStory.suggestedPriceTtcCents === null) ? null : (
+        <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4">
+          <div>
+            <dt className="text-xs text-muted">{t("hero.sampleCost")}</dt>
+            <dd className="font-display text-xl">
+              {heroStory ? euros(heroStory.costPerPortionCents!) : t("hero.sampleCostValue")}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted">{t("hero.samplePrice")}</dt>
+            <dd className="font-display text-xl text-primary">
+              {heroStory ? euros(heroStory.suggestedPriceTtcCents!) : t("hero.samplePriceValue")}
+            </dd>
+          </div>
+        </dl>
+      )}
     </div>
   );
 

@@ -100,6 +100,7 @@ export async function getShowcase(db: Database): Promise<ShowcaseItem[]> {
 export interface ShowcaseStory {
   recipeId: string;
   name: string;
+  cuisine: string | null;
   /** Idée de départ saisie dans l'assistant de création (ou, à défaut, la description). */
   idea: string | null;
   servings: number;
@@ -185,6 +186,7 @@ export async function getShowcaseStory(db: Database, item: ShowcaseItem): Promis
   return {
     recipeId: item.recipeId,
     name: view.name,
+    cuisine: view.cuisineLabel,
     idea: input || view.description,
     servings: view.servings,
     totalS: view.prepS + view.cookS + view.restS,

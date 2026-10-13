@@ -50,7 +50,8 @@
       "sampleCost": "Cost per portion",
       "samplePrice": "Suggested price incl. VAT",
       "sampleCostValue": "€3.45",
-      "samplePriceValue": "€14.50"
+      "samplePriceValue": "€14.50",
+      "realLabel": "Recipe made with Culinova"
     },
     "pillars": {
       "title": "The whole journey, from idea to plate",

@@ -22,7 +22,7 @@ const input = {
 describe("prompt photo", () => {
   it("transmet le dressage et impose un cadrage recadrable", () => {
     const { system, user } = buildImagePrompt(input);
-    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@4");
+    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@5");
     expect(system).toContain("Authenticity first");
     expect(system).toContain("never straight overhead");
     expect(system).toContain("cropped to square, 4:5, 9:16 and 16:9");
@@ -66,7 +66,26 @@ describe("adaptateur fal.ai", () => {
     expect(requests[0]!.body).toMatchObject({ prompt: "a dish", image_size: { width: 1440, height: 1440 } });
   });
 
-  it("utilise FLUX Ultra en mode raw par défaut, au format carré", async () => {
+  it("utilise FLUX.2 [pro] par défaut, à la taille demandée", async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const urls: string[] = [];
+    const fakeFetch = (async (url: string, init: RequestInit) => {
+      urls.push(url);
+      bodies.push(JSON.parse(String(init.body)));
+      return new Response(JSON.stringify({ images: [{ url: "https://cdn/z.jpg" }], seed: 3 }));
+    }) as unknown as typeof fetch;
+    const result = await new FalImageAdapter({ apiKey: "cle", fetchImpl: fakeFetch }).generate({
+      prompt: "a dish",
+      width: 1440,
+      height: 1440,
+    });
+    expect(urls[0]).toBe("https://fal.run/fal-ai/flux-2-pro");
+    expect(bodies[0]).toMatchObject({ image_size: { width: 1440, height: 1440 }, output_format: "jpeg" });
+    expect(bodies[0]).not.toHaveProperty("num_images");
+    expect(result).toMatchObject({ width: 1440, height: 1440, seed: 3 });
+  });
+
+  it("utilise FLUX Ultra en mode raw, au format carré", async () => {
     const bodies: Array<Record<string, unknown>> = [];
     const urls: string[] = [];
     const fakeFetch = (async (url: string, init: RequestInit) => {
@@ -76,11 +95,11 @@ describe("adaptateur fal.ai", () => {
         JSON.stringify({ images: [{ url: "https://cdn/y.jpg", width: 2048, height: 2048 }] }),
       );
     }) as unknown as typeof fetch;
-    const result = await new FalImageAdapter({ apiKey: "cle", fetchImpl: fakeFetch }).generate({
-      prompt: "a dish",
-      width: 1440,
-      height: 1440,
-    });
+    const result = await new FalImageAdapter({
+      apiKey: "cle",
+      model: "fal-ai/flux-pro/v1.1-ultra",
+      fetchImpl: fakeFetch,
+    }).generate({ prompt: "a dish", width: 1440, height: 1440 });
     expect(urls[0]).toBe("https://fal.run/fal-ai/flux-pro/v1.1-ultra");
     expect(bodies[0]).toMatchObject({ aspect_ratio: "1:1", raw: true, output_format: "jpeg" });
     expect(bodies[0]).not.toHaveProperty("image_size");

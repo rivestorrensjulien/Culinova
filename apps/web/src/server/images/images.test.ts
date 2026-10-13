@@ -72,7 +72,7 @@ describe.skipIf(!hasTestDb)("photo de recette", () => {
       .returning();
     expect(await runImageGeneration(db, ai, generation!, { storage })).toBe("succeeded");
     // Le prompt photo est rédigé d'après le dressage.
-    expect(ai.calls.at(-1)!.promptId).toBe("image.prompt@4");
+    expect(ai.calls.at(-1)!.promptId).toBe("image.prompt@5");
     expect(ai.calls.at(-1)!.user).toContain("Assiette creuse noire mate");
 
     view = (await loadRecipeView(db, recipeId, user.id))!;

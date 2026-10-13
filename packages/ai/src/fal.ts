@@ -1,5 +1,5 @@
 /**
- * Adaptateur d'images FLUX1.1 [pro] (Ultra par défaut) via fal.ai (API REST, sans dépendance).
+ * Adaptateur d'images FLUX (FLUX.2 [pro] par défaut, FLUX1.1 [pro] et Ultra acceptés) via fal.ai (API REST, sans dépendance).
  * Interchangeable : tout autre fournisseur implémente ImageAdapter.
  */
 import {
@@ -71,7 +71,7 @@ export class FalImageAdapter implements ImageAdapter {
           ...(this.model.includes("ultra")
             ? { aspect_ratio: aspectRatio(request.width, request.height), raw: true }
             : { image_size: { width: request.width, height: request.height } }),
-          num_images: 1,
+          ...(this.model.includes("flux-2") ? {} : { num_images: 1 }),
           output_format: "jpeg",
           enable_safety_checker: true,
           safety_tolerance: "2",

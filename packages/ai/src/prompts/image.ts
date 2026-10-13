@@ -4,7 +4,7 @@
  */
 import { z } from "zod";
 
-export const IMAGE_PROMPT_VERSION = "image.prompt@2";
+export const IMAGE_PROMPT_VERSION = "image.prompt@3";
 
 export interface ImagePromptInput {
   name: string;
@@ -12,6 +12,8 @@ export interface ImagePromptInput {
   cuisine: string | null;
   moment: string | null;
   ingredients: string[];
+  /** Étapes de la recette (consigne et résultat attendu), pour savoir à quoi ressemble le plat fini. */
+  steps?: string[];
   plating: {
     description?: string | null;
     plate: string;
@@ -26,6 +28,7 @@ export interface ImagePromptInput {
 export const IMAGE_PROMPT_SYSTEM = `You write prompts for a photorealistic food photography model (FLUX). From a recipe and its plating, write ONE prompt in English, 80 to 140 words, describing a single real photograph of the finished dish, as if shot by a professional food photographer for a cookbook.
 
 Rules:
+- Authenticity first. Identify the dish (its name, cuisine and steps) and how it really looks when made traditionally: its signature surface, shape, colour, thickness and cross-section, which side faces up, how it is cooked. Describe these defining visual features explicitly, in the first sentence, and never contradict them. Examples: Moroccan baghrir (crêpes mille trous) are pale yellow semolina pancakes cooked on one side only, served holes side up, the whole top covered with hundreds of tiny open holes, spongy, with no browning on top; a croissant shows flaky laminated layers; a Basque cheesecake has a deeply burnt top.
 - Show exactly the plating described: the serving container (material, shape, colour), the arrangement, sauce, garnish and finish. Only ingredients that are in the recipe may be visible.
 - Realism first: describe the real, tangible texture of each visible component (crisp caramelised edges, the crumb and slight wrinkles of bread, fibres of slow-cooked meat, glossy versus matte sauces, fresh herbs with tiny imperfections, coarse salt crystals, a few natural crumbs or drips). Natural irregular shapes, nothing perfectly symmetrical or smooth.
 - Light and camera: soft natural side light from a window, gentle real shadows, true-to-life colours, slightly muted rather than saturated. Shot on a full-frame camera with an 85mm lens at f/2.8, shallow depth of field, subtle film grain, sharp focus on the food.

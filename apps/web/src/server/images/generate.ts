@@ -108,12 +108,29 @@ async function promptInput(db: Database, versionId: string): Promise<ImagePrompt
     .from(s.recipeIngredients)
     .where(eq(s.recipeIngredients.recipeVersionId, versionId))
     .orderBy(asc(s.recipeIngredients.sortOrder));
+  const steps = await db
+    .select({ action: s.recipeSteps.action, expected: s.recipeSteps.expectedResult })
+    .from(s.recipeSteps)
+    .where(eq(s.recipeSteps.recipeVersionId, versionId))
+    .orderBy(asc(s.recipeSteps.sortOrder));
   return {
     name: version.name,
     description: version.description,
     cuisine: version.cuisine,
     moment: version.moment ?? null,
     ingredients: ingredients.map((i) => i.label),
+    // Jetons de quantité retirés : seul l'aspect du plat compte pour la photo.
+    steps: steps.map((step) =>
+      [
+        step.action
+          .replace(/\{\{[^}]*\}\}/g, "")
+          .replace(/\s+/g, " ")
+          .trim(),
+        step.expected,
+      ]
+        .filter(Boolean)
+        .join(" → "),
+    ),
     plating: (version.plating as ImagePromptInput["plating"]) ?? null,
   };
 }

@@ -16,10 +16,8 @@ export interface RequestValues {
 
 type RequestError = "name" | "email" | "consent" | "rate" | "server";
 
-export type InvitationRequestState =
-  | { status: "idle" }
-  | { status: "sent" }
-  | { status: "error"; error: RequestError; values: RequestValues };
+type RequestFailed = { status: "error"; error: RequestError; values: RequestValues };
+export type InvitationRequestState = { status: "idle" } | { status: "sent" } | RequestFailed;
 
 const requestSchema = z.object({
   name: z.string().trim().min(2).max(120),

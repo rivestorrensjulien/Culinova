@@ -2,11 +2,16 @@
 import { FakeLlmAdapter } from "@culinova/ai";
 import * as s from "@culinova/db/schema";
 import { eq } from "drizzle-orm";
+import { mkdtemp } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { emptyWizardState, type WizardState } from "@/lib/wizard";
 import { createTestUser, hasTestDb, testDb } from "@/test/db";
 import { savePrice } from "../costing/prices";
 import { computeRecipeCost } from "../costing/recipe-cost";
+import { runImageGeneration, startImageGeneration } from "../images/generate";
+import { LocalStorage } from "../images/storage";
 import { getMonthlyUsage } from "../quotas";
 import { startBaseGeneration } from "./base";
 import { runGeneration } from "./run";
@@ -87,6 +92,22 @@ describe.skipIf(!hasTestDb)("préparations faites maison", () => {
     expect(baseView.baseInfo!.usedIn).toEqual([{ recipeId, name: view.name }]);
     expect((await listRecipes(db, user.id)).map((r) => r.id)).toEqual([recipeId]);
     expect((await listBases(db, user.id)).map((b) => b.name)).toEqual(["Yuzu kosho maison"]);
+
+    // La base peut avoir sa photo, comme une recette.
+    const photo = await startImageGeneration(db, {
+      userId: user.id,
+      recipeId: homemade.base!.recipeId,
+    });
+    if (!photo.ok) throw new Error(photo.reason);
+    const [photoGeneration] = await db
+      .select()
+      .from(s.aiGenerations)
+      .where(eq(s.aiGenerations.id, photo.generationId));
+    const storage = new LocalStorage(await mkdtemp(join(tmpdir(), "culinova-base-photo-")));
+    expect(await runImageGeneration(db, ai, photoGeneration!, { storage })).toBe("succeeded");
+    expect(
+      (await loadRecipeView(db, homemade.base!.recipeId, user.id))!.images.current?.formats,
+    ).toHaveLength(4);
 
     // Coût : riz 300 g à 4 €/kg = 1,20 € ; base de 150 g à 10 €/kg = 1,50 €, dont 4 g utilisés = 0,04 €.
     const priceOf = async (versionId: string, label: string) => {

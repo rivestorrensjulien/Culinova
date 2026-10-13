@@ -149,6 +149,17 @@ export async function generationFailureAction(generationId: string): Promise<str
   return code ?? "unexpected";
 }
 
+/** Détail technique d'un échec, montré aux administrateurs seulement (pour le diagnostic). */
+export async function generationFailureDetailAction(generationId: string): Promise<string | null> {
+  const session = await currentUser();
+  if (session.user.role !== "admin" || !uuid.safeParse(generationId).success) return null;
+  const [row] = await getDb()
+    .select({ error: s.aiGenerations.error })
+    .from(s.aiGenerations)
+    .where(and(eq(s.aiGenerations.id, generationId), eq(s.aiGenerations.userId, session.user.id)));
+  return row?.error?.slice(0, 500) ?? null;
+}
+
 /** Ajoute ou retire une cuisine des favoris (suggestions du wizard). */
 export async function toggleFavoriteCuisineAction(cuisineCode: string): Promise<boolean> {
   const session = await currentUser();

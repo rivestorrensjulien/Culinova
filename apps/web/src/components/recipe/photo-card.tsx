@@ -5,7 +5,11 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { generateImageAction } from "@/server/actions/images";
-import { generationFailureAction, generationStatusAction } from "@/server/actions/wizard";
+import {
+  generationFailureAction,
+  generationFailureDetailAction,
+  generationStatusAction,
+} from "@/server/actions/wizard";
 import type { ImageFormatName, RecipeView as RecipeData } from "@/server/generation/view";
 
 const ASPECT: Record<ImageFormatName, string> = {
@@ -34,6 +38,7 @@ export function PhotoCard({
   const [format, setFormat] = useState<ImageFormatName>("4:5");
   const [pending, setPending] = useState<string | null>(images.pendingGenerationId);
   const [error, setError] = useState<string | null>(null);
+  const [detail, setDetail] = useState<string | null>(null);
   const checking = useRef(false);
 
   useEffect(() => {
@@ -46,6 +51,7 @@ export function PhotoCard({
         if (status === "queued" || status === "running") return;
         if (status === "failed") {
           const code = await generationFailureAction(pending).catch(() => "unexpected");
+          setDetail(await generationFailureDetailAction(pending).catch(() => null));
           setError(
             t.has(`errors.${code}`) ? t(`errors.${code}` as "errors.unexpected") : t("errors.unexpected"),
           );
@@ -65,6 +71,7 @@ export function PhotoCard({
 
   const generate = async () => {
     setError(null);
+    setDetail(null);
     const result = await generateImageAction(recipe.recipeId).catch(() => null);
     if (result?.ok) setPending(result.generationId);
     else if (result?.reason === "quota") setError(t("errors.quota", { limit: result.limit ?? 0 }));
@@ -74,7 +81,19 @@ export function PhotoCard({
   return (
     <Card data-testid="photo">
       <CardBody className="flex flex-col gap-4">
-        {error ? <Notice tone="danger">{error}</Notice> : null}
+        {error ? (
+          <Notice tone="danger">
+            {error}
+            {detail ? (
+              <span
+                className="mt-2 block font-mono text-xs break-words text-muted"
+                data-testid="photo-error-detail"
+              >
+                {detail}
+              </span>
+            ) : null}
+          </Notice>
+        ) : null}
         {current && selected ? (
           <>
             <div

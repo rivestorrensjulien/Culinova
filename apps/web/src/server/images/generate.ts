@@ -144,9 +144,18 @@ async function download(url: string, size: number, fetchImpl: typeof fetch): Pro
       .jpeg({ quality: 80 })
       .toBuffer();
   }
-  const response = await fetchImpl(url, { signal: AbortSignal.timeout(60_000) });
-  if (!response.ok) throw new Error(`Téléchargement de l'image impossible (${response.status})`);
-  return Buffer.from(await response.arrayBuffer());
+  // Deux essais : le lien du fournisseur répond parfois lentement juste après la création.
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetchImpl(url, { signal: AbortSignal.timeout(60_000) });
+      if (!response.ok) throw new Error(`Téléchargement de l'image impossible (${response.status})`);
+      return Buffer.from(await response.arrayBuffer());
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
 export interface ImageDeps {

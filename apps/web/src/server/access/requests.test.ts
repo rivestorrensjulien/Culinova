@@ -42,7 +42,9 @@ describe.skipIf(!hasTestDb)("demandes d'invitation", () => {
     const [row] = await requestsFor(email);
     expect(row).toMatchObject({ name: "Camille", profile: "chef", status: "pending", locale: "fr" });
     expect(row!.consentedAt).not.toBeNull();
-    expect((await lastEmailTo(email, "invitation-request"))?.text).toContain("Merci Camille");
+    expect((await lastEmailTo(email, "invitation-request"))?.subject).toBe(
+      "Votre demande d'invitation à Culinova",
+    );
     expect((await lastEmailTo(admin.email, "invitation-request-alert"))?.subject).toContain("Camille");
 
     // Une seconde demande en attente pour la même adresse n'est pas dupliquée.

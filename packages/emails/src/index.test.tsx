@@ -46,9 +46,9 @@ describe("e-mails de demande d'invitation", () => {
   it("accuse réception et alerte l'administrateur", async () => {
     const received = await renderInvitationRequestReceivedEmail({ name: "Camille" });
     expect(received.subject).toBe("Votre demande d'invitation à Culinova");
-    expect(received.text).toContain("Merci Camille");
+    expect(received.html).toContain("Merci Camille");
     const english = await renderInvitationRequestReceivedEmail({ name: "Sam", locale: "en" });
-    expect(english.text).toContain("Thank you Sam");
+    expect(english.html).toContain("Thank you Sam");
     const alert = await renderInvitationRequestAlertEmail({
       name: "Camille",
       email: "camille@exemple.fr",

@@ -78,12 +78,13 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
   },
   {
     type: "privacy" as const,
-    version: "1.0",
+    version: "1.1",
     title: "Politique de confidentialité",
     bodyMd: `## Responsable du traitement
 {{editeur.nom}}, {{editeur.adresse}} — {{editeur.email}}.
 
 ## Données traitées
+- **Demande d'invitation** : nom, adresse e-mail, profil, message facultatif et langue saisis sur la page d'accueil.
 - **Compte** : adresse e-mail, nom (facultatif), langue, code d'invitation utilisé, rôle.
 - **Sécurité** : dates de connexion, sessions ouvertes, adresse IP et navigateur, journal des actions sensibles.
 - **Contenus** : paramètres de création, recettes et leurs versions, traductions, photos, ingrédients, prix, fournisseurs, réglages de prix de vente, correspondances nutritionnelles, favoris.
@@ -93,6 +94,7 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
 Aucune donnée de paiement n'est collectée pendant la phase sur invitation.
 
 ## Finalités et bases légales
+- Étudier votre demande d'invitation et vous répondre — **mesures précontractuelles prises à votre demande**.
 - Créer et gérer votre compte, vous connecter par lien magique — **exécution du contrat** (CGU).
 - Générer recettes, images, traductions et analyses — **exécution du contrat** (CGU).
 - Appliquer les quotas et maîtriser le budget d'intelligence artificielle — **intérêt légitime**.
@@ -110,6 +112,7 @@ Vos données ne sont ni vendues ni louées. Elles sont accessibles à l'éditeur
 Certains de ces prestataires sont établis aux États-Unis. Les transferts sont encadrés par les clauses contractuelles types de la Commission européenne et, le cas échéant, par le cadre de protection des données UE–États-Unis. Seules les informations utiles à la génération (paramètres de la recette, texte à traduire, description du dressage…) sont transmises aux services d'intelligence artificielle, jamais votre adresse e-mail. Culinova n'utilise pas vos contenus pour entraîner des modèles.
 
 ## Durées de conservation
+- **Demandes d'invitation** : 12 mois après la demande, puis effacement automatique (le compte créé avec l'invitation suit ensuite ses propres règles).
 - **Compte et contenus** : tant que le compte existe. À la suppression du compte, ils sont effacés immédiatement, photos comprises.
 - **Compte suspendu** : données conservées jusqu'à sa réactivation ou sa suppression.
 - **Liens de connexion** : 15 minutes ; **sessions** : 30 jours au plus, ou jusqu'à leur fermeture.
@@ -137,7 +140,7 @@ Cette politique peut évoluer ; la nouvelle version vous est présentée à votr
   },
   {
     type: "cookies" as const,
-    version: "1.0",
+    version: "1.1",
     title: "Politique cookies",
     bodyMd: `## En bref
 Culinova n'utilise **ni cookie publicitaire, ni mesure d'audience, ni traceur de réseaux sociaux**. Seuls des éléments indispensables au fonctionnement du service sont déposés : ils sont dispensés de consentement et aucun bandeau ne vous est donc demandé.
@@ -147,6 +150,8 @@ Culinova n'utilise **ni cookie publicitaire, ni mesure d'audience, ni traceur de
 - **culinova.admin_session** — permet à un administrateur de revenir à l'administration après une assistance « en tant que » ; 1 heure.
 - **NEXT_LOCALE** — retient la langue choisie, le cas échéant ; 1 an.
 - **culinova-theme** (stockage local du navigateur) — retient le thème clair ou sombre choisi ; jusqu'à effacement.
+- **Cache de l'application** (stockage du navigateur) — garde les fichiers de l'interface (styles, scripts, icônes) et une page « hors ligne » pour que l'application installée s'ouvre rapidement ; aucune donnée personnelle ni recette n'y est conservée.
+- **culinova-install** (stockage local du navigateur) — retient que vous avez masqué la proposition d'installer l'application ; jusqu'à effacement.
 
 ## Les gérer
 Vous pouvez supprimer ces éléments depuis les réglages de votre navigateur. Sans le cookie de session, vous serez simplement déconnecté·e.
@@ -158,6 +163,13 @@ Si des outils de mesure d'audience ou des services tiers non indispensables éta
 
 /** Registre des traitements (RGPD), remplacé à chaque seed. */
 export const PROCESSING_REGISTER = [
+  {
+    purpose: "Demandes d'invitation depuis la page d'accueil",
+    legalBasis: "Mesures précontractuelles prises à la demande de la personne",
+    dataCategories: ["nom", "e-mail", "profil", "message", "langue"],
+    retention: "12 mois après la demande",
+    processors: ["Supabase", "Vercel", "Resend"],
+  },
   {
     purpose: "Gestion des comptes, invitations et authentification",
     legalBasis: "Exécution du contrat (CGU)",

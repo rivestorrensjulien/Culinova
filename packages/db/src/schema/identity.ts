@@ -134,7 +134,7 @@ export const loginAttempts = pgTable(
   "login_attempts",
   {
     id: id(),
-    kind: text("kind").$type<"magic_link" | "two_factor" | "invitation">().notNull(),
+    kind: text("kind").$type<"magic_link" | "two_factor" | "invitation" | "invitation_request">().notNull(),
     email: text("email"),
     userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
     ip: text("ip"),

@@ -2,7 +2,13 @@ import { mkdtemp, readdir, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { renderInvitationEmail, renderMagicLinkEmail, sendEmail } from "./index";
+import {
+  renderInvitationEmail,
+  renderInvitationRequestAlertEmail,
+  renderInvitationRequestReceivedEmail,
+  renderMagicLinkEmail,
+  sendEmail,
+} from "./index";
 
 describe("e-mail de lien magique", () => {
   it("contient le lien et la durée de validité", async () => {
@@ -33,6 +39,26 @@ describe("e-mail d'invitation", () => {
     expect(email.text).toContain("CULI-AAAA-BBBB");
     expect(email.text).toContain("31 décembre 2026");
     expect(email.html).toContain("https://exemple.fr/invitation/CULI-AAAA-BBBB");
+  });
+});
+
+describe("e-mails de demande d'invitation", () => {
+  it("accuse réception et alerte l'administrateur", async () => {
+    const received = await renderInvitationRequestReceivedEmail({ name: "Camille" });
+    expect(received.subject).toBe("Votre demande d'invitation à Culinova");
+    expect(received.text).toContain("Merci Camille");
+    const english = await renderInvitationRequestReceivedEmail({ name: "Sam", locale: "en" });
+    expect(english.text).toContain("Thank you Sam");
+    const alert = await renderInvitationRequestAlertEmail({
+      name: "Camille",
+      email: "camille@exemple.fr",
+      profile: "Cheffe à domicile",
+      message: "J'aimerais chiffrer mes menus.",
+      url: "https://exemple.fr/admin/demandes",
+    });
+    expect(alert.subject).toBe("Nouvelle demande d'invitation : Camille");
+    expect(alert.text).toContain("camille@exemple.fr");
+    expect(alert.html).toContain("https://exemple.fr/admin/demandes");
   });
 });
 

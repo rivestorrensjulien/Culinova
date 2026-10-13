@@ -9,6 +9,7 @@ import { computeRecipeNutrition, type NutritionView } from "../nutrition/recipe-
 import { imagesAvailable } from "../images/storage";
 import { isFavorite } from "../library";
 import { agentEnabled, type PublicationStatus, publicationStatuses } from "../publishing";
+import { isInShowcase } from "../showcase";
 import { loadTranslationState, type TranslationState } from "../translation";
 import { getMonthlyUsage, getQuotaLimits } from "../quotas";
 
@@ -122,7 +123,8 @@ export interface RecipeView {
   /** Version linguistique (traduction proposée par l'IA, à valider). */
   translation: TranslationState;
   /** Publication par l'agent (recettes des administrateurs uniquement), sinon null. */
-  publishing: { agentEnabled: boolean; statuses: PublicationStatus[] } | null;
+  /** Réservé aux administrateurs : publication sur les réseaux et vitrine de la page d'accueil. */
+  publishing: { agentEnabled: boolean; statuses: PublicationStatus[]; showcase: boolean } | null;
 }
 
 export type ImageFormatName = "1:1" | "4:5" | "9:16" | "16:9";
@@ -231,7 +233,11 @@ export async function loadRecipeView(
   const [owner] = await db.select({ role: s.users.role }).from(s.users).where(eq(s.users.id, userId));
   const publishing =
     owner?.role === "admin" && recipe.kind === "dish"
-      ? { agentEnabled: agentEnabled(), statuses: await publicationStatuses(db, recipe.id) }
+      ? {
+          agentEnabled: agentEnabled(),
+          statuses: await publicationStatuses(db, recipe.id),
+          showcase: await isInShowcase(db, recipe.id),
+        }
       : null;
   const translation = await loadTranslationState(db, recipe.id, version.id, recipe.originalLanguage);
   const images = await loadRecipeImages(db, userId, recipe.id, version.id, limits.images);

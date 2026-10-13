@@ -5,6 +5,7 @@ import { Fraunces, Inter } from "next/font/google";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
+import { ServiceWorkerRegistration } from "@/components/pwa/service-worker";
 import { routing } from "@/i18n/routing";
 import "./globals.css";
 
@@ -35,6 +36,10 @@ export async function generateMetadata({
   return {
     title: { default: t("brand"), template: `%s · ${t("brand")}` },
     description: t("tagline"),
+    applicationName: t("brand"),
+    manifest: "/manifest.webmanifest",
+    icons: { apple: "/icons/apple-touch-icon.png" },
+    appleWebApp: { capable: true, title: t("brand"), statusBarStyle: "default" },
   };
 }
 
@@ -62,6 +67,7 @@ export default async function LocaleLayout({
       </head>
       <body className="min-h-dvh bg-background text-foreground">
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <ServiceWorkerRegistration />
       </body>
     </html>
   );

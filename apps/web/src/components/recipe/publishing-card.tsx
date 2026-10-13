@@ -7,6 +7,7 @@ import {
   cancelPublicationAction,
   markPublishedAction,
   queuePublicationAction,
+  setShowcaseAction,
 } from "@/server/actions/publishing";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 import type { Platform, PublicationStatus } from "@/server/publishing";
@@ -21,7 +22,17 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
+  const [showcase, setShowcase] = useState(recipe.publishing?.showcase ?? false);
   if (!recipe.publishing) return null;
+
+  const toggleShowcase = async (shown: boolean) => {
+    setBusy(true);
+    setError(false);
+    const result = await setShowcaseAction(recipe.recipeId, shown).catch(() => null);
+    if (result === null) setError(true);
+    else setShowcase(result);
+    setBusy(false);
+  };
 
   const run = async (action: () => Promise<PublicationStatus[] | null>) => {
     setBusy(true);
@@ -123,6 +134,22 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             </Button>
           ) : null}
         </div>
+        <label className="flex items-start gap-3 border-t border-border pt-4">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-primary"
+            checked={showcase}
+            disabled={busy || (!showcase && !recipe.images.current)}
+            onChange={(e) => toggleShowcase(e.target.checked)}
+            data-testid="showcase-toggle"
+          />
+          <span>
+            <span className="font-medium">{t("showcase")}</span>
+            <span className="block text-muted">
+              {recipe.images.current ? t("showcaseHint") : t("needPhotoShowcase")}
+            </span>
+          </span>
+        </label>
       </CardBody>
     </Card>
   );

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#faf6ef" />
+    <title>Hors ligne · Culinova</title>
+    <link rel="icon" href="/icons/icon-192.png" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #faf6ef;
+        --fg: #1f1a16;
+        --muted: #6e6359;
+        --primary: #a84a24;
+        --on-primary: #fffaf4;
+        --border: #e5dbcd;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #13100e;
+          --fg: #f3ece2;
+          --muted: #a99d90;
+          --primary: #e08a5e;
+          --on-primary: #1a0e08;
+          --border: #352d26;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--fg);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      main {
+        max-width: 420px;
+        text-align: center;
+      }
+      img {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+      }
+      h1 {
+        font-family: Georgia, "Times New Roman", serif;
+        font-weight: 400;
+        font-size: 32px;
+        margin: 24px 0 8px;
+      }
+      p {
+        color: var(--muted);
+        line-height: 1.5;
+        margin: 0 0 8px;
+      }
+      .en {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        font-size: 14px;
+      }
+      button {
+        margin-top: 20px;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 24px;
+        background: var(--primary);
+        color: var(--on-primary);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" />
+      <h1>Vous êtes hors ligne</h1>
+      <p>
+        Culinova a besoin d'une connexion pour afficher vos recettes. Vérifiez votre réseau puis réessayez.
+      </p>
+      <button type="button" onclick="location.reload()">Réessayer</button>
+      <p class="en">
+        You are offline. Culinova needs a connection to show your recipes. Check your network and try again.
+      </p>
+    </main>
+  </body>
+</html>

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { readQuotaForm, overridesFrom, readUsdToMicros } from "@/lib/admin-forms";
 import { redirect } from "@/i18n/navigation";
 import { createInvitation, restoreInvitation, revokeInvitation } from "../access/invitations";
+import { acceptInvitationRequest, declineInvitationRequest } from "../access/requests";
 import { type ActorContext, reactivateUser, revokeAllSessions, suspendUser } from "../access/users";
 import { audit } from "../audit";
 import { appUrl, localePrefix } from "../auth";
@@ -101,6 +102,26 @@ export async function revokeInvitationAction(formData: FormData): Promise<void> 
 export async function restoreInvitationAction(formData: FormData): Promise<void> {
   const ctx = await adminContext();
   await restoreInvitation(getDb(), idFrom(formData), ctx);
+  revalidatePath("/admin", "layout");
+}
+
+// ─── Demandes d'invitation ──────────────────────────────────────────────────
+
+const expiresSchema = z.union([z.literal(""), z.coerce.number().int().min(1).max(365)]);
+
+/** Inviter : code nominatif créé et envoyé par e-mail à la personne. */
+export async function acceptRequestAction(formData: FormData): Promise<void> {
+  const ctx = await adminContext();
+  const days = expiresSchema.safeParse(formData.get("expiresInDays") ?? "");
+  await acceptInvitationRequest(getDb(), idFrom(formData), ctx, {
+    expiresInDays: days.success && typeof days.data === "number" ? days.data : null,
+  });
+  revalidatePath("/admin", "layout");
+}
+
+export async function declineRequestAction(formData: FormData): Promise<void> {
+  const ctx = await adminContext();
+  await declineInvitationRequest(getDb(), idFrom(formData), ctx);
   revalidatePath("/admin", "layout");
 }
 

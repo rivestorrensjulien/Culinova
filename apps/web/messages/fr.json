@@ -23,10 +23,155 @@
     }
   },
   "Home": {
+    "metaDescription": "Culinova crée vos recettes avec l'IA, pesées au gramme, chiffrées, illustrées et prêtes à publier. Accès gratuit sur invitation.",
     "intro": "Créer, chiffrer, illustrer et gérer ses recettes. Accès gratuit, sur invitation, pendant cette première phase.",
     "signIn": "Se connecter",
     "haveCode": "J'ai un code d'invitation",
-    "openApp": "Ouvrir mon espace"
+    "openApp": "Ouvrir mon espace",
+    "nav": {
+      "features": "Fonctionnalités",
+      "how": "Comment ça marche",
+      "faq": "Questions"
+    },
+    "hero": {
+      "eyebrow": "Sur invitation · gratuit pendant la phase pilote",
+      "lead": "Décrivez une envie, quelques ingrédients ou un nom de plat : Culinova rédige une recette pesée au gramme, calcule son coût et son prix de vente, imagine le dressage et en fait une photo prête à publier.",
+      "request": "Demander une invitation",
+      "sampleLabel": "Exemple de fiche",
+      "sampleName": "Saumon snacké, riz vinaigré et pickles de radis",
+      "sampleMeta": "Plat · Japon · 4 personnes · 35 min",
+      "sampleIngredients": "Ingrédients",
+      "sampleLines": [
+        "Pavé de saumon — 480 g",
+        "Riz à sushi — 300 g",
+        "Radis roses — 120 g",
+        "Vinaigre de riz — 45 g (3 c. à soupe)"
+      ],
+      "sampleCost": "Coût par portion",
+      "samplePrice": "Prix conseillé TTC",
+      "sampleCostValue": "3,45 €",
+      "samplePriceValue": "14,50 €"
+    },
+    "pillars": {
+      "title": "Tout le chemin, de l'idée à l'assiette",
+      "lead": "Un seul outil pour créer, chiffrer, illustrer et organiser votre cuisine.",
+      "items": [
+        {
+          "title": "Créer",
+          "text": "Moment, influence culinaire, pays, style : l'IA construit une vraie recette, pesée au gramme, avec un pas à pas clair et un dressage raconté."
+        },
+        {
+          "title": "Illustrer",
+          "text": "Une photo réaliste d'après le dressage, déclinée en quatre formats pour Instagram, TikTok, Pinterest et votre site."
+        },
+        {
+          "title": "Chiffrer",
+          "text": "Coût matière, main-d'œuvre et énergie par portion, prix conseillé HT et TTC, marges. Les prix se mettent à jour d'une facture scannée."
+        },
+        {
+          "title": "Gérer",
+          "text": "Bibliothèque, versions, préparations « faites maison », menus, listes de courses, stocks et fiches techniques imprimables."
+        },
+        {
+          "title": "Publier",
+          "text": "Textes Instagram, Pinterest et script TikTok rédigés pour chaque recette, sans répétition, dans l'ordre réel des étapes."
+        }
+      ]
+    },
+    "how": {
+      "title": "Comment ça marche",
+      "steps": [
+        {
+          "title": "Vous donnez le ton",
+          "text": "Un moment (plat, goûter, street food…), une influence, un style, le nombre de personnes, et votre idée ou vos ingrédients."
+        },
+        {
+          "title": "L'IA cuisine la recette",
+          "text": "Ingrédients pesés, étapes précises, temps réels, dressage, valeurs nutritionnelles et allergènes. Vous pouvez la régénérer ou la modifier d'une phrase."
+        },
+        {
+          "title": "Vous la faites vivre",
+          "text": "Photo, prix de vente, fiche technique, mode préparation avec minuteurs, liste de courses et contenus pour les réseaux."
+        }
+      ]
+    },
+    "gallery": {
+      "title": "Créé avec Culinova",
+      "lead": "Recettes et photos générées avec l'application, sans retouche."
+    },
+    "audience": {
+      "title": "Pensé pour celles et ceux qui cuisinent pour les autres",
+      "items": [
+        "Chefs et cuisiniers indépendants",
+        "Traiteurs et restaurateurs",
+        "Créateurs de contenu culinaire",
+        "Passionnés exigeants"
+      ]
+    },
+    "request": {
+      "title": "Demander une invitation",
+      "lead": "Culinova ouvre ses portes progressivement, pour accompagner chaque personne de près. L'accès est gratuit pendant cette phase pilote.",
+      "included": "Chaque mois : 5 recettes générées, 10 photos, et tout le reste en illimité — prix, marges, menus, courses, stocks, fiches techniques.",
+      "name": "Prénom et nom",
+      "email": "Adresse e-mail",
+      "profile": "Vous êtes…",
+      "profileNone": "Choisir (facultatif)",
+      "profiles": {
+        "chef": "Chef ou cuisinier professionnel",
+        "caterer": "Traiteur, restaurateur",
+        "creator": "Créateur de contenu culinaire",
+        "enthusiast": "Passionné de cuisine",
+        "other": "Autre"
+      },
+      "message": "Ce que vous aimeriez faire avec Culinova (facultatif)",
+      "messagePlaceholder": "Ex. : chiffrer mes menus de traiteur, créer des recettes pour mon compte Instagram…",
+      "consent": "J'accepte que mes informations soient utilisées pour étudier ma demande, comme décrit dans la",
+      "privacy": "politique de confidentialité",
+      "submit": "Envoyer ma demande",
+      "sending": "Envoi…",
+      "sent": "Merci ! Votre demande est bien arrivée. Un e-mail de confirmation vient de vous être envoyé ; nous revenons vers vous dès qu'une place se libère.",
+      "errors": {
+        "name": "Indiquez votre prénom et votre nom.",
+        "email": "Cette adresse e-mail ne semble pas valide.",
+        "consent": "Merci d'accepter l'utilisation de vos informations pour étudier la demande.",
+        "rate": "Trop de demandes depuis cette connexion. Réessayez un peu plus tard.",
+        "server": "La demande n'a pas pu être envoyée. Réessayez dans un instant."
+      },
+      "already": "Vous avez déjà un code ?"
+    },
+    "faq": {
+      "title": "Questions fréquentes",
+      "items": [
+        {
+          "q": "Combien ça coûte ?",
+          "a": "Rien pendant la phase pilote. Culinova est gratuit, sur invitation. Si des offres payantes arrivent plus tard, vous serez prévenu à l'avance et rien ne sera prélevé sans votre accord."
+        },
+        {
+          "q": "Comment obtenir une invitation ?",
+          "a": "Remplissez le formulaire ci-dessus. Chaque demande est lue ; si elle est acceptée, vous recevez par e-mail un code personnel et un lien pour créer votre compte en une minute."
+        },
+        {
+          "q": "Faut-il un mot de passe ?",
+          "a": "Non. Vous vous connectez avec un lien envoyé par e-mail, valable 15 minutes et utilisable une seule fois."
+        },
+        {
+          "q": "Les recettes sont-elles fiables ?",
+          "a": "Elles sont pesées au gramme, contrôlées (chaque ingrédient utilisé, étapes complètes) et rédigées avec le vocabulaire de la cuisine française. Vous gardez la main : chaque prix, analyse ou traduction proposé par l'IA est à valider."
+        },
+        {
+          "q": "Que deviennent mes données ?",
+          "a": "Elles sont hébergées dans l'Union européenne, ne sont jamais vendues et ne servent pas à entraîner des modèles. Vous pouvez les exporter ou supprimer votre compte à tout moment."
+        },
+        {
+          "q": "Puis-je l'utiliser sur mon téléphone ?",
+          "a": "Oui. Culinova s'installe comme une application depuis votre navigateur (« Ajouter à l'écran d'accueil »), idéal pour le mode préparation en cuisine."
+        }
+      ]
+    },
+    "closing": {
+      "title": "Prêt à passer en cuisine ?",
+      "cta": "Demander une invitation"
+    }
   },
   "SignIn": {
     "title": "Connexion",
@@ -944,6 +1089,16 @@
     "link": "Voir la publication",
     "postUrl": "Lien de la publication (facultatif)",
     "needPhoto": "Générez d’abord la photo : l’agent publie l’image 9:16.",
-    "error": "L’opération a échoué."
+    "error": "L’opération a échoué.",
+    "showcase": "Montrer la photo sur la page d’accueil",
+    "showcaseHint": "Elle apparaît dans la galerie visible par tous les visiteurs (6 photos au plus, les plus récentes d’abord).",
+    "needPhotoShowcase": "Générez d’abord la photo pour pouvoir la montrer sur la page d’accueil."
+  },
+  "Install": {
+    "title": "Installer Culinova sur cet appareil",
+    "text": "Une icône sur l'écran d'accueil, l'ouverture en plein écran : idéal pour le mode préparation en cuisine.",
+    "ios": "Dans Safari, touchez le bouton Partager puis « Sur l'écran d'accueil ».",
+    "install": "Installer",
+    "later": "Plus tard"
   }
 }

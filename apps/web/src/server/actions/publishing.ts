@@ -13,6 +13,7 @@ import {
   reportPublication,
 } from "../publishing";
 import { requireUser } from "../session";
+import { setShowcase } from "../showcase";
 
 const uuid = z.uuid();
 
@@ -67,4 +68,11 @@ export async function markPublishedAction(
     { actorId: session.user.id, via: "admin" },
   );
   return ok ? publicationStatuses(db, recipeId) : null;
+}
+
+/** Montre (ou retire) la photo de la recette dans la vitrine de la page d'accueil. */
+export async function setShowcaseAction(recipeId: string, shown: boolean): Promise<boolean | null> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success) return null;
+  return (await setShowcase(getDb(), session.user.id, recipeId, shown)) ? shown : null;
 }

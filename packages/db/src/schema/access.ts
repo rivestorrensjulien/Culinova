@@ -60,15 +60,29 @@ export const invitations = pgTable(
 );
 
 /** Demandes d'invitation reçues depuis la page d'accueil (J8). */
-export const invitationRequests = pgTable("invitation_requests", {
-  id: id(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  message: text("message"),
-  status: text("status").$type<"pending" | "invited" | "declined">().notNull().default("pending"),
-  invitationId: uuid("invitation_id").references(() => invitations.id, { onDelete: "set null" }),
-  ...timestamps,
-});
+export const invitationRequests = pgTable(
+  "invitation_requests",
+  {
+    id: id(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    /** Profil choisi dans le formulaire (chef, créateur de contenu, passionné…). */
+    profile: text("profile"),
+    message: text("message"),
+    locale: text("locale").notNull().default("fr"),
+    /** Acceptation de la politique de confidentialité au moment de la demande. */
+    consentedAt: tz("consented_at"),
+    status: text("status").$type<"pending" | "invited" | "declined">().notNull().default("pending"),
+    invitationId: uuid("invitation_id").references(() => invitations.id, { onDelete: "set null" }),
+    decidedAt: tz("decided_at"),
+    decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [
+    index("invitation_requests_email_idx").on(sql`lower(${t.email})`),
+    index("invitation_requests_status_idx").on(t.status, t.createdAt),
+  ],
+);
 
 /**
  * Compteurs de consommation. `subject_id` = personne (quotas mensuels) ou

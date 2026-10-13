@@ -8,6 +8,8 @@ export const SETTING_KEYS = {
   monthlyAiBudget: "ai.monthly_budget_usd_micros",
   /** Identité de l'éditeur, reprise dans les mentions légales et la politique de confidentialité. */
   legalIdentity: "legal.identity",
+  /** Recettes de l'administrateur dont la photo est montrée sur la page d'accueil (liste d'identifiants). */
+  homeShowcase: "home.showcase",
 } as const;
 
 /** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */

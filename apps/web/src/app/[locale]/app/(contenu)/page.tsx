@@ -1,5 +1,6 @@
 import { buttonClasses, Card, CardBody, CardTitle, Notice, Progress } from "@culinova/ui";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { Link } from "@/i18n/navigation";
 import { formatResetDate } from "@/lib/dates";
 import { getDb } from "@/server/db";
@@ -32,6 +33,7 @@ export default async function DashboardPage({
   return (
     <div className="flex flex-col gap-8">
       {bienvenue ? <Notice tone="success">{t("welcome")}</Notice> : null}
+      <InstallPrompt />
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-4xl">
           {session.user.name ? t("hello", { name: session.user.name }) : t("helloAnonymous")}

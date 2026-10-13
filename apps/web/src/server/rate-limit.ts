@@ -6,7 +6,7 @@ import type { Database } from "@culinova/db";
 import { loginAttempts } from "@culinova/db/schema";
 import { and, eq, gt, sql } from "drizzle-orm";
 
-type AttemptKind = "magic_link" | "invitation";
+type AttemptKind = "magic_link" | "invitation" | "invitation_request";
 
 export interface RateRule {
   /** Nombre maximal de tentatives dans la fenêtre. */
@@ -20,6 +20,8 @@ export const RATE_RULES = {
   magicLinkPerEmail: { max: 5, windowSeconds: 15 * 60 },
   magicLinkPerIp: { max: 30, windowSeconds: 60 * 60 },
   invitationFailuresPerIp: { max: 10, windowSeconds: 60 * 60, failuresOnly: true },
+  invitationRequestPerIp: { max: 5, windowSeconds: 60 * 60 },
+  invitationRequestPerEmail: { max: 3, windowSeconds: 24 * 60 * 60 },
 } satisfies Record<string, RateRule>;
 
 async function countAttempts(

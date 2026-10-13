@@ -22,7 +22,7 @@ const input = {
 describe("prompt photo", () => {
   it("transmet le dressage et impose un cadrage recadrable", () => {
     const { system, user } = buildImagePrompt(input);
-    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@1");
+    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@2");
     expect(system).toContain("cropped to square, 4:5, 9:16 and 16:9");
     expect(system).toContain("No text");
     expect(user).toContain("Barquette en bambou");
@@ -50,13 +50,39 @@ describe("adaptateur fal.ai", () => {
         JSON.stringify({ images: [{ url: "https://cdn/x.jpg", width: 1440, height: 1440 }], seed: 7 }),
       );
     }) as unknown as typeof fetch;
-    const adapter = new FalImageAdapter({ apiKey: "cle", costUsdMicros: 100, fetchImpl: fakeFetch });
+    const adapter = new FalImageAdapter({
+      apiKey: "cle",
+      model: "fal-ai/flux-pro/v1.1",
+      costUsdMicros: 100,
+      fetchImpl: fakeFetch,
+    });
     const result = await adapter.generate({ prompt: "a dish", width: 1440, height: 1440 });
     expect(result).toMatchObject({ url: "https://cdn/x.jpg", width: 1440, height: 1440, seed: 7 });
     expect(result.usage.costUsdMicros).toBe(100);
     expect(requests[0]!.url).toBe("https://fal.run/fal-ai/flux-pro/v1.1");
     expect(requests[0]!.auth).toBe("Key cle");
     expect(requests[0]!.body).toMatchObject({ prompt: "a dish", image_size: { width: 1440, height: 1440 } });
+  });
+
+  it("utilise FLUX Ultra en mode raw par défaut, au format carré", async () => {
+    const bodies: Array<Record<string, unknown>> = [];
+    const urls: string[] = [];
+    const fakeFetch = (async (url: string, init: RequestInit) => {
+      urls.push(url);
+      bodies.push(JSON.parse(String(init.body)));
+      return new Response(
+        JSON.stringify({ images: [{ url: "https://cdn/y.jpg", width: 2048, height: 2048 }] }),
+      );
+    }) as unknown as typeof fetch;
+    const result = await new FalImageAdapter({ apiKey: "cle", fetchImpl: fakeFetch }).generate({
+      prompt: "a dish",
+      width: 1440,
+      height: 1440,
+    });
+    expect(urls[0]).toBe("https://fal.run/fal-ai/flux-pro/v1.1-ultra");
+    expect(bodies[0]).toMatchObject({ aspect_ratio: "1:1", raw: true, output_format: "jpeg" });
+    expect(bodies[0]).not.toHaveProperty("image_size");
+    expect(result).toMatchObject({ width: 2048, height: 2048 });
   });
 
   it("signale une erreur du service et une image bloquée", async () => {

@@ -1,6 +1,7 @@
 /** Modèles utilisés par défaut (modifiables par variable d'environnement). */
 export const DEFAULT_RECIPE_MODEL = "claude-sonnet-5-5";
-export const DEFAULT_IMAGE_MODEL = "fal-ai/flux-pro/v1.1";
+/** FLUX1.1 [pro] Ultra en mode « raw » : rendu photographique naturel, moins lissé (retour de Julien). */
+export const DEFAULT_IMAGE_MODEL = "fal-ai/flux-pro/v1.1-ultra";
 
 /** Formats d'image : tous recadrés depuis une seule image HD (pas de génération supplémentaire). */
 export const IMAGE_FORMATS = ["1:1", "4:5", "9:16", "16:9"] as const;
@@ -45,10 +46,10 @@ export function costUsdMicros(model: string, usage: TokenUsage): number {
 export const IMAGE_SOURCE_SIZE = 1440;
 
 /**
- * Estimation prudente du coût d'une image FLUX1.1 [pro] (environ 0,04 $ par mégapixel,
- * arrondi au mégapixel supérieur : 1440 × 1440 ≈ 2,1 Mpx → 3 Mpx). Modifiable par IMAGE_COST_USD_MICROS.
+ * Estimation prudente du coût d'une image FLUX1.1 [pro] Ultra (environ 0,06 $ l'image,
+ * 2048 × 2048 en carré), avec une marge. Modifiable par la variable IMAGE_COST_USD_MICROS.
  */
-export const IMAGE_COST_USD_MICROS = 120_000;
+export const IMAGE_COST_USD_MICROS = 80_000;
 
 /** Estimation prudente d'une génération de recette (pour le contrôle du budget avant l'appel). */
 export const RECIPE_GENERATION_ESTIMATE_USD_MICROS = 150_000;

@@ -1,5 +1,5 @@
 /**
- * Adaptateur d'images FLUX1.1 [pro] via fal.ai (API REST, sans dépendance).
+ * Adaptateur d'images FLUX1.1 [pro] (Ultra par défaut) via fal.ai (API REST, sans dépendance).
  * Interchangeable : tout autre fournisseur implémente ImageAdapter.
  */
 import {
@@ -22,6 +22,17 @@ interface FalResponse {
   images?: Array<{ url: string; width?: number; height?: number }>;
   seed?: number;
   has_nsfw_concepts?: boolean[];
+}
+
+/** Rapport largeur:hauteur accepté par FLUX Ultra le plus proche de la taille demandée. */
+function aspectRatio(width: number, height: number): string {
+  const ratios = ["21:9", "16:9", "4:3", "3:2", "1:1", "2:3", "3:4", "9:16", "9:21"];
+  const target = width / height;
+  return ratios.reduce((best, ratio) => {
+    const [w, h] = ratio.split(":").map(Number) as [number, number];
+    const [bw, bh] = best.split(":").map(Number) as [number, number];
+    return Math.abs(w / h - target) < Math.abs(bw / bh - target) ? ratio : best;
+  }, "1:1");
 }
 
 export class FalImageAdapter implements ImageAdapter {
@@ -56,7 +67,10 @@ export class FalImageAdapter implements ImageAdapter {
         headers: { Authorization: `Key ${this.apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: request.prompt,
-          image_size: { width: request.width, height: request.height },
+          // Ultra : format par rapport (carré, 2048 × 2048) et mode « raw » pour un rendu photo naturel.
+          ...(this.model.includes("ultra")
+            ? { aspect_ratio: aspectRatio(request.width, request.height), raw: true }
+            : { image_size: { width: request.width, height: request.height } }),
           num_images: 1,
           output_format: "jpeg",
           enable_safety_checker: true,

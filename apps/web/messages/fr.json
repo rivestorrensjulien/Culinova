@@ -849,7 +849,21 @@
     "belowCost": "Ce prix ne couvre pas le coût de revient d'une portion ({cost}).",
     "estimating": "Estimation par l'IA des prix manquants…",
     "estimatedNote": "Calculé avec {count, plural, one {# prix estimé} other {# prix estimés}} par l'IA : confirmez-les dans Ingrédients pour un chiffrage juste.",
-    "checkPrices": "Vérifier les prix"
+    "checkPrices": "Vérifier les prix",
+    "hints": {
+      "material": "Prix des ingrédients pour une portion.",
+      "labor": "Votre temps de travail × coût horaire, ÷ nombre de portions.",
+      "energy": "Consommation des appareils × prix du kWh, ÷ nombre de portions.",
+      "totalCost": "Ce que vous coûte vraiment une portion : matière + main-d'œuvre + énergie.",
+      "priceHt": "Prix hors taxes, avant TVA.",
+      "priceTtc": "Prix payé par le client, TVA comprise.",
+      "grossMargin": "Prix HT − coût matière.",
+      "markupRate": "Marge brute ÷ prix HT : la part du prix qui n'est pas de la matière.",
+      "marginRate": "Marge brute ÷ coût matière : combien la matière est « multipliée ».",
+      "realCoefficient": "Prix HT ÷ coût matière (habituellement entre 3 et 4).",
+      "foodCostRatio": "Coût matière ÷ prix HT (habituellement entre 25 et 35 %).",
+      "netMargin": "Prix HT − coût de revient : ce qu'il vous reste vraiment."
+    }
   },
   "Settings": {
     "title": "Réglages de chiffrage",

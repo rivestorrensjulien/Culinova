@@ -849,7 +849,21 @@
     "belowCost": "This price does not cover the cost of a portion ({cost}).",
     "estimating": "AI is estimating missing prices…",
     "estimatedNote": "Calculated with {count, plural, one {# price} other {# prices}} estimated by AI: confirm them in Ingredients for accurate costing.",
-    "checkPrices": "Check prices"
+    "checkPrices": "Check prices",
+    "hints": {
+      "material": "Cost of the ingredients for one portion.",
+      "labor": "Your working time × hourly cost, ÷ number of portions.",
+      "energy": "Appliance consumption × kWh price, ÷ number of portions.",
+      "totalCost": "What one portion really costs you: ingredients + labour + energy.",
+      "priceHt": "Price excluding tax, before VAT.",
+      "priceTtc": "Price paid by the customer, VAT included.",
+      "grossMargin": "Price excl. VAT − ingredient cost.",
+      "markupRate": "Gross margin ÷ price excl. VAT: the share of the price that is not ingredients.",
+      "marginRate": "Gross margin ÷ ingredient cost: how much the ingredients are “multiplied”.",
+      "realCoefficient": "Price excl. VAT ÷ ingredient cost (usually between 3 and 4).",
+      "foodCostRatio": "Ingredient cost ÷ price excl. VAT (usually 25 to 35%).",
+      "netMargin": "Price excl. VAT − cost price: what you really keep."
+    }
   },
   "Settings": {
     "title": "Costing settings",

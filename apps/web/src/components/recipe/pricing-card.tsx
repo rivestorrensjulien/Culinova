@@ -118,15 +118,17 @@ export function PricingCard({
     }
   };
 
-  const costRows: Array<{ label: string; cents: number; note?: ReactNode }> = [
-    { label: t("material"), cents: sheet.perPortion.materialCents },
+  const costRows: Array<{ label: string; hint: string; cents: number; note?: ReactNode }> = [
+    { label: t("material"), hint: t("hints.material"), cents: sheet.perPortion.materialCents },
     {
       label: t("labor"),
+      hint: t("hints.labor"),
       cents: sheet.perPortion.laborCents,
       ...(settings.hourlyRateCents === null ? { note: <SettingsLink text={t("setHourlyRate")} /> } : {}),
     },
     {
       label: t("energy"),
+      hint: t("hints.energy"),
       cents: sheet.perPortion.energyCents,
       ...(settings.kwhPriceCents === null || appliances.length === 0
         ? { note: <SettingsLink text={t(appliances.length === 0 ? "addAppliances" : "setKwhPrice")} /> }
@@ -167,13 +169,17 @@ export function PricingCard({
                 <div key={row.label} className="flex items-baseline justify-between gap-3 py-1.5">
                   <dt className="flex flex-col">
                     <span className="text-muted">{row.label}</span>
+                    <span className="text-xs text-muted/80">{row.hint}</span>
                     {row.note}
                   </dt>
                   <dd className="tabular-nums">{euros(row.cents)}</dd>
                 </div>
               ))}
               <div className="flex items-baseline justify-between gap-3 py-1.5 font-medium">
-                <dt>{t("totalCost")}</dt>
+                <dt className="flex flex-col">
+                  <span>{t("totalCost")}</span>
+                  <span className="text-xs font-normal text-muted/80">{t("hints.totalCost")}</span>
+                </dt>
                 <dd className="font-display text-xl tabular-nums" data-testid="pricing-cost">
                   {euros(sheet.perPortion.totalCents)}
                 </dd>
@@ -191,17 +197,31 @@ export function PricingCard({
                 : t("suggestedHintMaterial", { coefficient: format.number(effectiveCoefficient) })}
             </p>
             <dl className="flex flex-col divide-y divide-border">
-              <Row label={t("priceHt")} value={euros(sheet.suggested.priceExclTaxCents)} />
+              <Row
+                label={t("priceHt")}
+                hint={t("hints.priceHt")}
+                value={euros(sheet.suggested.priceExclTaxCents)}
+              />
               <Row
                 label={t("priceTtc", { vat: format.number(vatRate) })}
+                hint={t("hints.priceTtc")}
                 value={euros(sheet.suggested.priceInclTaxCents)}
                 strong
                 testId="suggested-ttc"
               />
-              <Row label={t("grossMargin")} value={euros(sheet.suggested.onMaterial.grossMarginCents)} />
-              <Row label={t("foodCostRatio")} value={percent(sheet.suggested.foodCostRatio)} />
+              <Row
+                label={t("grossMargin")}
+                hint={t("hints.grossMargin")}
+                value={euros(sheet.suggested.onMaterial.grossMarginCents)}
+              />
+              <Row
+                label={t("foodCostRatio")}
+                hint={t("hints.foodCostRatio")}
+                value={percent(sheet.suggested.foodCostRatio)}
+              />
               <Row
                 label={t("netMargin")}
+                hint={t("hints.netMargin")}
                 value={euros(sheet.suggested.netMarginCents)}
                 negative={sheet.suggested.netMarginCents < 0}
               />
@@ -215,30 +235,46 @@ export function PricingCard({
             ) : null}
             {actual ? (
               <dl className="flex flex-col divide-y divide-border">
-                <Row label={t("priceHt")} value={euros(actual.priceExclTaxCents)} />
+                <Row label={t("priceHt")} hint={t("hints.priceHt")} value={euros(actual.priceExclTaxCents)} />
                 <Row
                   label={t("priceTtc", { vat: format.number(vatRate) })}
+                  hint={t("hints.priceTtc")}
                   value={euros(actual.priceInclTaxCents)}
                   strong
                 />
                 <Row
                   label={t("grossMargin")}
+                  hint={t("hints.grossMargin")}
                   value={euros(actual.onMaterial.grossMarginCents)}
                   testId="actual-margin"
                 />
-                <Row label={t("markupRate")} value={percent(actual.onMaterial.markupRate)} />
-                <Row label={t("marginRate")} value={percent(actual.onMaterial.marginRate)} />
+                <Row
+                  label={t("markupRate")}
+                  hint={t("hints.markupRate")}
+                  value={percent(actual.onMaterial.markupRate)}
+                />
+                <Row
+                  label={t("marginRate")}
+                  hint={t("hints.marginRate")}
+                  value={percent(actual.onMaterial.marginRate)}
+                />
                 <Row
                   label={t("realCoefficient")}
+                  hint={t("hints.realCoefficient")}
                   value={
                     actual.onMaterial.coefficient === null
                       ? "—"
                       : format.number(actual.onMaterial.coefficient, { maximumFractionDigits: 2 })
                   }
                 />
-                <Row label={t("foodCostRatio")} value={percent(actual.foodCostRatio)} />
+                <Row
+                  label={t("foodCostRatio")}
+                  hint={t("hints.foodCostRatio")}
+                  value={percent(actual.foodCostRatio)}
+                />
                 <Row
                   label={t("netMargin")}
+                  hint={t("hints.netMargin")}
                   value={euros(actual.netMarginCents)}
                   negative={actual.netMarginCents < 0}
                   testId="actual-net"
@@ -340,12 +376,15 @@ export function PricingCard({
 
 function Row({
   label,
+  hint,
   value,
   strong,
   negative,
   testId,
 }: {
   label: string;
+  /** Petite explication du calcul, sous le libellé. */
+  hint?: string;
   value: string;
   strong?: boolean;
   negative?: boolean;
@@ -353,7 +392,10 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-muted">{label}</dt>
+      <dt className="flex flex-col">
+        <span className="text-muted">{label}</span>
+        {hint ? <span className="text-xs text-muted/80">{hint}</span> : null}
+      </dt>
       <dd
         data-testid={testId}
         className={cx(

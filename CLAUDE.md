@@ -43,6 +43,7 @@ packages/ui         Système de design (clair / sombre)
 - Contenu social (prompt `social.generate@3`) : Instagram et Pinterest validés par Julien ; présentation (titre, description, texte court) sans répétition ni redondance ; script TikTok en lignes courtes (Accroche, puis Plan 1, Plan 2… jusqu’au dressage, chaque plan commençant par un verbe à l’infinitif, pas de ligne « Final », contrôlé par `socialProblems`), dans l’ordre réel des étapes, sans nombre d’ingrédients ni quantités.
 - Contrôle de complétude (`recipeProblems`) : au moins 3 étapes, aucune étape vide, dressage rédigé, chaque ingrédient utilisé dans une étape ; sinon la recette est renvoyée au modèle (3 tentatives au plus).
 - Affichage du pas à pas : numéro, consigne et résultat attendu uniquement (pas d'intitulé de phase ni de pastilles). Les données (durées, minuteurs, matériel par étape) restent enregistrées pour le futur mode préparation.
+- Base Supabase verrouillée : RLS activée sur toutes les tables de `public` sans aucune règle et droits retirés à `anon` / `authenticated` (`LOCKDOWN_SQL` dans `packages/db/src/migrate.ts`, relancé après chaque migration). L'application n'utilise jamais l'API publique de Supabase : connexion directe en propriétaire des tables.
 - Aucune clé en dur : tout passe par des variables d'environnement (`.env.example` documenté).
 - Calculs de coûts et quotas couverts par des tests unitaires.
 - Identité visuelle originale : premium, gastronomique, chaleureuse, épurée, photos au centre. Ne pas imiter GetCherry ni FoodCraft.

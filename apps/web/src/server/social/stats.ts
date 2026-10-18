@@ -241,9 +241,8 @@ export async function statsOverview(db: Database, now = new Date()): Promise<Sta
   };
 }
 
-export type AnalyzeResult =
-  | { ok: true; analysis: InsightsAnalysis }
-  | { ok: false; reason: "budget" | "failed" };
+type AnalyzeSuccess = { ok: true; analysis: InsightsAnalysis };
+export type AnalyzeResult = AnalyzeSuccess | { ok: false; reason: "budget" | "failed" };
 
 /** Analyse des statistiques par l'IA, avec des propositions pour toucher plus de monde. */
 export async function analyzeStats(

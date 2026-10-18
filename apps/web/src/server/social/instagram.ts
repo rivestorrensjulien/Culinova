@@ -28,10 +28,10 @@ export function instagramConfig(env: Env = process.env) {
   return appId && secret ? { appId, secret } : null;
 }
 
+type GraphBody<T> = T & { error?: { message?: string } | string; error_message?: string };
+
 async function json<T>(response: Response, what: string): Promise<T> {
-  const body = (await response.json().catch(() => null)) as
-    | (T & { error?: { message?: string } | string; error_message?: string })
-    | null;
+  const body = (await response.json().catch(() => null)) as GraphBody<T> | null;
   if (!response.ok || !body) {
     const error = body?.error as { message?: string } | string | undefined;
     const detail = typeof error === "object" ? error.message : (body?.error_message ?? error ?? "");

@@ -24,11 +24,10 @@ export function tiktokConfig(env: Env = process.env) {
 }
 
 type Envelope<T> = { data?: T; error?: { code?: string; message?: string; log_id?: string } };
+type TiktokBody<T> = Envelope<T> & { error_description?: string; access_token?: string };
 
 async function read<T>(response: Response, what: string): Promise<T> {
-  const body = (await response.json().catch(() => null)) as
-    | (Envelope<T> & { error_description?: string; access_token?: string })
-    | null;
+  const body = (await response.json().catch(() => null)) as TiktokBody<T> | null;
   const code = body?.error?.code;
   if (!response.ok || !body || (code && code !== "ok")) {
     const detail = body?.error?.message || body?.error_description || code || String(response.status);

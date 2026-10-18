@@ -27,6 +27,7 @@ export const AI_GENERATION_KINDS = [
   "price_estimate",
   "base",
   "import",
+  "social_analysis",
 ] as const;
 export type AiGenerationKind = (typeof AI_GENERATION_KINDS)[number];
 

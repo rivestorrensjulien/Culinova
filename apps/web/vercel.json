@@ -3,5 +3,14 @@
   "framework": "nextjs",
   "regions": ["dub1"],
   "buildCommand": "pnpm --filter @culinova/db db:deploy && pnpm build",
-  "crons": [{ "path": "/api/cron/purge", "schedule": "17 3 * * *" }]
+  "crons": [
+    {
+      "path": "/api/cron/purge",
+      "schedule": "17 3 * * *"
+    },
+    {
+      "path": "/api/cron/reseaux",
+      "schedule": "41 5 * * *"
+    }
+  ]
 }

@@ -18,3 +18,4 @@ export * from "./legal";
 export * from "./nutrition";
 export * from "./recipes";
 export * from "./settings";
+export * from "./social";

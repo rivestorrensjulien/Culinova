@@ -46,6 +46,9 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" != "schedule" ]; then echo "a_faire=oui" >> "$GITHUB_OUTPUT"; exit 0; fi
           if [ -z "$AGENT_API_KEY" ]; then echo "a_faire=non" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # Au passage, fait avancer les publications en cours chez Instagram et TikTok.
+          curl -fsS -X POST -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/suivi" || true
+          echo
           n=$(curl -fsS -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/videos" | jq '.videos | length')
           echo "$n vidéo(s) à fabriquer"
           if [ "$n" -gt 0 ]; then echo "a_faire=oui" >> "$GITHUB_OUTPUT"; else echo "a_faire=non" >> "$GITHUB_OUTPUT"; fi

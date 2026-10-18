@@ -37,8 +37,38 @@ export function agentAuthorized(
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
-function signature(imageId: string, expires: number, key: string): string {
-  return createHmac("sha256", key).update(`image:${imageId}:${expires}`).digest("base64url");
+function signature(imageId: string, expires: number, key: string, kind: "image" | "video" = "image"): string {
+  return createHmac("sha256", key).update(`${kind}:${imageId}:${expires}`).digest("base64url");
+}
+
+/** Durée de validité d'un lien de vidéo donné à Instagram ou TikTok (qui la téléchargent). */
+export const VIDEO_LINK_TTL_S = 6 * 60 * 60;
+
+/** Lien temporaire vers une vidéo, que les réseaux téléchargent sans session (6 h). */
+export function signedVideoPath(
+  videoId: string,
+  now = new Date(),
+  env: Record<string, string | undefined> = process.env,
+): string | null {
+  const key = agentKey(env);
+  if (!key) return null;
+  const expires = Math.floor(now.getTime() / 1000) + VIDEO_LINK_TTL_S;
+  return `/api/social/videos/${videoId}?expire=${expires}&signature=${signature(videoId, expires, key, "video")}`;
+}
+
+export function verifyVideoSignature(
+  videoId: string,
+  expires: string | null,
+  given: string | null,
+  now = new Date(),
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  const key = agentKey(env);
+  if (!key || !expires || !given || !/^\d+$/.test(expires)) return false;
+  if (Number(expires) < Math.floor(now.getTime() / 1000)) return false;
+  const expected = Buffer.from(signature(videoId, Number(expires), key, "video"));
+  const provided = Buffer.from(given);
+  return expected.length === provided.length && timingSafeEqual(expected, provided);
 }
 
 /** Lien temporaire vers une photo, utilisable sans session pendant une heure. */
@@ -69,7 +99,7 @@ export function verifyImageSignature(
 }
 
 /** Recettes publiables : celles des administrateurs, encore présentes. */
-async function adminRecipe(db: Database, recipeId: string) {
+export async function adminRecipe(db: Database, recipeId: string) {
   const [row] = await db
     .select({ id: s.recipes.id, versionId: s.recipes.currentVersionId })
     .from(s.recipes)
@@ -87,7 +117,7 @@ async function adminRecipe(db: Database, recipeId: string) {
 
 export interface PublicationStatus {
   platform: Platform;
-  status: "queued" | "published" | "failed";
+  status: s.PublicationStatusValue;
   publishedAt: string | null;
   postUrl: string | null;
   note: string | null;

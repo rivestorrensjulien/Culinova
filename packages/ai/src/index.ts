@@ -7,6 +7,7 @@ export * from "./models";
 export * from "./prompts/base";
 export * from "./prompts/image";
 export * from "./prompts/import";
+export * from "./prompts/insights";
 export * from "./prompts/invoice";
 export * from "./prompts/nutrition";
 export * from "./prompts/prices";

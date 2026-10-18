@@ -1,16 +1,128 @@
 "use client";
 
-import { Badge, Button, Card, CardBody, Input, Notice } from "@culinova/ui";
+import { Badge, Button, Card, CardBody, Input, Notice, Select } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "@/i18n/navigation";
 import {
   cancelPublicationAction,
   markPublishedAction,
   queuePublicationAction,
   setShowcaseAction,
 } from "@/server/actions/publishing";
+import {
+  publishVideoAction,
+  refreshPublicationsAction,
+  tiktokCreatorInfoAction,
+} from "@/server/actions/social";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 import type { Platform, PublicationStatus } from "@/server/publishing";
+import type { CreatorInfo } from "@/server/social/tiktok";
+
+const MUSIC_CONFIRMATION = "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en";
+
+/**
+ * Choix exigés par TikTok avant chaque publication : compte, confidentialité (sans
+ * valeur par défaut), interactions autorisées et accord sur l'utilisation de la musique.
+ */
+function TiktokPublishPanel({
+  busy,
+  onPublish,
+  onCancel,
+}: {
+  busy: boolean;
+  onPublish: (choices: {
+    privacy: string;
+    allowComments: boolean;
+    allowDuet: boolean;
+    allowStitch: boolean;
+  }) => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("Publishing.tiktok");
+  const [creator, setCreator] = useState<CreatorInfo | null | undefined>(undefined);
+  const [privacy, setPrivacy] = useState("");
+  const [allowComments, setAllowComments] = useState(false);
+  const [allowDuet, setAllowDuet] = useState(false);
+  const [allowStitch, setAllowStitch] = useState(false);
+  useEffect(() => {
+    tiktokCreatorInfoAction()
+      .then(setCreator)
+      .catch(() => setCreator(null));
+  }, []);
+  if (creator === undefined) return <p className="text-muted">{t("loading")}</p>;
+  if (creator === null) return <Notice tone="danger">{t("unavailable")}</Notice>;
+  const onlyPrivate =
+    creator.privacyOptions.length > 0 && creator.privacyOptions.every((o) => o === "SELF_ONLY");
+  const toggles = [
+    { key: "comments", value: allowComments, set: setAllowComments, disabled: creator.commentDisabled },
+    { key: "duet", value: allowDuet, set: setAllowDuet, disabled: creator.duetDisabled },
+    { key: "stitch", value: allowStitch, set: setAllowStitch, disabled: creator.stitchDisabled },
+  ] as const;
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-border p-3" data-testid="tiktok-panel">
+      <p>{t("account", { name: creator.nickname || creator.username })}</p>
+      <label className="flex flex-col gap-1">
+        <span className="font-medium">{t("privacy")}</span>
+        <Select value={privacy} onChange={(e) => setPrivacy(e.target.value)} className="w-72">
+          <option value="" disabled>
+            {t("choose")}
+          </option>
+          {creator.privacyOptions.map((option) => (
+            <option key={option} value={option}>
+              {t.has(`privacyOptions.${option}`)
+                ? t(`privacyOptions.${option}` as "privacyOptions.SELF_ONLY")
+                : option}
+            </option>
+          ))}
+        </Select>
+      </label>
+      {onlyPrivate ? <Notice tone="info">{t("onlyPrivate")}</Notice> : null}
+      <fieldset className="flex flex-wrap gap-4">
+        <legend className="mb-1 font-medium">{t("allow")}</legend>
+        {toggles.map((toggle) => (
+          <label key={toggle.key} className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={toggle.value && !toggle.disabled}
+              disabled={toggle.disabled}
+              onChange={(e) => toggle.set(e.target.checked)}
+            />
+            {t(`interactions.${toggle.key}`)}
+          </label>
+        ))}
+      </fieldset>
+      <p className="text-muted">
+        {t.rich("consent", {
+          link: (chunks) => (
+            <a
+              href={MUSIC_CONFIRMATION}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
+              {chunks}
+            </a>
+          ),
+        })}
+      </p>
+      <p className="text-muted">{t("processing")}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          size="sm"
+          disabled={busy || !privacy}
+          onClick={() => onPublish({ privacy, allowComments, allowDuet, allowStitch })}
+        >
+          {t("publish")}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
+          {t("cancel")}
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const PLATFORMS: Platform[] = ["tiktok", "instagram"];
 
@@ -23,7 +135,43 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [showcase, setShowcase] = useState(recipe.publishing?.showcase ?? false);
+  const [tiktokOpen, setTiktokOpen] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const processing = statuses.some((s) => s.status === "processing");
+  useEffect(() => {
+    if (!processing) return;
+    const timer = setInterval(() => {
+      refreshPublicationsAction(recipe.recipeId)
+        .then((next) => (next ? setStatuses(next) : null))
+        .catch(() => {});
+    }, 8000);
+    return () => clearInterval(timer);
+  }, [processing, recipe.recipeId]);
   if (!recipe.publishing) return null;
+  const { video, videoFailure, accounts } = recipe.publishing;
+  const connected = (platform: Platform) => accounts.some((a) => a.platform === platform && !a.expired);
+
+  const publish = async (
+    platform: Platform,
+    choices: { privacy: string; allowComments: boolean; allowDuet: boolean; allowStitch: boolean } | null,
+  ) => {
+    setBusy(true);
+    setError(false);
+    setPublishError(null);
+    const outcome = await publishVideoAction(recipe.recipeId, platform, choices).catch(() => null);
+    if (!outcome) setError(true);
+    else {
+      setStatuses(outcome.statuses);
+      if (!outcome.result.ok) {
+        setPublishError(
+          outcome.result.detail
+            ? t("publishErrors.failedDetail", { detail: outcome.result.detail })
+            : t(`publishErrors.${outcome.result.reason}`),
+        );
+      } else setTiktokOpen(false);
+    }
+    setBusy(false);
+  };
 
   const toggleShowcase = async (shown: boolean) => {
     setBusy(true);
@@ -56,6 +204,45 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
         {recipe.publishing.agentEnabled ? null : <Notice tone="info">{t("agentOff")}</Notice>}
         {hasPhoto ? null : <Notice tone="warning">{t("needPhoto")}</Notice>}
         {error ? <Notice tone="danger">{t("error")}</Notice> : null}
+        {publishError ? <Notice tone="danger">{publishError}</Notice> : null}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start" data-testid="publishing-video">
+          {video ? (
+            <>
+              <video
+                controls
+                playsInline
+                preload="metadata"
+                src={`/api/videos/${video.id}`}
+                className="aspect-[9/16] w-44 shrink-0 rounded-xl bg-black"
+              />
+              <div className="flex flex-col gap-2">
+                <p className="font-medium">{t("video.title")}</p>
+                <p className="text-muted">
+                  {t("video.meta", {
+                    date: format.dateTime(new Date(video.createdAt), {
+                      dateStyle: "medium",
+                      timeStyle: "short",
+                    }),
+                    seconds: Math.round(video.durationS),
+                  })}
+                </p>
+                {video.current ? null : <Notice tone="warning">{t("video.outdated")}</Notice>}
+                <p className="text-muted">{t("video.check")}</p>
+                <a href={`/api/videos/${video.id}?telecharger=1`} className="text-primary hover:underline">
+                  {t("video.download")}
+                </a>
+              </div>
+            </>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="font-medium">{t("video.title")}</p>
+              <p className="text-muted">{queued ? t("video.pending") : t("video.none")}</p>
+              {videoFailure ? (
+                <Notice tone="danger">{t("video.failed", { note: videoFailure.note ?? "" })}</Notice>
+              ) : null}
+            </div>
+          )}
+        </div>
         <ul className="flex flex-col divide-y divide-border">
           {PLATFORMS.map((platform) => {
             const status = statusOf(platform);
@@ -67,6 +254,8 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     <Badge>{t("none")}</Badge>
                   ) : status.status === "queued" ? (
                     <Badge tone="accent">{t("queued")}</Badge>
+                  ) : status.status === "processing" ? (
+                    <Badge tone="accent">{t("processing")}</Badge>
                   ) : status.status === "published" ? (
                     <Badge tone="success">
                       {t("published", {
@@ -91,7 +280,41 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     {t("link")}
                   </a>
                 ) : null}
-                {status?.status !== "published" ? (
+                {video && status?.status !== "published" && status?.status !== "processing" ? (
+                  connected(platform) ? (
+                    platform === "tiktok" && tiktokOpen ? (
+                      <TiktokPublishPanel
+                        busy={busy}
+                        onPublish={(choices) => publish("tiktok", choices)}
+                        onCancel={() => setTiktokOpen(false)}
+                      />
+                    ) : (
+                      <div>
+                        <Button
+                          size="sm"
+                          disabled={busy}
+                          data-testid={`publish-${platform}`}
+                          onClick={() =>
+                            platform === "tiktok" ? setTiktokOpen(true) : publish(platform, null)
+                          }
+                        >
+                          {t("publishOn", { platform: t(`platforms.${platform}`) })}
+                        </Button>
+                      </div>
+                    )
+                  ) : (
+                    <p className="text-muted">
+                      {t.rich("notConnected", {
+                        link: (chunks) => (
+                          <Link href="/admin/reseaux" className="text-primary hover:underline">
+                            {chunks}
+                          </Link>
+                        ),
+                      })}
+                    </p>
+                  )
+                ) : null}
+                {status?.status !== "published" && status?.status !== "processing" ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <Input
                       className="w-64"

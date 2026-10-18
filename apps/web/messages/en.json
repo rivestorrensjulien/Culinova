@@ -1273,7 +1273,7 @@
   },
   "Publishing": {
     "title": "Social media publishing",
-    "intro": "The publishing agent fetches recipes “to publish” (Instagram and TikTok texts, 9:16 photo) and reports when they are live.",
+    "intro": "The agent makes the recipe video (mascot, steps, photo of the dish); you watch it, then publish it on Instagram and TikTok.",
     "agentOff": "Agent not configured: add the AGENT_API_KEY variable in Vercel to open its gate.",
     "platforms": {
       "tiktok": "TikTok",
@@ -1289,11 +1289,57 @@
     "markPublished": "Mark published",
     "link": "View post",
     "postUrl": "Post link (optional)",
-    "needPhoto": "Generate the photo first: the agent publishes the 9:16 image.",
+    "needPhoto": "Generate the photo first: the video ends on the 9:16 image.",
     "error": "The operation failed.",
     "showcase": "Show the photo on the home page",
     "showcaseHint": "It appears in the gallery seen by every visitor (6 photos at most, newest first).",
-    "needPhotoShowcase": "Generate the photo first to show it on the home page."
+    "needPhotoShowcase": "Generate the photo first to show it on the home page.",
+    "processing": "Publishing…",
+    "publishOn": "Approve and publish on {platform}",
+    "notConnected": "Account not connected: <link>connect it in the admin area</link>.",
+    "video": {
+      "title": "Recipe video",
+      "meta": "Made on {date} · {seconds} s",
+      "outdated": "This video was made for an earlier version of the recipe.",
+      "check": "Watch it all the way through before publishing: nothing goes out without your click.",
+      "download": "Download the video",
+      "pending": "Video in progress: the agent makes it within half an hour (it needs the 9:16 photo and the TikTok script).",
+      "none": "The video is made automatically when the recipe is marked “to publish”.",
+      "failed": "Last attempt failed: {note}"
+    },
+    "publishErrors": {
+      "not_found": "Recipe not found.",
+      "no_video": "No video to publish yet.",
+      "not_connected": "Account not connected or connection expired: connect it in the admin area.",
+      "invalid_privacy": "Choose who can see the video.",
+      "too_long": "The video is longer than TikTok allows for this account.",
+      "failed": "Publishing failed.",
+      "failedDetail": "Publishing failed: {detail}"
+    },
+    "tiktok": {
+      "loading": "Reading the TikTok account…",
+      "unavailable": "TikTok account unreachable: check the connection in the admin area.",
+      "account": "TikTok account: {name}",
+      "privacy": "Who can see this video?",
+      "choose": "Choose…",
+      "privacyOptions": {
+        "PUBLIC_TO_EVERYONE": "Everyone",
+        "MUTUAL_FOLLOW_FRIENDS": "Friends (mutual follows)",
+        "FOLLOWER_OF_CREATOR": "Followers",
+        "SELF_ONLY": "Only me (private)"
+      },
+      "onlyPrivate": "Until TikTok approves the app, only private posts are possible.",
+      "allow": "Allow",
+      "interactions": {
+        "comments": "Comments",
+        "duet": "Duet",
+        "stitch": "Stitch"
+      },
+      "consent": "By posting, you agree to TikTok’s <link>Music Usage Confirmation</link>.",
+      "processing": "After posting, the video may take a few minutes to appear on the profile.",
+      "publish": "Post to TikTok",
+      "cancel": "Cancel"
+    }
   },
   "Install": {
     "title": "Install Culinova on this device",

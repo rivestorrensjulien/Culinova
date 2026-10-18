@@ -330,6 +330,7 @@ export const recipeViews = pgTable(
 
 export const PUBLICATION_PLATFORMS = ["tiktok", "instagram"] as const;
 export type PublicationPlatform = (typeof PUBLICATION_PLATFORMS)[number];
+export type PublicationStatusValue = "queued" | "processing" | "published" | "failed";
 
 /**
  * Publication d'une recette de l'administrateur sur un réseau social, par l'agent de
@@ -343,10 +344,19 @@ export const recipePublications = pgTable(
       .notNull()
       .references(() => recipes.id, { onDelete: "cascade" }),
     platform: text("platform").$type<PublicationPlatform>().notNull(),
-    status: text("status").$type<"queued" | "published" | "failed">().notNull().default("queued"),
+    /** « processing » : envoyée au réseau, en cours de traitement (Reels, TikTok). */
+    status: text("status").$type<PublicationStatusValue>().notNull().default("queued"),
     publishedAt: tz("published_at"),
     postUrl: text("post_url"),
     note: text("note"),
+    /** Vidéo publiée (recipe_videos), quand la publication passe par Culinova. */
+    videoId: uuid("video_id"),
+    /** Identifiant de traitement chez le réseau (conteneur Instagram, publish_id TikTok). */
+    externalId: text("external_id"),
+    /** Identifiant de la publication chez le réseau, pour les statistiques. */
+    postId: text("post_id"),
+    /** Confidentialité choisie (TikTok : PUBLIC_TO_EVERYONE, SELF_ONLY…). */
+    privacy: text("privacy"),
     ...timestamps,
   },
   (t) => [uniqueIndex("recipe_publications_unique").on(t.recipeId, t.platform)],

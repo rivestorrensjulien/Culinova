@@ -9,6 +9,8 @@ import { computeRecipeNutrition, type NutritionView } from "../nutrition/recipe-
 import { imagesAvailable } from "../images/storage";
 import { isFavorite } from "../library";
 import { agentEnabled, type PublicationStatus, publicationStatuses } from "../publishing";
+import { type AccountSummary, listAccounts } from "../social/accounts";
+import { lastVideoFailure, latestVideo, type RecipeVideoView } from "../social/videos";
 import { isInShowcase } from "../showcase";
 import { loadTranslationState, type TranslationState } from "../translation";
 import { getMonthlyUsage, getQuotaLimits } from "../quotas";
@@ -124,7 +126,14 @@ export interface RecipeView {
   translation: TranslationState;
   /** Publication par l'agent (recettes des administrateurs uniquement), sinon null. */
   /** Réservé aux administrateurs : publication sur les réseaux et vitrine de la page d'accueil. */
-  publishing: { agentEnabled: boolean; statuses: PublicationStatus[]; showcase: boolean } | null;
+  publishing: {
+    agentEnabled: boolean;
+    statuses: PublicationStatus[];
+    showcase: boolean;
+    video: RecipeVideoView | null;
+    videoFailure: { note: string | null; at: string } | null;
+    accounts: AccountSummary[];
+  } | null;
 }
 
 export type ImageFormatName = "1:1" | "4:5" | "9:16" | "16:9";
@@ -237,6 +246,9 @@ export async function loadRecipeView(
           agentEnabled: agentEnabled(),
           statuses: await publicationStatuses(db, recipe.id),
           showcase: await isInShowcase(db, recipe.id),
+          video: await latestVideo(db, recipe.id),
+          videoFailure: await lastVideoFailure(db, recipe.id),
+          accounts: await listAccounts(db),
         }
       : null;
   const translation = await loadTranslationState(db, recipe.id, version.id, recipe.originalLanguage);

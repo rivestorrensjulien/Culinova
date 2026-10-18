@@ -401,7 +401,25 @@ export function fakeInvoice(user: string) {
   };
 }
 
+/** Analyse des statistiques des réseaux (insights.analyze). */
+function fakeInsights() {
+  return {
+    summary: "Démarrage : trop peu de publications pour conclure, voici un plan pour les premières semaines.",
+    strengths: ["Les vidéos courtes avec la mascotte retiennent l'attention dès l'accroche."],
+    weaknesses: ["Peu de publications pour l'instant."],
+    suggestions: [
+      {
+        title: "Publier trois fois par semaine",
+        detail: "Mardi, jeudi et dimanche vers 18 h, quand votre public cuisine.",
+        impact: "fort",
+      },
+    ],
+    nextRecipes: ["Pâtes crémeuses au citron en 15 minutes"],
+  };
+}
+
 const defaultResponder: Responder = (request) => {
+  if (request.promptId.startsWith("insights.")) return fakeInsights();
   if (request.promptId.startsWith("invoice.")) return fakeInvoice(request.user);
   if (request.promptId.startsWith("recipe.import")) {
     const recipe = fakeRecipe(request.user, 0);

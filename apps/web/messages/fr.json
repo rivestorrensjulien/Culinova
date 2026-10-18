@@ -1273,7 +1273,7 @@
   },
   "Publishing": {
     "title": "Publication sur les réseaux",
-    "intro": "L’agent de publication récupère les recettes « à publier » (textes Instagram et TikTok, photo 9:16) puis indique quand c’est publié.",
+    "intro": "L’agent fabrique la vidéo de la recette (mascotte, étapes, photo du plat) ; vous la regardez, puis vous la publiez sur Instagram et TikTok.",
     "agentOff": "Agent non configuré : ajoutez la variable AGENT_API_KEY dans Vercel pour ouvrir sa porte d’accès.",
     "platforms": {
       "tiktok": "TikTok",
@@ -1289,11 +1289,57 @@
     "markPublished": "Marquer publié",
     "link": "Voir la publication",
     "postUrl": "Lien de la publication (facultatif)",
-    "needPhoto": "Générez d’abord la photo : l’agent publie l’image 9:16.",
+    "needPhoto": "Générez d’abord la photo : la vidéo se termine sur l’image 9:16.",
     "error": "L’opération a échoué.",
     "showcase": "Montrer la photo sur la page d’accueil",
     "showcaseHint": "Elle apparaît dans la galerie visible par tous les visiteurs (6 photos au plus, les plus récentes d’abord).",
-    "needPhotoShowcase": "Générez d’abord la photo pour pouvoir la montrer sur la page d’accueil."
+    "needPhotoShowcase": "Générez d’abord la photo pour pouvoir la montrer sur la page d’accueil.",
+    "processing": "Publication en cours…",
+    "publishOn": "Valider et publier sur {platform}",
+    "notConnected": "Compte non relié : <link>reliez-le dans l’administration</link>.",
+    "video": {
+      "title": "Vidéo de la recette",
+      "meta": "Fabriquée le {date} · {seconds} s",
+      "outdated": "Cette vidéo a été fabriquée pour une version précédente de la recette.",
+      "check": "Regardez-la en entier avant de publier : rien ne part sans votre clic.",
+      "download": "Télécharger la vidéo",
+      "pending": "Vidéo en préparation : l’agent la fabrique dans la demi-heure (il lui faut la photo 9:16 et le script TikTok).",
+      "none": "La vidéo est fabriquée automatiquement quand la recette est marquée « à publier ».",
+      "failed": "Dernière fabrication en échec : {note}"
+    },
+    "publishErrors": {
+      "not_found": "Recette introuvable.",
+      "no_video": "Pas encore de vidéo à publier.",
+      "not_connected": "Compte non relié ou connexion expirée : reliez-le dans l’administration.",
+      "invalid_privacy": "Choisissez qui peut voir la vidéo.",
+      "too_long": "La vidéo dépasse la durée autorisée par TikTok pour ce compte.",
+      "failed": "La publication a échoué.",
+      "failedDetail": "La publication a échoué : {detail}"
+    },
+    "tiktok": {
+      "loading": "Lecture du compte TikTok…",
+      "unavailable": "Compte TikTok injoignable : vérifiez la connexion dans l’administration.",
+      "account": "Compte TikTok : {name}",
+      "privacy": "Qui peut voir la vidéo ?",
+      "choose": "Choisir…",
+      "privacyOptions": {
+        "PUBLIC_TO_EVERYONE": "Tout le monde",
+        "MUTUAL_FOLLOW_FRIENDS": "Amis (abonnements mutuels)",
+        "FOLLOWER_OF_CREATOR": "Abonnés",
+        "SELF_ONLY": "Moi uniquement (privé)"
+      },
+      "onlyPrivate": "En attendant la validation de l’application par TikTok, seule la publication privée est possible.",
+      "allow": "Autoriser",
+      "interactions": {
+        "comments": "Commentaires",
+        "duet": "Duo",
+        "stitch": "Collage"
+      },
+      "consent": "En publiant, vous acceptez la <link>confirmation d’utilisation de la musique</link> de TikTok.",
+      "processing": "Après la publication, la vidéo peut mettre quelques minutes à apparaître sur le profil.",
+      "publish": "Publier sur TikTok",
+      "cancel": "Annuler"
+    }
   },
   "Install": {
     "title": "Installer Culinova sur cet appareil",

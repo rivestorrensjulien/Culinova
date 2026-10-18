@@ -1300,7 +1300,7 @@
     "video": {
       "title": "Recipe video",
       "meta": "Made on {date} · {seconds} s",
-      "outdated": "This video was made for an earlier version of the recipe.",
+      "outdated": "This video shows an earlier version of the recipe or another photo: a new one will be made automatically (recipe “to publish”).",
       "check": "Watch it all the way through before publishing: nothing goes out without your click.",
       "download": "Download the video",
       "pending": "Video in progress: the agent makes it within half an hour (it needs the 9:16 photo and the TikTok script).",
@@ -1314,7 +1314,8 @@
       "invalid_privacy": "Choose who can see the video.",
       "too_long": "The video is longer than TikTok allows for this account.",
       "failed": "Publishing failed.",
-      "failedDetail": "Publishing failed: {detail}"
+      "failedDetail": "Publishing failed: {detail}",
+      "outdated": "The video no longer matches the recipe or its photo: a new video is being made."
     },
     "tiktok": {
       "loading": "Reading the TikTok account…",

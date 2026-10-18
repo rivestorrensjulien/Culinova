@@ -112,6 +112,7 @@ async function main() {
       const target = await client.register({
         recipeId: job.recipeId,
         versionId: job.versionId,
+        imageId: job.imageId,
         sizeBytes: size,
         ...meta,
       });

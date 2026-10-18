@@ -1,7 +1,7 @@
 /**
  * Vidéos de l'agent de publication (dossier agent/).
  * GET  : vidéos à fabriquer (ou ?recette=<id> pour en refaire une) : textes à l'écran et photo 9:16.
- * POST : annonce d'une vidéo fabriquée { recipeId, versionId, durationS, width, height, sizeBytes }
+ * POST : annonce d'une vidéo fabriquée { recipeId, versionId, imageId, durationS, width, height, sizeBytes }
  *        → { videoId, upload: { url, method, headers } } pour envoyer le fichier.
  * En-tête obligatoire : Authorization: Bearer <AGENT_API_KEY>.
  */
@@ -28,6 +28,7 @@ export async function GET(request: Request) {
 const registrationSchema = z.object({
   recipeId: z.uuid(),
   versionId: z.uuid(),
+  imageId: z.uuid().nullish(),
   durationS: z.number().positive().max(600),
   width: z.int().positive().max(4096),
   height: z.int().positive().max(4096),

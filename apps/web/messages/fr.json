@@ -1300,7 +1300,7 @@
     "video": {
       "title": "Vidéo de la recette",
       "meta": "Fabriquée le {date} · {seconds} s",
-      "outdated": "Cette vidéo a été fabriquée pour une version précédente de la recette.",
+      "outdated": "Cette vidéo montre une version précédente de la recette ou une autre photo : une nouvelle vidéo sera fabriquée automatiquement (recette « à publier »).",
       "check": "Regardez-la en entier avant de publier : rien ne part sans votre clic.",
       "download": "Télécharger la vidéo",
       "pending": "Vidéo en préparation : l’agent la fabrique dans la demi-heure (il lui faut la photo 9:16 et le script TikTok).",
@@ -1314,7 +1314,8 @@
       "invalid_privacy": "Choisissez qui peut voir la vidéo.",
       "too_long": "La vidéo dépasse la durée autorisée par TikTok pour ce compte.",
       "failed": "La publication a échoué.",
-      "failedDetail": "La publication a échoué : {detail}"
+      "failedDetail": "La publication a échoué : {detail}",
+      "outdated": "La vidéo ne correspond plus à la recette ou à sa photo : une nouvelle vidéo est en préparation."
     },
     "tiktok": {
       "loading": "Lecture du compte TikTok…",

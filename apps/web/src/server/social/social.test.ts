@@ -41,6 +41,40 @@ async function recipeOf(userId: string): Promise<string> {
   return row!.recipeId!;
 }
 
+/** Photo de la version active : image HD principale et son recadrage 9:16. */
+async function addPhoto(recipeId: string): Promise<string> {
+  const db = testDb();
+  const [recipe] = await db.select().from(s.recipes).where(eq(s.recipes.id, recipeId));
+  const versionId = recipe!.currentVersionId!;
+  await db
+    .update(s.recipeImages)
+    .set({ isPrimary: false })
+    .where(eq(s.recipeImages.recipeVersionId, versionId));
+  const [source] = await db
+    .insert(s.recipeImages)
+    .values({
+      recipeVersionId: versionId,
+      format: "source",
+      status: "ready",
+      isPrimary: true,
+      storageKey: "x/src.jpg",
+    })
+    .returning();
+  const [vertical] = await db
+    .insert(s.recipeImages)
+    .values({
+      recipeVersionId: versionId,
+      format: "9:16",
+      sourceImageId: source!.id,
+      status: "ready",
+      storageKey: "x/916.jpg",
+      width: 810,
+      height: 1440,
+    })
+    .returning();
+  return vertical!.id;
+}
+
 /** Faux réseau : chaque route renvoie la réponse prévue (ou une suite de réponses). */
 function fakeNetwork(routes: Array<[RegExp, unknown | (() => unknown)]>) {
   const calls: Array<{ url: string; body: string | null }> = [];
@@ -109,8 +143,13 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
 
   it("fabrique, reçoit et montre la vidéo de la recette", async () => {
     const db = testDb();
+    // Pas de vidéo sans la photo de la recette : la vidéo montre exactement ce plat.
+    expect((await videoJobs(db, "https://culinova.fr")).some((j) => j.recipeId === recipeId)).toBe(false);
+    const photoId = await addPhoto(recipeId);
     const jobs = await videoJobs(db, "https://culinova.fr");
     const job = jobs.find((j) => j.recipeId === recipeId);
+    expect(job?.imageId).toBe(photoId);
+    expect(job?.photoUrl).toContain(`/api/agent/images/${photoId}?`);
     expect(job).toMatchObject({
       hook: "Regardez le chalumeau faire son œuvre…",
       shots: [
@@ -123,6 +162,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const registered = await registerVideo(db, {
       recipeId,
       versionId: job!.versionId,
+      imageId: job!.imageId,
       durationS: 21.5,
       width: 1080,
       height: 1920,
@@ -345,5 +385,18 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const analysis = await analyzeStats(db, new FakeLlmAdapter(), admin.id);
     expect(analysis.ok).toBe(true);
     expect((await statsOverview(db)).lastAnalysis?.analysis.suggestions.length).toBeGreaterThan(0);
+  });
+
+  it("nouvelle photo : la vidéo n'est plus publiable et une nouvelle est demandée", async () => {
+    const db = testDb();
+    const photoId = await addPhoto(recipeId);
+    expect((await latestVideo(db, recipeId))?.current).toBe(false);
+    await queuePublication(db, admin.id, recipeId, ["instagram"]);
+    const job = (await videoJobs(db, "https://culinova.fr")).find((j) => j.recipeId === recipeId);
+    expect(job?.imageId).toBe(photoId);
+    expect(await startPublication(db, admin.id, recipeId, "instagram", null)).toEqual({
+      ok: false,
+      reason: "outdated",
+    });
   });
 });

@@ -26,7 +26,14 @@ export type StartResult =
   | { ok: true }
   | {
       ok: false;
-      reason: "not_found" | "no_video" | "not_connected" | "invalid_privacy" | "too_long" | "failed";
+      reason:
+        | "not_found"
+        | "no_video"
+        | "outdated"
+        | "not_connected"
+        | "invalid_privacy"
+        | "too_long"
+        | "failed";
       detail?: string;
     };
 
@@ -92,6 +99,8 @@ export async function startPublication(
   if (!recipe?.versionId || owner?.ownerId !== adminId) return { ok: false, reason: "not_found" };
   const video = await latestVideo(db, recipeId);
   if (!video) return { ok: false, reason: "no_video" };
+  // La vidéo doit montrer la recette telle qu'elle est (version et photo actuelles).
+  if (!video.current) return { ok: false, reason: "outdated" };
   const account = await accountToken(db, platform, { fetchImpl, now: deps.now }).catch(() => null);
   if (!account) return { ok: false, reason: "not_connected" };
   const path = signedVideoPath(video.id, deps.now);

@@ -280,7 +280,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     {t("link")}
                   </a>
                 ) : null}
-                {video && status?.status !== "published" && status?.status !== "processing" ? (
+                {video?.current && status?.status !== "published" && status?.status !== "processing" ? (
                   connected(platform) ? (
                     platform === "tiktok" && tiktokOpen ? (
                       <TiktokPublishPanel

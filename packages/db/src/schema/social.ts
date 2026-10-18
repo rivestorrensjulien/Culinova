@@ -23,6 +23,8 @@ export const recipeVideos = pgTable(
       .references(() => recipeVersions.id, { onDelete: "cascade" }),
     status: text("status").$type<"uploading" | "ready" | "failed">().notNull().default("uploading"),
     storageKey: text("storage_key").notNull(),
+    /** Photo 9:16 montrée dans la vidéo : si la photo de la recette change, la vidéo est refaite. */
+    imageId: uuid("image_id"),
     durationMs: integer("duration_ms").notNull(),
     width: integer("width").notNull(),
     height: integer("height").notNull(),

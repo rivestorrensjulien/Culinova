@@ -8,7 +8,9 @@ export interface VideoJob {
   name: string;
   hook: string;
   shots: string[];
-  photoUrl: string | null;
+  /** Photo 9:16 de la recette (celle de sa page) : la vidéo la montre du début à la fin. */
+  imageId: string;
+  photoUrl: string;
 }
 
 export interface UploadTarget {
@@ -47,6 +49,7 @@ export class CulinovaClient {
   async register(input: {
     recipeId: string;
     versionId: string;
+    imageId: string;
     durationS: number;
     width: number;
     height: number;

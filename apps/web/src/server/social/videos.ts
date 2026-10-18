@@ -5,6 +5,7 @@
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, desc, eq, gte, inArray, isNotNull, notInArray } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { audit } from "../audit";
 import { adminRecipe, signedImagePath } from "../publishing";
 import { parseVideoScript } from "./script";
@@ -21,11 +22,53 @@ export interface VideoJob {
   name: string;
   hook: string;
   shots: string[];
-  /** Photo 9:16 de la version active (lien signé valable 1 h), ou null. */
-  photoUrl: string | null;
+  /** Photo 9:16 affichée sur la page de la recette (celle que la vidéo doit montrer). */
+  imageId: string;
+  /** Lien signé (1 h) vers cette photo. */
+  photoUrl: string;
 }
 
-/** Ce qu'il faut pour fabriquer la vidéo de la version active d'une recette, ou null (pas de script). */
+/**
+ * Photo 9:16 de la photo principale de la version (celle affichée sur la page de la recette),
+ * ou à défaut le dernier recadrage 9:16 prêt.
+ */
+export async function currentVerticalPhoto(db: Database, versionId: string): Promise<string | null> {
+  const source = alias(s.recipeImages, "source");
+  const [primary] = await db
+    .select({ id: s.recipeImages.id })
+    .from(s.recipeImages)
+    .innerJoin(source, eq(source.id, s.recipeImages.sourceImageId))
+    .where(
+      and(
+        eq(s.recipeImages.recipeVersionId, versionId),
+        eq(s.recipeImages.format, "9:16"),
+        eq(s.recipeImages.status, "ready"),
+        eq(source.isPrimary, true),
+      ),
+    )
+    .orderBy(desc(source.createdAt))
+    .limit(1);
+  if (primary) return primary.id;
+  const [latest] = await db
+    .select({ id: s.recipeImages.id })
+    .from(s.recipeImages)
+    .where(
+      and(
+        eq(s.recipeImages.recipeVersionId, versionId),
+        eq(s.recipeImages.format, "9:16"),
+        eq(s.recipeImages.status, "ready"),
+      ),
+    )
+    .orderBy(desc(s.recipeImages.createdAt))
+    .limit(1);
+  return latest?.id ?? null;
+}
+
+/**
+ * Ce qu'il faut pour fabriquer la vidéo de la version active d'une recette : script TikTok
+ * et photo de la recette, tous deux de la même version (sinon null : pas de vidéo sans photo,
+ * pour que la vidéo montre exactement le plat de la recette).
+ */
 async function jobFor(db: Database, recipeId: string, baseUrl: string, now: Date): Promise<VideoJob | null> {
   const recipe = await adminRecipe(db, recipeId);
   if (!recipe?.versionId) return null;
@@ -40,33 +83,23 @@ async function jobFor(db: Database, recipeId: string, baseUrl: string, now: Date
       and(eq(s.socialContents.recipeVersionId, recipe.versionId), eq(s.socialContents.platform, "tiktok")),
     );
   const script = parseVideoScript(tiktok?.caption);
-  if (!version || !script) return null;
-  const [photo] = await db
-    .select({ id: s.recipeImages.id })
-    .from(s.recipeImages)
-    .where(
-      and(
-        eq(s.recipeImages.recipeVersionId, recipe.versionId),
-        eq(s.recipeImages.format, "9:16"),
-        eq(s.recipeImages.status, "ready"),
-      ),
-    )
-    .orderBy(desc(s.recipeImages.createdAt))
-    .limit(1);
-  const path = photo ? signedImagePath(photo.id, now) : null;
+  const imageId = await currentVerticalPhoto(db, recipe.versionId);
+  const path = imageId ? signedImagePath(imageId, now) : null;
+  if (!version || !script || !imageId || !path) return null;
   return {
     recipeId,
     versionId: recipe.versionId,
     name: version.name,
     hook: script.hook,
     shots: script.shots,
-    photoUrl: path ? `${baseUrl}${path}` : null,
+    imageId,
+    photoUrl: `${baseUrl}${path}`,
   };
 }
 
 /**
- * Vidéos à fabriquer : recettes « à publier » dont la version active n'a pas encore de
- * vidéo (ni d'envoi en cours, ni trop d'échecs). Avec une recette précise : toujours
+ * Vidéos à fabriquer : recettes « à publier » dont la photo actuelle n'a pas encore de
+ * vidéo (ni d'envoi en cours, ni trop d'échecs) : changer la photo ou la version refait la vidéo. Avec une recette précise : toujours
  * une nouvelle vidéo (pour en refaire une).
  */
 export async function videoJobs(
@@ -90,7 +123,7 @@ export async function videoJobs(
     const videos = await db
       .select({ status: s.recipeVideos.status, createdAt: s.recipeVideos.createdAt })
       .from(s.recipeVideos)
-      .where(eq(s.recipeVideos.recipeVersionId, job.versionId));
+      .where(and(eq(s.recipeVideos.recipeVersionId, job.versionId), eq(s.recipeVideos.imageId, job.imageId)));
     const done = videos.some(
       (v) =>
         v.status === "ready" ||
@@ -105,6 +138,8 @@ export async function videoJobs(
 export interface VideoRegistration {
   recipeId: string;
   versionId: string;
+  /** Photo 9:16 montrée dans la vidéo. */
+  imageId?: string | null;
   durationS: number;
   width: number;
   height: number;
@@ -132,6 +167,7 @@ export async function registerVideo(
     .values({
       recipeId: input.recipeId,
       recipeVersionId: input.versionId,
+      imageId: input.imageId ?? null,
       storageKey: "",
       durationMs: Math.round(input.durationS * 1000),
       width: input.width,
@@ -202,7 +238,7 @@ export interface RecipeVideoView {
   id: string;
   durationS: number;
   createdAt: string;
-  /** La vidéo a été fabriquée pour la version active de la recette. */
+  /** La vidéo a été fabriquée pour la version active et la photo actuelle de la recette. */
   current: boolean;
 }
 
@@ -214,6 +250,7 @@ export async function latestVideo(db: Database, recipeId: string): Promise<Recip
       durationMs: s.recipeVideos.durationMs,
       createdAt: s.recipeVideos.createdAt,
       versionId: s.recipeVideos.recipeVersionId,
+      imageId: s.recipeVideos.imageId,
       currentVersionId: s.recipes.currentVersionId,
     })
     .from(s.recipeVideos)
@@ -222,11 +259,12 @@ export async function latestVideo(db: Database, recipeId: string): Promise<Recip
     .orderBy(desc(s.recipeVideos.createdAt))
     .limit(1);
   if (!row) return null;
+  const photo = row.currentVersionId ? await currentVerticalPhoto(db, row.currentVersionId) : null;
   return {
     id: row.id,
     durationS: row.durationMs / 1000,
     createdAt: row.createdAt.toISOString(),
-    current: row.versionId === row.currentVersionId,
+    current: row.versionId === row.currentVersionId && (!row.imageId || row.imageId === photo),
   };
 }
 

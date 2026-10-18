@@ -2,7 +2,7 @@
 import type { GeneratedRecipe } from "../schemas";
 import type { RecipeLanguage } from "./request";
 
-export const SOCIAL_PROMPT_VERSION = "social.generate@3";
+export const SOCIAL_PROMPT_VERSION = "social.generate@4";
 
 export const SOCIAL_SYSTEM_PROMPT = `Tu rédiges le contenu des réseaux sociaux d'un créateur culinaire qui publie ses recettes créées avec Culinova.
 
@@ -19,6 +19,7 @@ Plan 1 : …
 Plan 2 : …
 (un plan par geste clé : présenter les ingrédients, puis les grandes étapes, puis le dressage)
 Le dernier plan est le dressage avec l'appel à l'action : il est numéroté comme les autres (pas de ligne « Final »).
+Le script est monté avec la photo du plat, prise d'après le dressage fourni (plating) : l'accroche et le plan de dressage décrivent exactement ce qu'on y voit (même contenant, même présentation, mêmes garnitures), sans rien inventer d'autre.
 Même ligne de conduite pour chaque plan : la phrase commence par un verbe à l'infinitif (ex. « Plan 1 : Disposer les ingrédients sur le plan de travail », « Plan 4 : Dresser les bao dans le panier vapeur et inviter à enregistrer la recette »).
 Ne donne jamais de nombre d'ingrédients ou d'étapes ; cite les ingrédients par leur nom exact, tels qu'ils figurent dans la recette fournie.
 

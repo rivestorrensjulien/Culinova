@@ -34,7 +34,85 @@ const COLORS = {
   gold: "#b08a3e",
   muted: "#6b5f55",
 };
-const BACKGROUNDS = ["#faf6ef", "#f3e4d6", "#e6eadf", "#f1e7cf"];
+
+function photoSrc(photoUrl: string | null): string | null {
+  if (!photoUrl) return null;
+  return photoUrl.startsWith("static:") ? staticFile(photoUrl.slice(7)) : photoUrl;
+}
+
+/**
+ * Fond tiré de la photo du plat (très floutée, voilée d'ivoire) : chaque scène prend les
+ * couleurs de la recette, pour que toute la vidéo soit cohérente avec sa photo.
+ */
+function PhotoBackdrop({ props, veil = 0.78 }: { props: VideoProps; veil?: number }) {
+  const src = photoSrc(props.photoUrl);
+  return (
+    <AbsoluteFill style={{ backgroundColor: COLORS.ivory, overflow: "hidden" }}>
+      {src ? (
+        <Img
+          src={src}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            filter: "blur(48px) saturate(1.2)",
+            transform: "scale(1.25)",
+          }}
+        />
+      ) : null}
+      <AbsoluteFill style={{ backgroundColor: COLORS.ivory, opacity: veil }} />
+    </AbsoluteFill>
+  );
+}
+
+/** Le plat de la recette, en carte arrondie, toujours visible pendant les étapes. */
+function DishCard({
+  props,
+  width,
+  height,
+  delay = 0,
+  tilt = 0,
+  style,
+}: {
+  props: VideoProps;
+  width: number;
+  height: number;
+  delay?: number;
+  tilt?: number;
+  style: CSSProperties;
+}) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const src = photoSrc(props.photoUrl);
+  if (!src) return null;
+  const enter = spring({ frame: frame - delay, fps, config: { damping: 14 } });
+  return (
+    <div
+      style={{
+        position: "absolute",
+        width,
+        height,
+        borderRadius: 36,
+        overflow: "hidden",
+        border: "10px solid #ffffff",
+        boxShadow: "0 30px 60px #0003",
+        opacity: enter,
+        transform: `translateY(${(1 - enter) * 120}px) rotate(${tilt}deg) scale(${0.9 + enter * 0.1})`,
+        ...style,
+      }}
+    >
+      <Img
+        src={src}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          transform: `scale(${1.04 + Math.sin(frame / 40) * 0.03})`,
+        }}
+      />
+    </div>
+  );
+}
 
 /** Phrase révélée mot à mot (chaque mot monte et apparaît avec un léger rebond). */
 function Words({
@@ -131,8 +209,10 @@ function Brand() {
 
 function HookScene({ props }: { props: VideoProps }) {
   return (
-    <AbsoluteFill style={{ backgroundColor: COLORS.ivory }}>
+    <AbsoluteFill>
+      <PhotoBackdrop props={props} />
       <Brand />
+      <DishCard props={props} width={500} height={640} delay={20} tilt={4} style={{ right: 140, top: 900 }} />
       <Words
         text={props.hook}
         start={8}
@@ -147,7 +227,7 @@ function HookScene({ props }: { props: VideoProps }) {
           color: COLORS.ink,
         }}
       />
-      <BouncingMascot expression="waouh" jacket={props.jacket} size={620} style={{ left: 230, top: 980 }} />
+      <BouncingMascot expression="waouh" jacket={props.jacket} size={460} style={{ left: 40, top: 1110 }} />
     </AbsoluteFill>
   );
 }
@@ -159,7 +239,15 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
     extrapolateRight: "clamp",
   });
   return (
-    <AbsoluteFill style={{ backgroundColor: BACKGROUNDS[index % BACKGROUNDS.length] }}>
+    <AbsoluteFill>
+      <PhotoBackdrop props={props} veil={0.8 - (index % 2) * 0.06} />
+      <DishCard
+        props={props}
+        width={420}
+        height={520}
+        tilt={index % 2 === 0 ? 3 : -3}
+        style={{ right: 150, top: 1050 }}
+      />
       <div
         style={{
           position: "absolute",
@@ -207,10 +295,10 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
       <BouncingMascot
         expression={shotExpression(index, count)}
         jacket={props.jacket}
-        size={460}
+        size={420}
         bust
         delay={2}
-        style={{ left: 70, top: 1060 }}
+        style={{ left: 50, top: 1100 }}
       />
     </AbsoluteFill>
   );
@@ -224,9 +312,9 @@ function RevealScene({ props, frames }: { props: VideoProps; frames: number }) {
   const title = spring({ frame: frame - 12, fps, config: { damping: 16 } });
   return (
     <AbsoluteFill style={{ backgroundColor: COLORS.ink }}>
-      {props.photoUrl ? (
+      {photoSrc(props.photoUrl) ? (
         <Img
-          src={props.photoUrl.startsWith("static:") ? staticFile(props.photoUrl.slice(7)) : props.photoUrl}
+          src={photoSrc(props.photoUrl)!}
           style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${zoom})` }}
         />
       ) : null}
@@ -265,7 +353,8 @@ function EndScene({ props }: { props: VideoProps }) {
   const { fps } = useVideoConfig();
   const text = spring({ frame: frame - 10, fps, config: { damping: 15 } });
   return (
-    <AbsoluteFill style={{ backgroundColor: COLORS.ivory, alignItems: "center" }}>
+    <AbsoluteFill style={{ alignItems: "center" }}>
+      <PhotoBackdrop props={props} veil={0.85} />
       <BouncingMascot expression="clin" jacket={props.jacket} size={560} style={{ left: 260, top: 230 }} />
       <div
         style={{

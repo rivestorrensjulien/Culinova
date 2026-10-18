@@ -1,5 +1,5 @@
 /**
- * Script TikTok d'une recette (prompt social.generate@3 : « Accroche (0-3 s) : … »,
+ * Script TikTok d'une recette (prompt social.generate@3 et suivants : « Accroche (0-3 s) : … »,
  * puis « Plan 1 : … », « Plan 2 : … ») transformé en textes à l'écran pour la vidéo.
  */
 export interface VideoScript {

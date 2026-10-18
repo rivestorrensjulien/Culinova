@@ -22,20 +22,10 @@ export interface PublishDeps {
 
 export type TiktokChoices = Omit<TiktokPostOptions, "title">;
 
-export type StartResult =
-  | { ok: true }
-  | {
-      ok: false;
-      reason:
-        | "not_found"
-        | "no_video"
-        | "outdated"
-        | "not_connected"
-        | "invalid_privacy"
-        | "too_long"
-        | "failed";
-      detail?: string;
-    };
+type MissingRefusal = "not_found" | "no_video" | "outdated" | "not_connected";
+type PostRefusal = "invalid_privacy" | "too_long" | "failed";
+type StartRefusal = { ok: false; reason: MissingRefusal | PostRefusal; detail?: string };
+export type StartResult = { ok: true } | StartRefusal;
 
 const MAX_CAPTION = 2200;
 

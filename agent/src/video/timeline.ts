@@ -17,7 +17,10 @@ export interface VideoProps {
   hook: string;
   /** Plans du script TikTok, dans l'ordre des étapes, sans le préfixe « Plan n : ». */
   shots: string[];
-  /** Photo 9:16 du plat (lien temporaire) ; sans photo, la carte de fin suit directement. */
+  /**
+   * Photo 9:16 du plat (lien temporaire, ou « static:fichier » dans agent/public) ;
+   * sans photo, la carte de fin suit directement.
+   */
   photoUrl: string | null;
   handle: string;
   site: string;

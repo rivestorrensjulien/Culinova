@@ -226,7 +226,7 @@ function RevealScene({ props, frames }: { props: VideoProps; frames: number }) {
     <AbsoluteFill style={{ backgroundColor: COLORS.ink }}>
       {props.photoUrl ? (
         <Img
-          src={props.photoUrl}
+          src={props.photoUrl.startsWith("static:") ? staticFile(props.photoUrl.slice(7)) : props.photoUrl}
           style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${zoom})` }}
         />
       ) : null}

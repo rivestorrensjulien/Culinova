@@ -8,13 +8,13 @@
  * Variables : CULINOVA_URL (ex. https://culinova.fr), AGENT_API_KEY, VESTE (blanche | noire).
  */
 import { bundle } from "@remotion/bundler";
-import { renderMedia, selectComposition } from "@remotion/renderer";
+import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";
 import { existsSync } from "node:fs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CulinovaClient } from "./culinova.ts";
-import { COMPOSITION_ID, EXAMPLE_PROPS, FPS, type VideoProps } from "./video/timeline.ts";
+import { COMPOSITION_ID, EXAMPLE_PROPS, FPS, timeline, type VideoProps } from "./video/timeline.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = join(root, "sortie");
@@ -46,6 +46,22 @@ async function render(serveUrl: string, props: VideoProps, file: string) {
   };
 }
 
+/** Images fixes au milieu de chaque scène (aperçu sans lecteur vidéo). */
+async function stills(serveUrl: string, props: VideoProps) {
+  const composition = await selectComposition({ serveUrl, id: COMPOSITION_ID, inputProps: props });
+  for (const [i, segment] of timeline(props).entries()) {
+    const output = join(root, "sortie", `apercu-${String(i).padStart(2, "0")}-${segment.kind}.png`);
+    await renderStill({
+      composition,
+      serveUrl,
+      output,
+      frame: segment.from + Math.round(segment.frames * 0.7),
+      inputProps: props,
+      scale: 0.5,
+    });
+  }
+}
+
 async function main() {
   await mkdir(output, { recursive: true });
   const music = existsSync(join(root, "public", "musique.mp3")) ? "musique.mp3" : null;
@@ -58,8 +74,10 @@ async function main() {
 
   if (arg("exemple") !== null) {
     const file = join(output, "exemple.mp4");
-    await render(serveUrl, { ...EXAMPLE_PROPS, jacket, music }, file);
+    const props: VideoProps = { ...EXAMPLE_PROPS, photoUrl: "static:exemple.jpg", jacket, music };
+    await render(serveUrl, props, file);
     console.log(`Vidéo d'exemple : ${file}`);
+    if (arg("images") !== null) await stills(serveUrl, props);
     return;
   }
 

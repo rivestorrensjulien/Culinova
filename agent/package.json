@@ -8,7 +8,7 @@
   },
   "scripts": {
     "studio": "remotion studio src/video/index.ts",
-    "exemple": "tsx src/render.ts --exemple",
+    "exemple": "tsx src/render.ts --exemple --images",
     "rendre": "tsx src/render.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/video/timeline.test.ts"

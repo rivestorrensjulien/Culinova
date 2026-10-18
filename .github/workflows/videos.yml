@@ -19,6 +19,9 @@ on:
     branches: [main]
     paths: ["agent/**", ".github/workflows/videos.yml"]
 
+permissions:
+  contents: write
+
 concurrency:
   group: videos
   cancel-in-progress: false
@@ -71,6 +74,17 @@ jobs:
           name: video-exemple
           path: agent/sortie/exemple.mp4
           retention-days: 14
+
+      - name: Aperçu en images (branche apercus-video)
+        if: github.event_name == 'push' || inputs.exemple
+        run: |
+          mkdir -p /tmp/apercu && cp sortie/apercu-*.png /tmp/apercu/
+          cd /tmp/apercu
+          git init -q -b apercus-video
+          git config user.name "Agent Culinova"
+          git config user.email "agent@culinova.fr"
+          git add . && git commit -qm "Aperçu de la vidéo d'exemple (${GITHUB_SHA::7})"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" apercus-video
 
       - name: Vidéos des recettes à publier
         if: steps.file.outputs.a_faire == 'oui' && github.event_name != 'push' && !inputs.exemple

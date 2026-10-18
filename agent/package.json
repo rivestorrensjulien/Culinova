@@ -1,0 +1,31 @@
+{
+  "name": "culinova-agent",
+  "private": true,
+  "description": "Agent de publication de Culinova : fabrique les vidéos des recettes (mascotte, texte animé, photo) et les envoie à Culinova.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "studio": "remotion studio src/video/index.ts",
+    "exemple": "tsx src/render.ts --exemple",
+    "rendre": "tsx src/render.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/video/timeline.test.ts"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.300",
+    "@remotion/cli": "4.0.300",
+    "@remotion/google-fonts": "4.0.300",
+    "@remotion/renderer": "4.0.300",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.300"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,89 @@
+/**
+ * Déroulé de la vidéo d'une recette (30 images par seconde, format 9:16) :
+ * accroche → un plan par étape du script TikTok → la photo du plat → carte de fin.
+ * Logique pure, testée sans rendu.
+ */
+import type { Expression, Jacket } from "./Mascot.tsx";
+
+export const COMPOSITION_ID = "RecetteVerticale";
+export const FPS = 30;
+export const WIDTH = 1080;
+export const HEIGHT = 1920;
+
+export interface VideoProps {
+  /** Nom de la recette. */
+  name: string;
+  /** Accroche (0-3 s) du script TikTok. */
+  hook: string;
+  /** Plans du script TikTok, dans l'ordre des étapes, sans le préfixe « Plan n : ». */
+  shots: string[];
+  /** Photo 9:16 du plat (lien temporaire) ; sans photo, la carte de fin suit directement. */
+  photoUrl: string | null;
+  handle: string;
+  site: string;
+  jacket: Jacket;
+  /** Fichier de musique dans agent/public (libre de droits), ou null. */
+  music: string | null;
+  [key: string]: unknown;
+}
+
+export const HOOK_FRAMES = 96;
+export const REVEAL_FRAMES = 120;
+export const END_FRAMES = 90;
+
+/** Durée d'un plan : le temps de lire la phrase (4 images par mot), entre 1,8 et 3 s. */
+export function shotFrames(text: string): number {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  return Math.min(90, Math.max(54, 30 + words * 4));
+}
+
+const SHOT_EXPRESSIONS: Expression[] = ["idee", "content", "clin", "content", "waouh", "idee"];
+
+/** Expression de la mascotte pour le plan n (le dernier plan, le dressage, est « fier »). */
+export function shotExpression(index: number, count: number): Expression {
+  if (index === count - 1) return "fier";
+  return SHOT_EXPRESSIONS[index % SHOT_EXPRESSIONS.length]!;
+}
+
+export interface Segment {
+  kind: "hook" | "shot" | "reveal" | "end";
+  from: number;
+  frames: number;
+  /** Rang du plan (segments « shot »). */
+  index?: number;
+}
+
+export function timeline(props: Pick<VideoProps, "shots" | "photoUrl" | "hook">): Segment[] {
+  const segments: Segment[] = [];
+  let from = 0;
+  const push = (segment: Omit<Segment, "from">) => {
+    segments.push({ ...segment, from });
+    from += segment.frames;
+  };
+  push({ kind: "hook", frames: Math.max(HOOK_FRAMES, shotFrames(props.hook) + 30) });
+  props.shots.forEach((text, index) => push({ kind: "shot", frames: shotFrames(text), index }));
+  if (props.photoUrl) push({ kind: "reveal", frames: REVEAL_FRAMES });
+  push({ kind: "end", frames: END_FRAMES });
+  return segments;
+}
+
+export function totalFrames(props: Pick<VideoProps, "shots" | "photoUrl" | "hook">): number {
+  return timeline(props).reduce((sum, s) => sum + s.frames, 0);
+}
+
+export const EXAMPLE_PROPS: VideoProps = {
+  name: "Baghrir, beurre fondu au miel",
+  hook: "Les crêpes mille trous les plus moelleuses, sans levure chimique",
+  shots: [
+    "Mixer la semoule fine, la farine et l'eau tiède",
+    "Laisser reposer la pâte jusqu'à ce qu'elle bulle",
+    "Cuire d'un seul côté dans une poêle bien chaude",
+    "Faire fondre le beurre avec le miel",
+    "Napper les baghrir encore tièdes et servir",
+  ],
+  photoUrl: null,
+  handle: "@culinova.recette",
+  site: "culinova.fr",
+  jacket: "blanche",
+  music: null,
+};

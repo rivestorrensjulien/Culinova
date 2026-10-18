@@ -1,0 +1,81 @@
+name: Vidéos des recettes
+
+# Agent de publication (dossier agent/) : fabrique la vidéo verticale des recettes
+# « à publier » et l'envoie à Culinova, où l'administrateur la regarde avant de publier.
+on:
+  workflow_dispatch:
+    inputs:
+      recette:
+        description: "Identifiant d'une recette (facultatif : sinon toutes les vidéos manquantes)"
+        required: false
+      exemple:
+        description: "Fabriquer seulement la vidéo d'exemple"
+        type: boolean
+        default: false
+  schedule:
+    # Toutes les 30 minutes de 7 h à 23 h (heure de Paris, été) : ne fait rien s'il n'y a rien à fabriquer.
+    - cron: "*/30 5-21 * * *"
+  push:
+    branches: [main]
+    paths: ["agent/**", ".github/workflows/videos.yml"]
+
+concurrency:
+  group: videos
+  cancel-in-progress: false
+
+jobs:
+  videos:
+    name: Fabriquer les vidéos
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: agent
+    env:
+      CULINOVA_URL: ${{ vars.CULINOVA_URL || 'https://culinova.fr' }}
+      AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+      VESTE: ${{ vars.MASCOTTE_VESTE || 'blanche' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Y a-t-il des vidéos à fabriquer ?
+        id: file
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "a_faire=oui" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ -z "$AGENT_API_KEY" ]; then echo "a_faire=non" >> "$GITHUB_OUTPUT"; exit 0; fi
+          n=$(curl -fsS -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/videos" | jq '.videos | length')
+          echo "$n vidéo(s) à fabriquer"
+          if [ "$n" -gt 0 ]; then echo "a_faire=oui" >> "$GITHUB_OUTPUT"; else echo "a_faire=non" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-node@v4
+        if: steps.file.outputs.a_faire == 'oui'
+        with:
+          node-version: 22
+
+      - name: Installation du studio vidéo
+        if: steps.file.outputs.a_faire == 'oui'
+        run: npm install --no-audit --no-fund
+
+      - name: Vérifications
+        if: steps.file.outputs.a_faire == 'oui'
+        run: npm run typecheck && npm test
+
+      - name: Vidéo d'exemple
+        if: github.event_name == 'push' || inputs.exemple
+        run: npm run exemple
+
+      - name: Vidéo d'exemple (téléchargeable)
+        if: github.event_name == 'push' || inputs.exemple
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-exemple
+          path: agent/sortie/exemple.mp4
+          retention-days: 14
+
+      - name: Vidéos des recettes à publier
+        if: steps.file.outputs.a_faire == 'oui' && github.event_name != 'push' && !inputs.exemple
+        env:
+          RECETTE: ${{ inputs.recette }}
+        run: |
+          if [ -z "$AGENT_API_KEY" ]; then echo "::error::Secret AGENT_API_KEY manquant (Settings → Secrets and variables → Actions)."; exit 1; fi
+          if [ -n "$RECETTE" ]; then npm run rendre -- --recette="$RECETTE"; else npm run rendre; fi

@@ -70,3 +70,23 @@ Publié :
 
 Réponses : `200 { "ok": true }`, `400 invalid_body`, `404 recipe_not_found` (recette absente ou pas d'un administrateur).
 Chaque compte rendu est inscrit au journal d'audit et s'affiche sur la page de la recette (« Publié sur TikTok le… »).
+
+## Vidéos (agent intégré, dossier `agent/`)
+
+Depuis octobre 2026, l'agent fait partie du dépôt (dossier `agent/`, exécuté par GitHub Actions).
+Il fabrique la vidéo ; la publication est faite par Culinova après validation de l'administrateur.
+
+```
+GET  /api/agent/videos                 → { videos: [{ recipeId, versionId, name, hook, shots[], photoUrl }] }
+GET  /api/agent/videos?recette=<id>    → la recette demandée (pour refaire sa vidéo)
+POST /api/agent/videos                 { recipeId, versionId, durationS, width, height, sizeBytes }
+                                       → { videoId, upload: { url, method: "PUT", headers } }
+PUT  <upload.url>                      fichier MP4 (lien signé Supabase, ou /api/agent/videos/<id>/fichier en local)
+POST /api/agent/videos/<id>            { status: "ready" } ou { status: "failed", note }
+POST /api/agent/suivi                  fait avancer les publications en cours (Instagram, TikTok)
+```
+
+Une recette apparaît dans `GET /api/agent/videos` si elle est « à publier », que sa version active a un
+script TikTok (accroche + plans) et pas encore de vidéo (ni d'envoi en cours depuis moins d'une heure,
+ni trois échecs). Instagram et TikTok téléchargent ensuite la vidéo depuis
+`https://culinova.fr/api/social/videos/<id>?expire=…&signature=…` (lien signé de 6 h).

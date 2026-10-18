@@ -8,7 +8,13 @@ import { getDb } from "../db";
 import { PLATFORMS, type Platform, type PublicationStatus, publicationStatuses } from "../publishing";
 import { requireUser } from "../session";
 import { accountToken, disconnectAccount, type SocialPlatform } from "../social/accounts";
-import { advanceProcessing, startPublication, type StartResult, type TiktokChoices } from "../social/publish";
+import {
+  type AdvanceOutcome,
+  advanceProcessing,
+  startPublication,
+  type StartResult,
+  type TiktokChoices,
+} from "../social/publish";
 import { analyzeStats, type AnalyzeResult, collectStats } from "../social/stats";
 import { type CreatorInfo, tiktokCreatorInfo } from "../social/tiktok";
 
@@ -31,7 +37,7 @@ function followUp(recipeId: string) {
     const db = getDb();
     for (let i = 0; i < 24; i++) {
       await new Promise((resolve) => setTimeout(resolve, 10_000));
-      const outcomes = await advanceProcessing(db, recipeId).catch(() => []);
+      const outcomes: AdvanceOutcome[] = await advanceProcessing(db, recipeId).catch(() => []);
       if (!outcomes.includes("processing")) return;
     }
   });

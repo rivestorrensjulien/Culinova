@@ -209,11 +209,11 @@ export async function instagramPublish(
     }),
     "publication du Reel",
   );
-  const media = await fetchImpl(
+  const media: { permalink?: string } = await fetchImpl(
     `${GRAPH}/${body.id}?${new URLSearchParams({ fields: "permalink", access_token: accessToken })}`,
   )
     .then((r) => (r.ok ? (r.json() as Promise<{ permalink?: string }>) : {}))
-    .catch(() => ({}) as { permalink?: string });
+    .catch(() => ({}));
   return { mediaId: body.id, permalink: media.permalink ?? null };
 }
 

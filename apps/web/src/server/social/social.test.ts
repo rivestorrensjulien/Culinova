@@ -16,6 +16,7 @@ import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slide
 import { advancePublication, captionFor, startPublication } from "./publish";
 import { analyzeStats, collectStats, engagementRate, statsOverview } from "./stats";
 import { createVideoStorage, parseRange } from "./video-storage";
+import { loadRecipeView } from "../generation/view";
 import { completeVideo, latestVideo, registerVideo, videoJobs } from "./videos";
 
 const state: WizardState = {
@@ -506,6 +507,46 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const analysis = await analyzeStats(db, new FakeLlmAdapter(), admin.id);
     expect(analysis.ok).toBe(true);
     expect((await statsOverview(db)).lastAnalysis?.analysis.suggestions.length).toBeGreaterThan(0);
+  });
+
+  it("réservé à l'administrateur : aucune automatisation pour les autres comptes", async () => {
+    const db = testDb();
+    const cook = await createTestUser();
+    const cookRecipe = await recipeOf(cook.id);
+    await addPhoto(cookRecipe);
+    // Pas d'encart de publication sur ses recettes.
+    expect((await loadRecipeView(db, cookRecipe, cook.id))?.publishing).toBeNull();
+    // Ni file « à publier », ni publication, même en visant la recette d'un administrateur.
+    expect(await queuePublication(db, cook.id, cookRecipe, ["instagram"])).toBe(false);
+    expect(await queuePublication(db, cook.id, recipeId, ["instagram"])).toBe(false);
+    expect(await startPublication(db, cook.id, cookRecipe, "instagram", "photo")).toMatchObject({
+      ok: false,
+      reason: "not_found",
+    });
+    expect(await startPublication(db, cook.id, recipeId, "instagram", "photo")).toMatchObject({
+      ok: false,
+      reason: "not_found",
+    });
+    // Même une ligne « à publier » glissée en base n'ouvre rien à l'agent.
+    await db
+      .insert(s.recipePublications)
+      .values({ recipeId: cookRecipe, platform: "tiktok", status: "queued" });
+    expect((await videoJobs(db, "https://culinova.fr")).some((j) => j.recipeId === cookRecipe)).toBe(false);
+    expect((await carouselJobs(db, "https://culinova.fr")).some((j) => j.recipeId === cookRecipe)).toBe(
+      false,
+    );
+    expect(await videoJobs(db, "https://culinova.fr", { recipeId: cookRecipe })).toEqual([]);
+    const [version] = await db.select().from(s.recipes).where(eq(s.recipes.id, cookRecipe));
+    expect(
+      await registerVideo(db, {
+        recipeId: cookRecipe,
+        versionId: version!.currentVersionId!,
+        durationS: 10,
+        width: 1080,
+        height: 1920,
+        sizeBytes: 10,
+      }),
+    ).toEqual({ ok: false, reason: "recipe_not_found" });
   });
 
   it("nouvelle photo : la vidéo n'est plus publiable et une nouvelle est demandée", async () => {

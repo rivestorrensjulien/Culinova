@@ -19,7 +19,10 @@ const uuid = z.uuid();
 
 async function admin() {
   const session = await requireUser(await getLocale());
-  return session.user.role === "admin" && !session.impersonatedBy ? session : null;
+  // Agent et réseaux : administrateur uniquement, avec son second facteur validé.
+  return session.user.role === "admin" && !session.impersonatedBy && session.twoFactorVerifiedAt
+    ? session
+    : null;
 }
 
 /** Met la recette dans la file de l'agent (« à publier ») pour les réseaux choisis. */

@@ -44,6 +44,7 @@ packages/ui         Système de design (clair / sombre)
 - Contrôle de complétude (`recipeProblems`) : au moins 3 étapes, aucune étape vide, dressage rédigé, chaque ingrédient utilisé dans une étape ; sinon la recette est renvoyée au modèle (3 tentatives au plus).
 - Affichage du pas à pas : numéro, consigne et résultat attendu uniquement (pas d'intitulé de phase ni de pastilles). Les données (durées, minuteurs, matériel par étape) restent enregistrées pour le futur mode préparation.
 - Base Supabase verrouillée : RLS activée sur toutes les tables de `public` sans aucune règle et droits retirés à `anon` / `authenticated` (`LOCKDOWN_SQL` dans `packages/db/src/migrate.ts`, relancé après chaque migration). L'application n'utilise jamais l'API publique de Supabase : connexion directe en propriétaire des tables.
+- **Agent de publication et réseaux sociaux : administrateur uniquement** (rappel de Julien). Encart de publication, vidéos, carrousels, comptes reliés, statistiques et analyses : jamais visibles ni utilisables par les autres comptes (rôle admin + second facteur validé, hors « se connecter en tant que » ; recettes des administrateurs seulement — `adminRecipe`). Test : « réservé à l'administrateur » dans `server/social/social.test.ts`.
 - Aucune clé en dur : tout passe par des variables d'environnement (`.env.example` documenté).
 - Calculs de coûts et quotas couverts par des tests unitaires.
 - Identité visuelle originale : premium, gastronomique, chaleureuse, épurée, photos au centre. Ne pas imiter GetCherry ni FoodCraft.

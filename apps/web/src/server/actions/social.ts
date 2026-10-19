@@ -3,14 +3,17 @@
 import { createLlmAdapter } from "@culinova/ai";
 import { after } from "next/server";
 import { getLocale } from "next-intl/server";
+import { PUBLICATION_FORMATS } from "@culinova/db/schema";
 import { z } from "zod";
 import { getDb } from "../db";
 import { PLATFORMS, type Platform, type PublicationStatus, publicationStatuses } from "../publishing";
 import { requireUser } from "../session";
 import { accountToken, disconnectAccount, type SocialPlatform } from "../social/accounts";
+import { parseMentions, saveCaptionSettings } from "../social/captions";
 import {
   type AdvanceOutcome,
   advanceProcessing,
+  type PublicationFormat,
   startPublication,
   type StartResult,
   type TiktokChoices,
@@ -48,30 +51,56 @@ const choicesSchema = z.object({
   allowComments: z.boolean(),
   allowDuet: z.boolean(),
   allowStitch: z.boolean(),
+  promoteOwnBrand: z.boolean(),
 });
 
-export type PublishVideoResult = { result: StartResult; statuses: PublicationStatus[] } | null;
+export type PublishResult = { result: StartResult; statuses: PublicationStatus[] } | null;
 
-/** « Valider et publier » : la dernière vidéo de la recette part sur le réseau choisi. */
-export async function publishVideoAction(
+/**
+ * « Valider et publier » : la recette part sur le réseau choisi, dans le format choisi
+ * (Instagram : photo, carrousel ou Reel ; TikTok : vidéo), avec la légende validée.
+ */
+export async function publishAction(
   recipeId: string,
   platform: string,
-  choices: TiktokChoices | null,
-): Promise<PublishVideoResult> {
+  format: string,
+  options: { caption: string; tiktok: TiktokChoices | null },
+): Promise<PublishResult> {
   const session = await admin();
   if (!session || !uuid.safeParse(recipeId).success || !isPlatform(platform)) return null;
-  const parsed = choices ? choicesSchema.safeParse(choices) : null;
+  if (!(PUBLICATION_FORMATS as readonly string[]).includes(format)) return null;
+  const parsed = options.tiktok ? choicesSchema.safeParse(options.tiktok) : null;
   if (platform === "tiktok" && !parsed?.success) return null;
+  const caption = z.string().max(2200).safeParse(options.caption);
+  if (!caption.success) return null;
   const db = getDb();
   const result = await startPublication(
     db,
     session.user.id,
     recipeId,
     platform,
-    parsed?.success ? parsed.data : null,
+    format as PublicationFormat,
+    {
+      caption: caption.data,
+      tiktok: parsed?.success ? parsed.data : null,
+    },
   );
   if (result.ok) followUp(recipeId);
   return { result, statuses: await publicationStatuses(db, recipeId) };
+}
+
+/** Comptes mentionnés et mention « visuel généré par IA » ajoutés aux légendes. */
+export async function saveCaptionSettingsAction(input: {
+  mentions: string;
+  aiNotice: boolean;
+}): Promise<boolean> {
+  const session = await admin();
+  if (!session) return false;
+  await saveCaptionSettings(getDb(), session.user.id, {
+    mentions: parseMentions(String(input.mentions ?? "")),
+    aiNotice: Boolean(input.aiNotice),
+  });
+  return true;
 }
 
 /** Rafraîchit l'état des publications en cours d'une recette (appelé par l'encart). */

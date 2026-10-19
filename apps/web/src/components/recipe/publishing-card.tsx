@@ -1,6 +1,6 @@
 "use client";
 
-import { Badge, Button, Card, CardBody, Input, Notice, Select } from "@culinova/ui";
+import { Badge, Button, Card, CardBody, Input, Notice, Select, Textarea } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
@@ -10,13 +10,10 @@ import {
   queuePublicationAction,
   setShowcaseAction,
 } from "@/server/actions/publishing";
-import {
-  publishVideoAction,
-  refreshPublicationsAction,
-  tiktokCreatorInfoAction,
-} from "@/server/actions/social";
+import { publishAction, refreshPublicationsAction, tiktokCreatorInfoAction } from "@/server/actions/social";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 import type { Platform, PublicationStatus } from "@/server/publishing";
+import type { TiktokChoices } from "@/server/social/publish";
 import type { CreatorInfo } from "@/server/social/tiktok";
 
 const MUSIC_CONFIRMATION = "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en";
@@ -45,6 +42,7 @@ function TiktokPublishPanel({
   const [allowComments, setAllowComments] = useState(false);
   const [allowDuet, setAllowDuet] = useState(false);
   const [allowStitch, setAllowStitch] = useState(false);
+  const [promoteOwnBrand, setPromoteOwnBrand] = useState(false);
   useEffect(() => {
     tiktokCreatorInfoAction()
       .then(setCreator)
@@ -93,6 +91,19 @@ function TiktokPublishPanel({
           </label>
         ))}
       </fieldset>
+      <label className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-primary"
+          checked={promoteOwnBrand}
+          onChange={(e) => setPromoteOwnBrand(e.target.checked)}
+        />
+        <span>
+          {t("ownBrand")}
+          <span className="block text-muted">{t("ownBrandHint")}</span>
+        </span>
+      </label>
+      <p className="text-muted">{t("aiLabel")}</p>
       <p className="text-muted">
         {t.rich("consent", {
           link: (chunks) => (
@@ -112,7 +123,7 @@ function TiktokPublishPanel({
         <Button
           size="sm"
           disabled={busy || !privacy}
-          onClick={() => onPublish({ privacy, allowComments, allowDuet, allowStitch })}
+          onClick={() => onPublish({ privacy, allowComments, allowDuet, allowStitch, promoteOwnBrand })}
         >
           {t("publish")}
         </Button>
@@ -125,6 +136,14 @@ function TiktokPublishPanel({
 }
 
 const PLATFORMS: Platform[] = ["tiktok", "instagram"];
+type Format = PublicationStatus["format"];
+/** Ce que l'administrateur peut publier : photo, carrousel et Reel sur Instagram, vidéo sur TikTok. */
+const ROWS: Array<{ platform: Platform; format: Format }> = [
+  { platform: "instagram", format: "photo" },
+  { platform: "instagram", format: "carousel" },
+  { platform: "instagram", format: "video" },
+  { platform: "tiktok", format: "video" },
+];
 
 /** Statut de publication par réseau, pour les recettes de l'administrateur. */
 export function PublishingCard({ recipe }: { recipe: RecipeData }) {
@@ -137,6 +156,9 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [showcase, setShowcase] = useState(recipe.publishing?.showcase ?? false);
   const [tiktokOpen, setTiktokOpen] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [captions, setCaptions] = useState<Record<Platform, string>>(
+    recipe.publishing?.captions ?? { instagram: "", tiktok: "" },
+  );
   const processing = statuses.some((s) => s.status === "processing");
   useEffect(() => {
     if (!processing) return;
@@ -151,14 +173,15 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const { video, videoFailure, accounts } = recipe.publishing;
   const connected = (platform: Platform) => accounts.some((a) => a.platform === platform && !a.expired);
 
-  const publish = async (
-    platform: Platform,
-    choices: { privacy: string; allowComments: boolean; allowDuet: boolean; allowStitch: boolean } | null,
-  ) => {
+  const { carousel } = recipe.publishing;
+  const publish = async (platform: Platform, format: Format, choices: TiktokChoices | null) => {
     setBusy(true);
     setError(false);
     setPublishError(null);
-    const outcome = await publishVideoAction(recipe.recipeId, platform, choices).catch(() => null);
+    const outcome = await publishAction(recipe.recipeId, platform, format, {
+      caption: captions[platform],
+      tiktok: choices,
+    }).catch(() => null);
     if (!outcome) setError(true);
     else {
       setStatuses(outcome.statuses);
@@ -190,7 +213,15 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
     else setError(true);
     setBusy(false);
   };
-  const statusOf = (platform: Platform) => statuses.find((s) => s.platform === platform);
+  const statusOf = (platform: Platform, format: Format) =>
+    statuses.find((s) => s.platform === platform && s.format === format);
+  const hasPortrait = recipe.images.current?.formats.some((f) => f.format === "4:5") ?? false;
+  const ready = (format: Format) =>
+    format === "photo"
+      ? hasPortrait
+      : format === "carousel"
+        ? Boolean(carousel?.current)
+        : Boolean(video?.current);
   const queued = statuses.some((s) => s.status === "queued");
   const hasPhoto = recipe.images.current?.formats.some((f) => f.format === "9:16") ?? false;
 
@@ -243,13 +274,55 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             </div>
           )}
         </div>
+        <div className="flex flex-col gap-2" data-testid="publishing-carousel">
+          <p className="font-medium">{t("carousel.title")}</p>
+          {carousel ? (
+            <>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {Array.from({ length: carousel.slideCount }, (_, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={i}
+                    src={`/api/carrousels/${carousel.id}/${i + 1}`}
+                    alt={t("carousel.slide", { n: i + 1 })}
+                    className="aspect-[4/5] w-28 shrink-0 rounded-lg border border-border object-cover"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+              {carousel.current ? null : <Notice tone="warning">{t("carousel.outdated")}</Notice>}
+            </>
+          ) : (
+            <p className="text-muted">{queued ? t("carousel.pending") : t("carousel.none")}</p>
+          )}
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {(["instagram", "tiktok"] as const).map((platform) => (
+            <label key={platform} className="flex flex-col gap-1">
+              <span className="font-medium">{t("caption", { platform: t(`platforms.${platform}`) })}</span>
+              <Textarea
+                value={captions[platform]}
+                maxLength={2200}
+                rows={7}
+                onChange={(e) => setCaptions((all) => ({ ...all, [platform]: e.target.value }))}
+                data-testid={`caption-${platform}`}
+              />
+              <span className="text-xs text-muted">
+                {t("captionHint", { count: captions[platform].length })}
+              </span>
+            </label>
+          ))}
+        </div>
         <ul className="flex flex-col divide-y divide-border">
-          {PLATFORMS.map((platform) => {
-            const status = statusOf(platform);
+          {ROWS.map(({ platform, format: kind }) => {
+            const status = statusOf(platform, kind);
+            const key = `${platform}-${kind}`;
             return (
-              <li key={platform} className="flex flex-col gap-2 py-2" data-testid={`publishing-${platform}`}>
+              <li key={key} className="flex flex-col gap-2 py-2" data-testid={`publishing-${key}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium">{t(`platforms.${platform}`)}</span>
+                  <span className="font-medium">
+                    {t(`formats.${platform}.${kind}` as "formats.instagram.photo")}
+                  </span>
                   {!status ? (
                     <Badge>{t("none")}</Badge>
                   ) : status.status === "queued" ? (
@@ -280,25 +353,28 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     {t("link")}
                   </a>
                 ) : null}
-                {video?.current && status?.status !== "published" && status?.status !== "processing" ? (
+                {ready(kind) && status?.status !== "processing" ? (
                   connected(platform) ? (
                     platform === "tiktok" && tiktokOpen ? (
                       <TiktokPublishPanel
                         busy={busy}
-                        onPublish={(choices) => publish("tiktok", choices)}
+                        onPublish={(choices) => publish("tiktok", "video", choices)}
                         onCancel={() => setTiktokOpen(false)}
                       />
                     ) : (
                       <div>
                         <Button
                           size="sm"
+                          variant={status?.status === "published" ? "secondary" : "primary"}
                           disabled={busy}
-                          data-testid={`publish-${platform}`}
+                          data-testid={`publish-${key}`}
                           onClick={() =>
-                            platform === "tiktok" ? setTiktokOpen(true) : publish(platform, null)
+                            platform === "tiktok" ? setTiktokOpen(true) : publish(platform, kind, null)
                           }
                         >
-                          {t("publishOn", { platform: t(`platforms.${platform}`) })}
+                          {status?.status === "published"
+                            ? t("publishAgain")
+                            : t("publishOn", { platform: t(`platforms.${platform}`) })}
                         </Button>
                       </div>
                     )
@@ -314,7 +390,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     </p>
                   )
                 ) : null}
-                {status?.status !== "published" && status?.status !== "processing" ? (
+                {kind === "video" && status?.status !== "published" && status?.status !== "processing" ? (
                   <div className="flex flex-wrap items-center gap-2">
                     <Input
                       className="w-64"

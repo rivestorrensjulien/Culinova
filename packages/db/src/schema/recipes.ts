@@ -331,6 +331,9 @@ export const recipeViews = pgTable(
 export const PUBLICATION_PLATFORMS = ["tiktok", "instagram"] as const;
 export type PublicationPlatform = (typeof PUBLICATION_PLATFORMS)[number];
 export type PublicationStatusValue = "queued" | "processing" | "published" | "failed";
+/** Format publié : vidéo (Reel, TikTok), photo seule ou carrousel (Instagram). */
+export const PUBLICATION_FORMATS = ["video", "photo", "carousel"] as const;
+export type PublicationFormat = (typeof PUBLICATION_FORMATS)[number];
 
 /**
  * Publication d'une recette de l'administrateur sur un réseau social, par l'agent de
@@ -344,6 +347,7 @@ export const recipePublications = pgTable(
       .notNull()
       .references(() => recipes.id, { onDelete: "cascade" }),
     platform: text("platform").$type<PublicationPlatform>().notNull(),
+    format: text("format").$type<PublicationFormat>().notNull().default("video"),
     /** « processing » : envoyée au réseau, en cours de traitement (Reels, TikTok). */
     status: text("status").$type<PublicationStatusValue>().notNull().default("queued"),
     publishedAt: tz("published_at"),
@@ -359,5 +363,5 @@ export const recipePublications = pgTable(
     privacy: text("privacy"),
     ...timestamps,
   },
-  (t) => [uniqueIndex("recipe_publications_unique").on(t.recipeId, t.platform)],
+  (t) => [uniqueIndex("recipe_publications_unique").on(t.recipeId, t.platform, t.format)],
 );

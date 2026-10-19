@@ -35,6 +35,31 @@ export const recipeVideos = pgTable(
   (t) => [index("recipe_videos_recipe_idx").on(t.recipeId, t.createdAt)],
 );
 
+/**
+ * Carrousel Instagram d'une version de recette, fabriqué par l'agent : photo, ingrédients,
+ * étapes, puis carte de fin (JPEG 1080 × 1350, dans le compartiment des vidéos).
+ */
+export const recipeCarousels = pgTable(
+  "recipe_carousels",
+  {
+    id: id(),
+    recipeId: uuid("recipe_id")
+      .notNull()
+      .references(() => recipes.id, { onDelete: "cascade" }),
+    recipeVersionId: uuid("recipe_version_id")
+      .notNull()
+      .references(() => recipeVersions.id, { onDelete: "cascade" }),
+    imageId: uuid("image_id"),
+    status: text("status").$type<"uploading" | "ready" | "failed">().notNull().default("uploading"),
+    slideCount: integer("slide_count").notNull(),
+    /** Dossier des images : <prefix>/01.jpg, 02.jpg… */
+    storagePrefix: text("storage_prefix").notNull(),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("recipe_carousels_recipe_idx").on(t.recipeId, t.createdAt)],
+);
+
 /** Compte Instagram ou TikTok relié par l'administrateur (un par réseau). */
 export const socialAccounts = pgTable(
   "social_accounts",

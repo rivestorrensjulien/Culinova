@@ -1273,7 +1273,7 @@
   },
   "Publishing": {
     "title": "Social media publishing",
-    "intro": "The agent makes the recipe video (mascot, steps, photo of the dish); you watch it, then publish it on Instagram and TikTok.",
+    "intro": "The agent prepares the recipe video and carousel; you review them, adjust the caption, then publish: photo, carousel or Reel on Instagram, video on TikTok.",
     "agentOff": "Agent not configured: add the AGENT_API_KEY variable in Vercel to open its gate.",
     "platforms": {
       "tiktok": "TikTok",
@@ -1315,7 +1315,10 @@
       "too_long": "The video is longer than TikTok allows for this account.",
       "failed": "Publishing failed.",
       "failedDetail": "Publishing failed: {detail}",
-      "outdated": "The video no longer matches the recipe or its photo: a new video is being made."
+      "outdated": "This content no longer matches the recipe or its photo: a new one is being made.",
+      "no_photo": "Generate the recipe photo first.",
+      "no_carousel": "No carousel to publish yet.",
+      "invalid_format": "Format not available on this network."
     },
     "tiktok": {
       "loading": "Reading the TikTok account…",
@@ -1339,8 +1342,31 @@
       "consent": "By posting, you agree to TikTok’s <link>Music Usage Confirmation</link>.",
       "processing": "After posting, the video may take a few minutes to appear on the profile.",
       "publish": "Post to TikTok",
-      "cancel": "Cancel"
-    }
+      "cancel": "Cancel",
+      "ownBrand": "This video promotes my own brand (Culinova)",
+      "ownBrandHint": "TikTok will show it as “Promotional content”.",
+      "aiLabel": "TikTok will label the video “AI-generated” (the visuals are made with AI)."
+    },
+    "formats": {
+      "instagram": {
+        "photo": "Instagram · feed photo",
+        "carousel": "Instagram · carousel",
+        "video": "Instagram · Reel"
+      },
+      "tiktok": {
+        "video": "TikTok · video"
+      }
+    },
+    "carousel": {
+      "title": "Instagram carousel",
+      "slide": "Carousel image {n}",
+      "outdated": "This carousel shows an earlier version of the recipe or another photo: a new one will be made automatically (recipe “to publish”).",
+      "pending": "Carousel in progress: the agent makes it within half an hour (it needs the 4:5 photo).",
+      "none": "The carousel (photo, ingredients, steps) is made automatically when the recipe is marked “to publish”."
+    },
+    "caption": "{platform} caption",
+    "captionHint": "{count} / 2,200 characters · mentions and AI notice set in Admin › Social",
+    "publishAgain": "Publish again"
   },
   "Install": {
     "title": "Install Culinova on this device",

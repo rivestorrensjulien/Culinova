@@ -13,7 +13,8 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CulinovaClient } from "./culinova.ts";
+import { type CarouselJob, CulinovaClient } from "./culinova.ts";
+import { CAROUSEL_ID, carouselPages, type CarouselProps, EXAMPLE_CAROUSEL } from "./video/carousel.ts";
 import { COMPOSITION_ID, EXAMPLE_PROPS, FPS, timeline, type VideoProps } from "./video/timeline.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -62,6 +63,80 @@ async function stills(serveUrl: string, props: VideoProps) {
   }
 }
 
+/** Images JPEG du carrousel (une par page), dans l'ordre. */
+async function renderCarousel(serveUrl: string, props: CarouselProps, prefix: string): Promise<string[]> {
+  const count = carouselPages(props).length;
+  const files: string[] = [];
+  for (let page = 0; page < count; page++) {
+    const inputProps = { ...props, page };
+    const composition = await selectComposition({ serveUrl, id: CAROUSEL_ID, inputProps });
+    const file = `${prefix}-${String(page + 1).padStart(2, "0")}.jpg`;
+    await renderStill({
+      composition,
+      serveUrl,
+      output: file,
+      inputProps,
+      imageFormat: "jpeg",
+      jpegQuality: 90,
+    });
+    files.push(file);
+  }
+  return files;
+}
+
+async function carousels(
+  serveUrl: string,
+  client: CulinovaClient,
+  jacket: VideoProps["jacket"],
+  recipeId?: string,
+) {
+  const jobs: CarouselJob[] = await client.carouselJobs(recipeId);
+  let failures = 0;
+  for (const job of jobs) {
+    console.log(`Carrousel de « ${job.name} »…`);
+    let carouselId: string | null = null;
+    try {
+      const files = await renderCarousel(
+        serveUrl,
+        {
+          name: job.name,
+          servings: job.servings,
+          totalMinutes: job.totalMinutes,
+          ingredients: job.ingredients,
+          steps: job.steps,
+          photoUrl: job.photoUrl,
+          handle: "@culinova.recette",
+          site: "culinova.fr",
+          jacket,
+          page: 0,
+        },
+        join(output, `carrousel-${job.recipeId}`),
+      );
+      const target = await client.registerCarousel({
+        recipeId: job.recipeId,
+        versionId: job.versionId,
+        imageId: job.imageId,
+        slideCount: files.length,
+      });
+      carouselId = target.carouselId;
+      for (const [index, file] of files.entries()) {
+        await client.send(target.uploads[index]!, new Uint8Array(await readFile(file)));
+      }
+      await client.reportCarousel(target.carouselId, { status: "ready" });
+      console.log(`  envoyé (${files.length} images)`);
+    } catch (error) {
+      failures++;
+      const note = error instanceof Error ? error.message : String(error);
+      console.error(`  échec : ${note}`);
+      if (carouselId)
+        await client
+          .reportCarousel(carouselId, { status: "failed", note: note.slice(0, 500) })
+          .catch(() => {});
+    }
+  }
+  return failures;
+}
+
 async function main() {
   await mkdir(output, { recursive: true });
   const music = existsSync(join(root, "public", "musique.mp3")) ? "musique.mp3" : null;
@@ -78,6 +153,8 @@ async function main() {
     await render(serveUrl, props, file);
     console.log(`Vidéo d'exemple : ${file}`);
     if (arg("images") !== null) await stills(serveUrl, props);
+    const slides = await renderCarousel(serveUrl, { ...EXAMPLE_CAROUSEL, jacket }, join(output, "carrousel"));
+    console.log(`Carrousel d'exemple : ${slides.length} images`);
     return;
   }
 
@@ -86,12 +163,9 @@ async function main() {
   if (!baseUrl || !apiKey) throw new Error("CULINOVA_URL et AGENT_API_KEY sont nécessaires.");
   const client = new CulinovaClient(baseUrl, apiKey);
   const jobs = await client.jobs(arg("recette") || undefined);
-  if (jobs.length === 0) {
-    console.log("Aucune vidéo à fabriquer.");
-    return;
-  }
+  if (jobs.length === 0) console.log("Aucune vidéo à fabriquer.");
 
-  let failures = 0;
+  let failures = await carousels(serveUrl, client, jacket, arg("recette") || undefined);
   for (const job of jobs) {
     const file = join(output, `${job.recipeId}.mp4`);
     console.log(`Vidéo de « ${job.name} » (${job.shots.length} plans)…`);

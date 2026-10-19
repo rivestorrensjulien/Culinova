@@ -125,6 +125,7 @@ export interface PostSummary {
   recipeId: string;
   name: string;
   platform: SocialPlatform;
+  format: s.PublicationFormat;
   publishedAt: string | null;
   postUrl: string | null;
   moment: string | null;
@@ -175,6 +176,7 @@ export async function statsOverview(db: Database, now = new Date()): Promise<Sta
       id: s.recipePublications.id,
       recipeId: s.recipePublications.recipeId,
       platform: s.recipePublications.platform,
+      format: s.recipePublications.format,
       publishedAt: s.recipePublications.publishedAt,
       postUrl: s.recipePublications.postUrl,
       name: s.recipeVersions.name,
@@ -215,6 +217,7 @@ export async function statsOverview(db: Database, now = new Date()): Promise<Sta
       recipeId: p.recipeId,
       name: p.name,
       platform: p.platform,
+      format: p.format,
       publishedAt: p.publishedAt?.toISOString() ?? null,
       postUrl: p.postUrl,
       moment: p.moment,
@@ -260,6 +263,7 @@ export async function analyzeStats(
     posts: overview.posts.map((p) => ({
       recipe: p.name,
       platform: p.platform,
+      format: p.format,
       publishedAt: p.publishedAt,
       publishedHourParis: p.publishedAt
         ? new Date(p.publishedAt).toLocaleString("fr-FR", {

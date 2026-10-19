@@ -1,7 +1,7 @@
 /**
- * Publication de la vidéo d'une recette, après validation par l'administrateur :
- * Reel Instagram (conteneur, puis publication quand Instagram a fini de traiter la vidéo)
- * ou TikTok (téléchargement par TikTok depuis culinova.fr, puis suivi de l'état).
+ * Publication d'une recette après validation par l'administrateur :
+ * Instagram — photo dans le fil, carrousel (photo, ingrédients, étapes) ou Reel ;
+ * TikTok — vidéo (téléchargée par TikTok depuis culinova.fr), étiquetée « générée par IA ».
  * Une publication passe par « processing » puis « published » ou « failed ».
  */
 import type { Database } from "@culinova/db";
@@ -9,56 +9,61 @@ import * as s from "@culinova/db/schema";
 import { and, eq } from "drizzle-orm";
 import { audit } from "../audit";
 import { appUrl } from "../auth";
-import { adminRecipe, signedVideoPath } from "../publishing";
+import { adminRecipe, signedImagePath, signedSlidePath, signedVideoPath } from "../publishing";
 import { accountToken, type SocialPlatform } from "./accounts";
-import { instagramContainerStatus, instagramCreateReel, instagramPublish, SocialApiError } from "./instagram";
+import { captionFor, MAX_CAPTION } from "./captions";
+import { latestCarousel } from "./carousels";
+import {
+  instagramContainerStatus,
+  instagramCreateCarousel,
+  instagramCreateImage,
+  instagramCreateReel,
+  instagramPublish,
+  SocialApiError,
+} from "./instagram";
 import { tiktokCreatorInfo, tiktokInitPost, tiktokPostStatus, type TiktokPostOptions } from "./tiktok";
-import { latestVideo } from "./videos";
+import { currentPhoto, latestVideo } from "./videos";
+
+export { captionFor } from "./captions";
 
 export interface PublishDeps {
   fetchImpl?: typeof fetch;
   now?: Date;
 }
 
+export type PublicationFormat = s.PublicationFormat;
 export type TiktokChoices = Omit<TiktokPostOptions, "title">;
 
-type MissingRefusal = "not_found" | "no_video" | "outdated" | "not_connected";
-type PostRefusal = "invalid_privacy" | "too_long" | "failed";
+export interface PublishOptions {
+  /** Légende modifiée par l'administrateur (sinon la légende proposée). */
+  caption?: string | null;
+  /** Choix exigés par TikTok avant chaque publication. */
+  tiktok?: TiktokChoices | null;
+}
+
+type MissingRefusal = "not_found" | "no_video" | "no_photo" | "no_carousel" | "outdated";
+type PostRefusal = "not_connected" | "invalid_format" | "invalid_privacy" | "too_long" | "failed";
 type StartRefusal = { ok: false; reason: MissingRefusal | PostRefusal; detail?: string };
 export type StartResult = { ok: true } | StartRefusal;
 
-const MAX_CAPTION = 2200;
-
-/** Légende : texte du réseau (ou de l'autre réseau), puis les hashtags. */
-export async function captionFor(db: Database, versionId: string, platform: SocialPlatform): Promise<string> {
-  const contents = await db
-    .select()
-    .from(s.socialContents)
-    .where(eq(s.socialContents.recipeVersionId, versionId));
-  const instagram = contents.find((c) => c.platform === "instagram");
-  const tiktok = contents.find((c) => c.platform === "tiktok");
-  const hashtags = (instagram?.hashtags.length ? instagram.hashtags : (tiktok?.hashtags ?? []))
-    .slice(0, platform === "instagram" ? 15 : 8)
-    .map((tag) => `#${tag.replace(/^#/, "").replace(/\s+/g, "")}`)
-    .join(" ");
-  const text =
-    platform === "instagram"
-      ? (instagram?.caption ?? instagram?.description ?? "")
-      : [tiktok?.title, tiktok?.description].filter(Boolean).join("\n\n") || (instagram?.caption ?? "");
-  return [text.trim(), hashtags].filter(Boolean).join("\n\n").slice(0, MAX_CAPTION);
-}
+/** Formats possibles par réseau. */
+export const FORMATS_BY_PLATFORM: Record<SocialPlatform, readonly PublicationFormat[]> = {
+  instagram: ["photo", "carousel", "video"],
+  tiktok: ["video"],
+};
 
 async function setPublication(
   db: Database,
   recipeId: string,
   platform: SocialPlatform,
+  format: PublicationFormat,
   values: Partial<typeof s.recipePublications.$inferInsert>,
 ) {
   await db
     .insert(s.recipePublications)
-    .values({ recipeId, platform, status: "queued", ...values })
+    .values({ recipeId, platform, format, status: "queued", ...values })
     .onConflictDoUpdate({
-      target: [s.recipePublications.recipeId, s.recipePublications.platform],
+      target: [s.recipePublications.recipeId, s.recipePublications.platform, s.recipePublications.format],
       set: { ...values, updatedAt: new Date() },
     });
 }
@@ -68,69 +73,120 @@ function message(error: unknown): string {
 }
 
 /**
- * Lance la publication de la dernière vidéo de la recette sur un réseau.
- * TikTok : la confidentialité et les interactions sont choisies par l'administrateur
- * parmi les options proposées par TikTok pour ce compte.
+ * Lance la publication d'une recette sur un réseau, dans un format.
+ * Tout ce qui est publié correspond à la photo et à la version actuelles de la recette.
  */
 export async function startPublication(
   db: Database,
   adminId: string,
   recipeId: string,
   platform: SocialPlatform,
-  choices: TiktokChoices | null,
+  format: PublicationFormat,
+  options: PublishOptions = {},
   deps: PublishDeps = {},
 ): Promise<StartResult> {
   const fetchImpl = deps.fetchImpl ?? fetch;
+  if (!FORMATS_BY_PLATFORM[platform].includes(format)) return { ok: false, reason: "invalid_format" };
   const recipe = await adminRecipe(db, recipeId);
   const [owner] = await db
     .select({ ownerId: s.recipes.ownerId })
     .from(s.recipes)
     .where(eq(s.recipes.id, recipeId));
   if (!recipe?.versionId || owner?.ownerId !== adminId) return { ok: false, reason: "not_found" };
-  const video = await latestVideo(db, recipeId);
-  if (!video) return { ok: false, reason: "no_video" };
-  // La vidéo doit montrer la recette telle qu'elle est (version et photo actuelles).
-  if (!video.current) return { ok: false, reason: "outdated" };
+
+  // Ce qui sera publié : la vidéo, le carrousel ou la photo 4:5 de la version actuelle.
+  let mediaId: string;
+  let durationS = 0;
+  if (format === "video") {
+    const video = await latestVideo(db, recipeId);
+    if (!video) return { ok: false, reason: "no_video" };
+    if (!video.current) return { ok: false, reason: "outdated" };
+    mediaId = video.id;
+    durationS = video.durationS;
+  } else if (format === "carousel") {
+    const carousel = await latestCarousel(db, recipeId);
+    if (!carousel) return { ok: false, reason: "no_carousel" };
+    if (!carousel.current) return { ok: false, reason: "outdated" };
+    mediaId = carousel.id;
+  } else {
+    const photo = await currentPhoto(db, recipe.versionId, "4:5");
+    if (!photo) return { ok: false, reason: "no_photo" };
+    mediaId = photo;
+  }
+
   const account = await accountToken(db, platform, { fetchImpl, now: deps.now }).catch(() => null);
   if (!account) return { ok: false, reason: "not_connected" };
-  const path = signedVideoPath(video.id, deps.now);
-  if (!path) return { ok: false, reason: "failed", detail: "AGENT_API_KEY manquante" };
-  const videoUrl = `${appUrl()}${path}`;
-  const caption = await captionFor(db, recipe.versionId, platform);
+  const caption = (options.caption?.trim() || (await captionFor(db, recipe.versionId, platform))).slice(
+    0,
+    MAX_CAPTION,
+  );
+  const signed = (path: string | null) => {
+    if (!path) throw new Error("AGENT_API_KEY manquante : liens signés impossibles.");
+    return `${appUrl()}${path}`;
+  };
 
   try {
     let externalId: string;
     let privacy: string | null = null;
-    if (platform === "instagram") {
+    if (platform === "instagram" && format === "photo") {
+      externalId = await instagramCreateImage(
+        account.accessToken,
+        account.accountId,
+        { imageUrl: signed(signedImagePath(mediaId, deps.now)), caption },
+        fetchImpl,
+      );
+    } else if (platform === "instagram" && format === "carousel") {
+      const carousel = (await latestCarousel(db, recipeId))!;
+      const children: string[] = [];
+      for (let slide = 1; slide <= carousel.slideCount; slide++) {
+        children.push(
+          await instagramCreateImage(
+            account.accessToken,
+            account.accountId,
+            { imageUrl: signed(signedSlidePath(mediaId, slide, deps.now)), carouselItem: true },
+            fetchImpl,
+          ),
+        );
+      }
+      externalId = await instagramCreateCarousel(
+        account.accessToken,
+        account.accountId,
+        { children, caption },
+        fetchImpl,
+      );
+    } else if (platform === "instagram") {
       externalId = await instagramCreateReel(
         account.accessToken,
         account.accountId,
-        { videoUrl, caption },
+        { videoUrl: signed(signedVideoPath(mediaId, deps.now)), caption },
         fetchImpl,
       );
     } else {
+      const choices = options.tiktok;
       if (!choices) return { ok: false, reason: "invalid_privacy" };
       const creator = await tiktokCreatorInfo(account.accessToken, fetchImpl);
       if (!creator.privacyOptions.includes(choices.privacy)) return { ok: false, reason: "invalid_privacy" };
-      if (video.durationS > creator.maxDurationS) return { ok: false, reason: "too_long" };
+      if (durationS > creator.maxDurationS) return { ok: false, reason: "too_long" };
       externalId = await tiktokInitPost(
         account.accessToken,
-        videoUrl,
+        signed(signedVideoPath(mediaId, deps.now)),
         {
           title: caption,
           privacy: choices.privacy,
           allowComments: choices.allowComments && !creator.commentDisabled,
           allowDuet: choices.allowDuet && !creator.duetDisabled,
           allowStitch: choices.allowStitch && !creator.stitchDisabled,
+          promoteOwnBrand: choices.promoteOwnBrand,
         },
         fetchImpl,
       );
       privacy = choices.privacy;
     }
-    await setPublication(db, recipeId, platform, {
+    // video_id garde ce qui a été publié (vidéo, carrousel ou photo).
+    await setPublication(db, recipeId, platform, format, {
       status: "processing",
       externalId,
-      videoId: video.id,
+      videoId: mediaId,
       privacy,
       postId: null,
       postUrl: null,
@@ -142,15 +198,11 @@ export async function startPublication(
       action: "publication.start",
       entity: "recipe",
       entityId: recipeId,
-      after: { platform, videoId: video.id, privacy },
+      after: { platform, format, mediaId, privacy },
     });
     return { ok: true };
   } catch (error) {
-    await setPublication(db, recipeId, platform, {
-      status: "failed",
-      note: message(error),
-      videoId: video.id,
-    });
+    await setPublication(db, recipeId, platform, format, { status: "failed", note: message(error) });
     return { ok: false, reason: "failed", detail: message(error) };
   }
 }
@@ -180,7 +232,7 @@ export async function advancePublication(
       action: "publication.failed",
       entity: "recipe",
       entityId: row.recipeId,
-      after: { platform: row.platform, note },
+      after: { platform: row.platform, format: row.format, note },
     });
     return "failed" as const;
   };
@@ -194,7 +246,7 @@ export async function advancePublication(
       action: "publication.published",
       entity: "recipe",
       entityId: row.recipeId,
-      after: { platform: row.platform, postUrl },
+      after: { platform: row.platform, format: row.format, postUrl },
     });
     return "published" as const;
   };

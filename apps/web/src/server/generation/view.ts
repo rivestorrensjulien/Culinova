@@ -10,6 +10,8 @@ import { imagesAvailable } from "../images/storage";
 import { isFavorite } from "../library";
 import { agentEnabled, type PublicationStatus, publicationStatuses } from "../publishing";
 import { type AccountSummary, listAccounts } from "../social/accounts";
+import { captionFor } from "../social/captions";
+import { latestCarousel, type RecipeCarouselView } from "../social/carousels";
 import { lastVideoFailure, latestVideo, type RecipeVideoView } from "../social/videos";
 import { isInShowcase } from "../showcase";
 import { loadTranslationState, type TranslationState } from "../translation";
@@ -131,6 +133,9 @@ export interface RecipeView {
     statuses: PublicationStatus[];
     showcase: boolean;
     video: RecipeVideoView | null;
+    carousel: RecipeCarouselView | null;
+    /** Légendes proposées (modifiables avant publication). */
+    captions: { instagram: string; tiktok: string };
     videoFailure: { note: string | null; at: string } | null;
     accounts: AccountSummary[];
   } | null;
@@ -247,6 +252,11 @@ export async function loadRecipeView(
           statuses: await publicationStatuses(db, recipe.id),
           showcase: await isInShowcase(db, recipe.id),
           video: await latestVideo(db, recipe.id),
+          carousel: await latestCarousel(db, recipe.id),
+          captions: {
+            instagram: await captionFor(db, version.id, "instagram"),
+            tiktok: await captionFor(db, version.id, "tiktok"),
+          },
           videoFailure: await lastVideoFailure(db, recipe.id),
           accounts: await listAccounts(db),
         }

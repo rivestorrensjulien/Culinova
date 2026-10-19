@@ -11,7 +11,7 @@
     "exemple": "tsx src/render.ts --exemple --images",
     "rendre": "tsx src/render.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/video/timeline.test.ts"
+    "test": "tsx --test src/video/timeline.test.ts src/video/carousel.test.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.300",

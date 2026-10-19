@@ -10,6 +10,8 @@ export const SETTING_KEYS = {
   legalIdentity: "legal.identity",
   /** Recettes de l'administrateur dont la photo est montrée sur la page d'accueil (liste d'identifiants). */
   homeShowcase: "home.showcase",
+  /** Réglages des légendes des réseaux : comptes à mentionner, mention « photo générée par IA ». */
+  socialCaptions: "social.captions",
 } as const;
 
 /** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */

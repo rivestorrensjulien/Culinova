@@ -5,11 +5,13 @@ import { Link } from "@/i18n/navigation";
 import { getDb } from "@/server/db";
 import { agentEnabled } from "@/server/publishing";
 import { listAccounts, socialSetup } from "@/server/social/accounts";
+import { getCaptionSettings } from "@/server/social/captions";
 import { redirectUri } from "@/server/social/oauth";
 import { type AccountTrend, statsOverview } from "@/server/social/stats";
-import { AnalysisView, AnalyzeButton, CollectButton, DisconnectButton } from "./actions";
+import { AnalysisView, AnalyzeButton, CaptionSettingsForm, CollectButton, DisconnectButton } from "./actions";
 
 const LABELS = { instagram: "Instagram", tiktok: "TikTok" } as const;
+const FORMAT_LABELS = { video: "vidéo", photo: "photo", carousel: "carrousel" } as const;
 const ERRORS: Record<string, string> = {
   configuration:
     "Configuration incomplète : ajoutez les variables indiquées ci-dessous dans Vercel, puis redéployez.",
@@ -70,7 +72,11 @@ export default async function SocialPage({
   const query = await searchParams;
   const db = getDb();
   const setup = socialSetup();
-  const [accounts, overview] = await Promise.all([listAccounts(db), statsOverview(db)]);
+  const [accounts, overview, captions] = await Promise.all([
+    listAccounts(db),
+    statsOverview(db),
+    getCaptionSettings(db),
+  ]);
   const agent = agentEnabled();
 
   return (
@@ -166,6 +172,19 @@ export default async function SocialPage({
 
       <Card>
         <CardBody className="flex flex-col gap-4">
+          <div>
+            <CardTitle>Légendes</CardTitle>
+            <CardDescription>
+              Ajoutés à la légende proposée pour chaque publication (texte de la recette, puis les mentions,
+              les hashtags et la mention IA). La légende reste modifiable avant chaque publication.
+            </CardDescription>
+          </div>
+          <CaptionSettingsForm mentions={captions.mentions} aiNotice={captions.aiNotice} />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <CardTitle>Statistiques des publications</CardTitle>
@@ -212,7 +231,12 @@ export default async function SocialPage({
                           </a>
                         ) : null}
                       </td>
-                      <td className="py-2 pr-3">{LABELS[post.platform]}</td>
+                      <td className="py-2 pr-3 whitespace-nowrap">
+                        {LABELS[post.platform]} ·{" "}
+                        {post.platform === "instagram" && post.format === "video"
+                          ? "Reel"
+                          : FORMAT_LABELS[post.format]}
+                      </td>
                       <td className="py-2 pr-3 whitespace-nowrap">
                         {post.publishedAt ? dateTime(post.publishedAt) : "—"}
                       </td>

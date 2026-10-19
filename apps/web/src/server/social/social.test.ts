@@ -12,6 +12,7 @@ import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { publicationStatuses, queuePublication, signedVideoPath, verifyVideoSignature } from "../publishing";
 import { accountToken, listAccounts, saveAccount } from "./accounts";
+import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slideKey } from "./carousels";
 import { advancePublication, captionFor, startPublication } from "./publish";
 import { analyzeStats, collectStats, engagementRate, statsOverview } from "./stats";
 import { createVideoStorage, parseRange } from "./video-storage";
@@ -72,6 +73,15 @@ async function addPhoto(recipeId: string): Promise<string> {
       height: 1440,
     })
     .returning();
+  await db.insert(s.recipeImages).values({
+    recipeVersionId: versionId,
+    format: "4:5",
+    sourceImageId: source!.id,
+    status: "ready",
+    storageKey: "x/45.jpg",
+    width: 1152,
+    height: 1440,
+  });
   return vertical!.id;
 }
 
@@ -223,7 +233,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       [/\/m-1\?/, { permalink: "https://www.instagram.com/reel/abc/" }],
     ]);
     expect(
-      await startPublication(db, admin.id, recipeId, "instagram", null, { fetchImpl: network.impl }),
+      await startPublication(db, admin.id, recipeId, "instagram", "video", {}, { fetchImpl: network.impl }),
     ).toEqual({
       ok: true,
     });
@@ -237,7 +247,11 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       .select()
       .from(s.recipePublications)
       .where(
-        and(eq(s.recipePublications.platform, "instagram"), eq(s.recipePublications.recipeId, recipeId)),
+        and(
+          eq(s.recipePublications.platform, "instagram"),
+          eq(s.recipePublications.recipeId, recipeId),
+          eq(s.recipePublications.format, "video"),
+        ),
       );
     expect(await advancePublication(db, publication!.id, { fetchImpl: network.impl })).toBe("processing");
     expect(await advancePublication(db, publication!.id, { fetchImpl: network.impl })).toBe("published");
@@ -292,9 +306,18 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       allowComments: true,
       allowDuet: true,
       allowStitch: false,
+      promoteOwnBrand: false,
     };
     expect(
-      await startPublication(db, admin.id, recipeId, "tiktok", choices, { fetchImpl: network.impl }),
+      await startPublication(
+        db,
+        admin.id,
+        recipeId,
+        "tiktok",
+        "video",
+        { tiktok: choices },
+        { fetchImpl: network.impl },
+      ),
     ).toEqual({
       ok: false,
       reason: "invalid_privacy",
@@ -305,7 +328,8 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
         admin.id,
         recipeId,
         "tiktok",
-        { ...choices, privacy: "SELF_ONLY" },
+        "video",
+        { tiktok: { ...choices, privacy: "SELF_ONLY" } },
         { fetchImpl: network.impl },
       ),
     ).toEqual({ ok: true });
@@ -314,6 +338,9 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       privacy_level: "SELF_ONLY",
       disable_comment: false,
       disable_duet: true,
+      brand_content_toggle: false,
+      brand_organic_toggle: false,
+      is_aigc: true,
     });
     expect(init.source_info.source).toBe("PULL_FROM_URL");
     expect(init.post_info.title).toContain("#");
@@ -328,6 +355,100 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       .from(s.recipePublications)
       .where(eq(s.recipePublications.id, publication!.id));
     expect(after?.postUrl).toBe("https://www.tiktok.com/@culinova.recette/video/7123");
+  });
+
+  it("carrousel et photo Instagram : fabriqués d'après la photo, publiés avec la légende validée", async () => {
+    const db = testDb();
+    const job = (await carouselJobs(db, "https://culinova.fr")).find((j) => j.recipeId === recipeId);
+    // La recette n'est plus « à publier » (déjà publiée) : on demande ce carrousel précisément.
+    const forced = job ?? (await carouselJobs(db, "https://culinova.fr", { recipeId }))[0];
+    expect(forced?.ingredients.length).toBeGreaterThan(0);
+    expect(forced?.steps.length).toBeGreaterThan(2);
+    expect(forced?.photoUrl).toContain("/api/agent/images/");
+
+    const registered = await registerCarousel(db, {
+      recipeId,
+      versionId: forced!.versionId,
+      imageId: forced!.imageId,
+      slideCount: 3,
+    });
+    if (!registered.ok) throw new Error(registered.reason);
+    expect(registered.uploads).toHaveLength(3);
+    const [row] = await db
+      .select()
+      .from(s.recipeCarousels)
+      .where(eq(s.recipeCarousels.id, registered.carouselId));
+    expect(await completeCarousel(db, registered.carouselId, { status: "ready" })).toEqual({
+      ok: false,
+      reason: "file_missing",
+    });
+    for (let slide = 1; slide <= 3; slide++) {
+      await createVideoStorage().put(
+        slideKey(row!.storagePrefix, slide),
+        new Uint8Array([slide]),
+        "image/jpeg",
+      );
+    }
+    expect(await completeCarousel(db, registered.carouselId, { status: "ready" })).toEqual({ ok: true });
+    expect(await latestCarousel(db, recipeId)).toMatchObject({ slideCount: 3, current: true });
+
+    const calls: Array<{ url: string; body: string }> = [];
+    let child = 0;
+    const impl = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      const body = init?.body ? String(init.body) : "";
+      calls.push({ url, body });
+      if (/\/media_publish/.test(url)) return Response.json({ id: "m-car" });
+      if (/\/17841\/media$/.test(url)) {
+        if (body.includes("is_carousel_item=true")) return Response.json({ id: `child-${++child}` });
+        if (body.includes("media_type=CAROUSEL")) return Response.json({ id: "car-1" });
+        return Response.json({ id: "img-1" });
+      }
+      if (/\/(car-1|img-1)\?/.test(url)) return Response.json({ status_code: "FINISHED" });
+      return Response.json({ permalink: "https://www.instagram.com/p/xyz/" });
+    }) as typeof fetch;
+
+    expect(
+      await startPublication(
+        db,
+        admin.id,
+        recipeId,
+        "instagram",
+        "carousel",
+        { caption: "Ma légende avec @maison.dupont #baghrir" },
+        { fetchImpl: impl },
+      ),
+    ).toEqual({ ok: true });
+    const parent = calls.find((c) => c.body.includes("media_type=CAROUSEL"));
+    expect(new URLSearchParams(parent!.body).get("children")).toBe("child-1,child-2,child-3");
+    expect(new URLSearchParams(parent!.body).get("caption")).toBe("Ma légende avec @maison.dupont #baghrir");
+    expect(decodeURIComponent(calls[0]!.body)).toContain(
+      `/api/social/carrousels/${registered.carouselId}/1?`,
+    );
+
+    expect(
+      await startPublication(db, admin.id, recipeId, "instagram", "photo", {}, { fetchImpl: impl }),
+    ).toEqual({ ok: true });
+    const photoCall = calls.find(
+      (c) => /\/media$/.test(c.url) && !c.body.includes("is_carousel_item") && !c.body.includes("CAROUSEL"),
+    );
+    expect(decodeURIComponent(photoCall!.body)).toContain("/api/agent/images/");
+    // TikTok ne publie que des vidéos.
+    expect(await startPublication(db, admin.id, recipeId, "tiktok", "photo")).toEqual({
+      ok: false,
+      reason: "invalid_format",
+    });
+
+    const rows = await db
+      .select()
+      .from(s.recipePublications)
+      .where(
+        and(eq(s.recipePublications.recipeId, recipeId), eq(s.recipePublications.platform, "instagram")),
+      );
+    expect(rows.map((r) => r.format).sort()).toEqual(["carousel", "photo", "video"]);
+    for (const publication of rows.filter((r) => r.status === "processing")) {
+      expect(await advancePublication(db, publication.id, { fetchImpl: impl })).toBe("published");
+    }
   });
 
   it("légende : texte du réseau suivi des hashtags", async () => {
@@ -378,7 +499,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     expect(await collectStats(db, { fetchImpl: network.impl })).toEqual({ instagram: "ok", tiktok: "ok" });
     const overview = await statsOverview(db);
     expect(overview.accounts.find((a) => a.platform === "instagram")?.followers).toBe(120);
-    const reel = overview.posts.find((p) => p.recipeId === recipeId && p.platform === "instagram");
+    const reel = overview.posts.find((p) => p.postUrl === "https://www.instagram.com/reel/abc/");
     expect(reel?.metrics).toMatchObject({ views: 1000, saves: 35 });
     expect(reel?.engagementRate).toBe(10);
 
@@ -394,7 +515,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     await queuePublication(db, admin.id, recipeId, ["instagram"]);
     const job = (await videoJobs(db, "https://culinova.fr")).find((j) => j.recipeId === recipeId);
     expect(job?.imageId).toBe(photoId);
-    expect(await startPublication(db, admin.id, recipeId, "instagram", null)).toEqual({
+    expect(await startPublication(db, admin.id, recipeId, "instagram", "video")).toEqual({
       ok: false,
       reason: "outdated",
     });

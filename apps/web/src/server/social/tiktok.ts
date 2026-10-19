@@ -196,6 +196,8 @@ export interface TiktokPostOptions {
   allowComments: boolean;
   allowDuet: boolean;
   allowStitch: boolean;
+  /** La vidéo fait la promotion de la marque du créateur (étiquette « Contenu promotionnel »). */
+  promoteOwnBrand: boolean;
 }
 
 /** Lance la publication : TikTok télécharge la vidéo depuis videoUrl (domaine vérifié culinova.fr). */
@@ -216,6 +218,11 @@ export async function tiktokInitPost(
           disable_comment: !options.allowComments,
           disable_duet: !options.allowDuet,
           disable_stitch: !options.allowStitch,
+          // Obligatoire : pas de partenariat rémunéré ; marque propre si l'administrateur le coche.
+          brand_content_toggle: false,
+          brand_organic_toggle: options.promoteOwnBrand,
+          // Les visuels sont générés par IA : étiquette « générée par IA » de TikTok.
+          is_aigc: true,
         },
         source_info: { source: "PULL_FROM_URL", video_url: videoUrl },
       }),

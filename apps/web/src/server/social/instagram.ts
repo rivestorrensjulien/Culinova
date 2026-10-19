@@ -181,6 +181,45 @@ export async function instagramCreateReel(
   return body.id;
 }
 
+/** Conteneur d'une photo (seule, ou élément d'un carrousel). Instagram n'accepte que le JPEG. */
+export async function instagramCreateImage(
+  accessToken: string,
+  userId: string,
+  input: { imageUrl: string; caption?: string; carouselItem?: boolean },
+  fetchImpl: typeof fetch = fetch,
+): Promise<string> {
+  const params = new URLSearchParams({ image_url: input.imageUrl, access_token: accessToken });
+  if (input.carouselItem) params.set("is_carousel_item", "true");
+  else if (input.caption) params.set("caption", input.caption);
+  const body = await json<{ id: string }>(
+    await fetchImpl(`${GRAPH}/${userId}/media`, { method: "POST", body: params }),
+    input.carouselItem ? "image du carrousel" : "création de la photo",
+  );
+  return body.id;
+}
+
+/** Conteneur d'un carrousel (2 à 10 éléments déjà créés). */
+export async function instagramCreateCarousel(
+  accessToken: string,
+  userId: string,
+  input: { children: string[]; caption: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<string> {
+  const body = await json<{ id: string }>(
+    await fetchImpl(`${GRAPH}/${userId}/media`, {
+      method: "POST",
+      body: new URLSearchParams({
+        media_type: "CAROUSEL",
+        children: input.children.join(","),
+        caption: input.caption,
+        access_token: accessToken,
+      }),
+    }),
+    "création du carrousel",
+  );
+  return body.id;
+}
+
 /** État du conteneur : IN_PROGRESS, FINISHED, ERROR, EXPIRED ou PUBLISHED. */
 export async function instagramContainerStatus(
   accessToken: string,

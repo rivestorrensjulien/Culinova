@@ -6,10 +6,10 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { pricingSheet, splitStepText } from "@culinova/core";
-import { ingredientAmount } from "@/components/recipe/format";
+import { pricingSheet } from "@culinova/core";
 import { audit } from "./audit";
-import { loadRecipeView, type RecipeView } from "./generation/view";
+import { loadRecipeView } from "./generation/view";
+import { amountText, stepPlainText } from "./recipe-text";
 
 export const SHOWCASE_MAX = 6;
 
@@ -115,33 +115,6 @@ export interface ShowcaseStory {
   imageId: string;
   caption: string | null;
   hashtags: string[];
-}
-
-function amountText(ingredient: RecipeView["ingredients"][number], part: number | null = null): string {
-  const amount = ingredientAmount(ingredient, part, 1, 1);
-  const unit = amount.unit === "piece" ? "" : ` ${amount.unit}`;
-  const main = `${amount.value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}${unit}`;
-  return amount.kitchen
-    ? `${main} (${amount.kitchen.value.toLocaleString("fr-FR")} ${amount.kitchen.unit})`
-    : main;
-}
-
-/** Consigne lisible : les jetons de quantité deviennent « (300 g) » après le nom de l'ingrédient. */
-function stepPlainText(view: RecipeView, action: string): string {
-  const byId = new Map(view.ingredients.map((i) => [i.id, i]));
-  return splitStepText(action)
-    .map((segment, index, all) => {
-      if (segment.kind === "text") return segment.text;
-      const ingredient = byId.get(segment.ref);
-      if (!ingredient) return "";
-      const next = all[index + 1];
-      if (next?.kind === "text" && /^\s+(de|d['’])/i.test(next.text))
-        return amountText(ingredient, segment.part);
-      return `(${amountText(ingredient, segment.part).replace(" (", ", ").replace(/\)$/, "")})`;
-    })
-    .join("")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 /**

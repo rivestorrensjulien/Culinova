@@ -1273,7 +1273,7 @@
   },
   "Publishing": {
     "title": "Publication sur les réseaux",
-    "intro": "L’agent fabrique la vidéo de la recette (mascotte, étapes, photo du plat) ; vous la regardez, puis vous la publiez sur Instagram et TikTok.",
+    "intro": "L’agent prépare la vidéo et le carrousel de la recette ; vous les regardez, ajustez la légende, puis publiez : photo, carrousel ou Reel sur Instagram, vidéo sur TikTok.",
     "agentOff": "Agent non configuré : ajoutez la variable AGENT_API_KEY dans Vercel pour ouvrir sa porte d’accès.",
     "platforms": {
       "tiktok": "TikTok",
@@ -1315,7 +1315,10 @@
       "too_long": "La vidéo dépasse la durée autorisée par TikTok pour ce compte.",
       "failed": "La publication a échoué.",
       "failedDetail": "La publication a échoué : {detail}",
-      "outdated": "La vidéo ne correspond plus à la recette ou à sa photo : une nouvelle vidéo est en préparation."
+      "outdated": "Ce contenu ne correspond plus à la recette ou à sa photo : une nouvelle version est en préparation.",
+      "no_photo": "Générez d’abord la photo de la recette.",
+      "no_carousel": "Pas encore de carrousel à publier.",
+      "invalid_format": "Format non disponible sur ce réseau."
     },
     "tiktok": {
       "loading": "Lecture du compte TikTok…",
@@ -1339,8 +1342,31 @@
       "consent": "En publiant, vous acceptez la <link>confirmation d’utilisation de la musique</link> de TikTok.",
       "processing": "Après la publication, la vidéo peut mettre quelques minutes à apparaître sur le profil.",
       "publish": "Publier sur TikTok",
-      "cancel": "Annuler"
-    }
+      "cancel": "Annuler",
+      "ownBrand": "Cette vidéo fait la promotion de ma propre marque (Culinova)",
+      "ownBrandHint": "TikTok l’affichera comme « Contenu promotionnel ».",
+      "aiLabel": "La vidéo sera étiquetée « générée par IA » par TikTok (les visuels sont créés par IA)."
+    },
+    "formats": {
+      "instagram": {
+        "photo": "Instagram · photo dans le fil",
+        "carousel": "Instagram · carrousel",
+        "video": "Instagram · Reel"
+      },
+      "tiktok": {
+        "video": "TikTok · vidéo"
+      }
+    },
+    "carousel": {
+      "title": "Carrousel Instagram",
+      "slide": "Image {n} du carrousel",
+      "outdated": "Ce carrousel montre une version précédente de la recette ou une autre photo : un nouveau sera fabriqué automatiquement (recette « à publier »).",
+      "pending": "Carrousel en préparation : l’agent le fabrique dans la demi-heure (il lui faut la photo 4:5).",
+      "none": "Le carrousel (photo, ingrédients, étapes) est fabriqué automatiquement quand la recette est marquée « à publier »."
+    },
+    "caption": "Légende {platform}",
+    "captionHint": "{count} / 2 200 caractères · comptes mentionnés et mention IA réglés dans Administration › Réseaux",
+    "publishAgain": "Publier à nouveau"
   },
   "Install": {
     "title": "Installer Culinova sur cet appareil",

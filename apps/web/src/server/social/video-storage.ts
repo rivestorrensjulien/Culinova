@@ -22,8 +22,8 @@ export interface UploadInstructions {
 export interface VideoStorage {
   readonly kind: "supabase" | "local";
   /** Lien d'envoi direct, ou null : envoi par Culinova (/api/agent/videos/[id]/fichier). */
-  uploadInstructions(key: string): Promise<UploadInstructions | null>;
-  put(key: string, bytes: Uint8Array): Promise<void>;
+  uploadInstructions(key: string, contentType?: string): Promise<UploadInstructions | null>;
+  put(key: string, bytes: Uint8Array, contentType?: string): Promise<void>;
   exists(key: string): Promise<boolean>;
   /** Lecture, éventuellement partielle (« Range: bytes=… ») pour les lecteurs vidéo. */
   read(key: string, range: string | null): Promise<Response | null>;
@@ -66,7 +66,7 @@ class SupabaseVideoStorage implements VideoStorage {
     this.bucketReady = true;
   }
 
-  async uploadInstructions(key: string): Promise<UploadInstructions> {
+  async uploadInstructions(key: string, contentType = "video/mp4"): Promise<UploadInstructions> {
     await this.ensureBucket();
     const response = await this.fetchImpl(
       `${this.url}/storage/v1/object/upload/sign/${VIDEO_BUCKET}/${safeKey(key)}`,
@@ -78,15 +78,15 @@ class SupabaseVideoStorage implements VideoStorage {
     return {
       url: `${this.url}/storage/v1${body.url}`,
       method: "PUT",
-      headers: { "Content-Type": "video/mp4", "x-upsert": "true" },
+      headers: { "Content-Type": contentType, "x-upsert": "true" },
     };
   }
 
-  async put(key: string, bytes: Uint8Array) {
+  async put(key: string, bytes: Uint8Array, contentType = "video/mp4") {
     await this.ensureBucket();
     const response = await this.fetchImpl(`${this.url}/storage/v1/object/${VIDEO_BUCKET}/${safeKey(key)}`, {
       method: "POST",
-      headers: this.headers({ "Content-Type": "video/mp4", "x-upsert": "true" }),
+      headers: this.headers({ "Content-Type": contentType, "x-upsert": "true" }),
       body: bytes as unknown as BodyInit,
     });
     if (!response.ok) throw new Error(`Envoi de la vidéo impossible (${response.status})`);
@@ -202,6 +202,15 @@ export function createVideoStorage(
     );
   }
   return new LocalVideoStorage(join(env.IMAGE_STORAGE_DIR || join(tmpdir(), "culinova-images"), "videos"));
+}
+
+/** Image d'un carrousel (JPEG) lue dans le stockage. */
+export async function slideResponse(storage: VideoStorage, key: string, extra: Record<string, string> = {}) {
+  const source = await storage.read(key, null);
+  if (!source) return null;
+  return new Response(source.body, {
+    headers: { "Content-Type": "image/jpeg", "Cache-Control": "private, max-age=3600", ...extra },
+  });
 }
 
 /** Réponse de lecture, en ne transmettant que les en-têtes utiles au lecteur. */

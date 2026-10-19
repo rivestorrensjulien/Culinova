@@ -37,7 +37,12 @@ export function agentAuthorized(
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
-function signature(imageId: string, expires: number, key: string, kind: "image" | "video" = "image"): string {
+function signature(
+  imageId: string,
+  expires: number,
+  key: string,
+  kind: "image" | "video" | "slide" = "image",
+): string {
   return createHmac("sha256", key).update(`${kind}:${imageId}:${expires}`).digest("base64url");
 }
 
@@ -98,6 +103,36 @@ export function verifyImageSignature(
   return expected.length === provided.length && timingSafeEqual(expected, provided);
 }
 
+/** Lien temporaire (6 h) vers une image d'un carrousel, téléchargée par Instagram. */
+export function signedSlidePath(
+  carouselId: string,
+  slide: number,
+  now = new Date(),
+  env: Record<string, string | undefined> = process.env,
+): string | null {
+  const key = agentKey(env);
+  if (!key) return null;
+  const expires = Math.floor(now.getTime() / 1000) + VIDEO_LINK_TTL_S;
+  const sig = signature(`${carouselId}/${slide}`, expires, key, "slide");
+  return `/api/social/carrousels/${carouselId}/${slide}?expire=${expires}&signature=${sig}`;
+}
+
+export function verifySlideSignature(
+  carouselId: string,
+  slide: number,
+  expires: string | null,
+  given: string | null,
+  now = new Date(),
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  const key = agentKey(env);
+  if (!key || !expires || !given || !/^\d+$/.test(expires)) return false;
+  if (Number(expires) < Math.floor(now.getTime() / 1000)) return false;
+  const expected = Buffer.from(signature(`${carouselId}/${slide}`, Number(expires), key, "slide"));
+  const provided = Buffer.from(given);
+  return expected.length === provided.length && timingSafeEqual(expected, provided);
+}
+
 /** Recettes publiables : celles des administrateurs, encore présentes. */
 export async function adminRecipe(db: Database, recipeId: string) {
   const [row] = await db
@@ -117,6 +152,7 @@ export async function adminRecipe(db: Database, recipeId: string) {
 
 export interface PublicationStatus {
   platform: Platform;
+  format: s.PublicationFormat;
   status: s.PublicationStatusValue;
   publishedAt: string | null;
   postUrl: string | null;
@@ -131,6 +167,7 @@ export async function publicationStatuses(db: Database, recipeId: string): Promi
     .orderBy(asc(s.recipePublications.platform));
   return rows.map((row) => ({
     platform: row.platform,
+    format: row.format,
     status: row.status,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     postUrl: row.postUrl,
@@ -156,7 +193,7 @@ export async function queuePublication(
       .insert(s.recipePublications)
       .values({ recipeId, platform, status: "queued" })
       .onConflictDoUpdate({
-        target: [s.recipePublications.recipeId, s.recipePublications.platform],
+        target: [s.recipePublications.recipeId, s.recipePublications.platform, s.recipePublications.format],
         set: { status: "queued", publishedAt: null, postUrl: null, note: null, updatedAt: new Date() },
       });
   }
@@ -215,7 +252,7 @@ export async function reportPublication(
     .insert(s.recipePublications)
     .values({ recipeId, platform, ...values })
     .onConflictDoUpdate({
-      target: [s.recipePublications.recipeId, s.recipePublications.platform],
+      target: [s.recipePublications.recipeId, s.recipePublications.platform, s.recipePublications.format],
       set: { ...values, updatedAt: new Date() },
     });
   await audit(db, {

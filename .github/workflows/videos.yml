@@ -49,8 +49,10 @@ jobs:
           # Au passage, fait avancer les publications en cours chez Instagram et TikTok.
           curl -fsS -X POST -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/suivi" || true
           echo
-          n=$(curl -fsS -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/videos" | jq '.videos | length')
-          echo "$n vidéo(s) à fabriquer"
+          v=$(curl -fsS -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/videos" | jq '.videos | length')
+          c=$(curl -fsS -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/carrousels" | jq '.carousels | length')
+          n=$((v + c))
+          echo "$v vidéo(s) et $c carrousel(s) à fabriquer"
           if [ "$n" -gt 0 ]; then echo "a_faire=oui" >> "$GITHUB_OUTPUT"; else echo "a_faire=non" >> "$GITHUB_OUTPUT"; fi
 
       - uses: actions/setup-node@v4
@@ -75,13 +77,15 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: video-exemple
-          path: agent/sortie/exemple.mp4
+          path: |
+            agent/sortie/exemple.mp4
+            agent/sortie/carrousel-*.jpg
           retention-days: 14
 
       - name: Aperçu en images (branche apercus-video)
         if: github.event_name == 'push' || inputs.exemple
         run: |
-          mkdir -p /tmp/apercu && cp sortie/apercu-*.png /tmp/apercu/
+          mkdir -p /tmp/apercu && cp sortie/apercu-*.png sortie/carrousel-*.jpg /tmp/apercu/
           cd /tmp/apercu
           git init -q -b apercus-video
           git config user.name "Agent Culinova"

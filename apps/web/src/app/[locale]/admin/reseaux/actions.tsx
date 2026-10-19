@@ -1,10 +1,18 @@
 "use client";
 
 import type { InsightsAnalysis } from "@culinova/ai";
-import { Badge, Button, Notice } from "@culinova/ui";
+import { Badge, Button, Notice, Textarea } from "@culinova/ui";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { analyzeStatsAction, collectStatsAction, disconnectAccountAction } from "@/server/actions/social";
+import {
+  analyzeStatsAction,
+  collectStatsAction,
+  disconnectAccountAction,
+  saveCaptionSettingsAction,
+} from "@/server/actions/social";
+
+/** Même texte que AI_NOTICE (server/social/captions.ts), affiché dans le réglage. */
+const AI_NOTICE_TEXT = "📸 Visuel généré par IA à partir de la recette.";
 
 export function DisconnectButton({ platform, label }: { platform: string; label: string }) {
   const router = useRouter();
@@ -134,5 +142,58 @@ export function AnalyzeButton() {
         </Button>
       </div>
     </div>
+  );
+}
+
+export function CaptionSettingsForm({ mentions, aiNotice }: { mentions: string[]; aiNotice: boolean }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [text, setText] = useState(mentions.map((m) => `@${m}`).join(" "));
+  const [notice, setNotice] = useState(aiNotice);
+  const [saved, setSaved] = useState<boolean | null>(null);
+  return (
+    <form
+      className="flex flex-col gap-3 text-sm"
+      onSubmit={(e) => {
+        e.preventDefault();
+        start(async () => {
+          setSaved(await saveCaptionSettingsAction({ mentions: text, aiNotice: notice }).catch(() => false));
+          router.refresh();
+        });
+      }}
+    >
+      {saved === true ? <Notice tone="success">Réglages enregistrés.</Notice> : null}
+      {saved === false ? <Notice tone="danger">L&apos;enregistrement a échoué.</Notice> : null}
+      <label className="flex flex-col gap-1">
+        <span className="font-medium">Comptes à mentionner dans chaque publication</span>
+        <Textarea
+          value={text}
+          rows={2}
+          placeholder="@partenaire @producteur"
+          onChange={(e) => setText(e.target.value)}
+          data-testid="caption-mentions"
+        />
+        <span className="text-muted">
+          Séparés par des espaces (20 au plus). Mentionnez seulement des comptes en lien avec la recette
+          (producteur, partenaire, matériel) : trop de mentions fait « publicité ».
+        </span>
+      </label>
+      <label className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-primary"
+          checked={notice}
+          onChange={(e) => setNotice(e.target.checked)}
+        />
+        <span>
+          Ajouter « {AI_NOTICE_TEXT} » à la fin des légendes (recommandé : les visuels sont créés par IA).
+        </span>
+      </label>
+      <div>
+        <Button type="submit" size="sm" disabled={pending}>
+          Enregistrer
+        </Button>
+      </div>
+    </form>
   );
 }

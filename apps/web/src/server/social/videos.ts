@@ -29,10 +29,14 @@ export interface VideoJob {
 }
 
 /**
- * Photo 9:16 de la photo principale de la version (celle affichée sur la page de la recette),
- * ou à défaut le dernier recadrage 9:16 prêt.
+ * Recadrage (9:16, 4:5…) de la photo principale de la version (celle affichée sur la page
+ * de la recette), ou à défaut le dernier recadrage prêt de ce format.
  */
-export async function currentVerticalPhoto(db: Database, versionId: string): Promise<string | null> {
+export async function currentPhoto(
+  db: Database,
+  versionId: string,
+  format: "9:16" | "4:5" | "1:1",
+): Promise<string | null> {
   const source = alias(s.recipeImages, "source");
   const [primary] = await db
     .select({ id: s.recipeImages.id })
@@ -41,7 +45,7 @@ export async function currentVerticalPhoto(db: Database, versionId: string): Pro
     .where(
       and(
         eq(s.recipeImages.recipeVersionId, versionId),
-        eq(s.recipeImages.format, "9:16"),
+        eq(s.recipeImages.format, format),
         eq(s.recipeImages.status, "ready"),
         eq(source.isPrimary, true),
       ),
@@ -55,13 +59,18 @@ export async function currentVerticalPhoto(db: Database, versionId: string): Pro
     .where(
       and(
         eq(s.recipeImages.recipeVersionId, versionId),
-        eq(s.recipeImages.format, "9:16"),
+        eq(s.recipeImages.format, format),
         eq(s.recipeImages.status, "ready"),
       ),
     )
     .orderBy(desc(s.recipeImages.createdAt))
     .limit(1);
   return latest?.id ?? null;
+}
+
+/** Photo 9:16 montrée dans la vidéo. */
+export function currentVerticalPhoto(db: Database, versionId: string): Promise<string | null> {
+  return currentPhoto(db, versionId, "9:16");
 }
 
 /**

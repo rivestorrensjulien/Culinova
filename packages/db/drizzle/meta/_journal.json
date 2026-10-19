@@ -78,6 +78,13 @@
       "when": 1792400000000,
       "tag": "0010_video_photo",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1792500000000,
+      "tag": "0011_formats_carrousels",
+      "breakpoints": true
     }
   ]
 }

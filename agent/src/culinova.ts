@@ -13,9 +13,24 @@ export interface VideoJob {
   photoUrl: string;
 }
 
+export interface CarouselJob {
+  recipeId: string;
+  versionId: string;
+  name: string;
+  servings: number;
+  totalMinutes: number;
+  ingredients: Array<{ label: string; amount: string }>;
+  steps: string[];
+  /** Photo 4:5 de la recette (celle de sa page). */
+  imageId: string;
+  photoUrl: string;
+}
+
+type Upload = { url: string; method: "PUT" | "POST"; headers: Record<string, string> };
+
 export interface UploadTarget {
   videoId: string;
-  upload: { url: string; method: "PUT" | "POST"; headers: Record<string, string> };
+  upload: Upload;
 }
 
 export class CulinovaClient {
@@ -59,22 +74,40 @@ export class CulinovaClient {
   }
 
   async upload(target: UploadTarget, bytes: Uint8Array): Promise<void> {
-    const url = target.upload.url.startsWith("http")
-      ? target.upload.url
-      : `${this.baseUrl}${target.upload.url}`;
+    await this.send(target.upload, bytes);
+  }
+
+  /** Envoie un fichier au lien donné par Culinova (Supabase signé, ou Culinova en local). */
+  async send(upload: Upload, bytes: Uint8Array): Promise<void> {
+    const url = upload.url.startsWith("http") ? upload.url : `${this.baseUrl}${upload.url}`;
     const sameOrigin = url.startsWith(this.baseUrl);
     const response = await this.fetchImpl(url, {
-      method: target.upload.method,
-      headers: {
-        ...(sameOrigin ? { Authorization: `Bearer ${this.apiKey}` } : {}),
-        ...target.upload.headers,
-      },
+      method: upload.method,
+      headers: { ...(sameOrigin ? { Authorization: `Bearer ${this.apiKey}` } : {}), ...upload.headers },
       body: bytes as unknown as BodyInit,
     });
     if (!response.ok) {
       const text = await response.text().catch(() => "");
-      throw new Error(`Envoi de la vidéo impossible : ${response.status} ${text.slice(0, 300)}`);
+      throw new Error(`Envoi du fichier impossible : ${response.status} ${text.slice(0, 300)}`);
     }
+  }
+
+  async carouselJobs(recipeId?: string): Promise<CarouselJob[]> {
+    const query = recipeId ? `?recette=${encodeURIComponent(recipeId)}` : "";
+    return (await this.call<{ carousels: CarouselJob[] }>(`/api/agent/carrousels${query}`)).carousels;
+  }
+
+  async registerCarousel(input: {
+    recipeId: string;
+    versionId: string;
+    imageId: string;
+    slideCount: number;
+  }): Promise<{ carouselId: string; uploads: Upload[] }> {
+    return this.call("/api/agent/carrousels", { method: "POST", body: JSON.stringify(input) });
+  }
+
+  async reportCarousel(carouselId: string, report: { status: "ready" } | { status: "failed"; note: string }) {
+    await this.call(`/api/agent/carrousels/${carouselId}`, { method: "POST", body: JSON.stringify(report) });
   }
 
   async report(videoId: string, report: { status: "ready" } | { status: "failed"; note: string }) {

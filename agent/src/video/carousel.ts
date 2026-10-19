@@ -67,16 +67,14 @@ export function carouselPages(props: Pick<CarouselProps, "ingredients" | "steps"
   if (steps.length > room) steps = chunk(numbered, Math.min(5, Math.ceil(numbered.length / room)));
   const more = steps.length > room;
   const kept = steps.slice(0, room);
-  return [
-    { kind: "cover" },
-    ...ingredientChunks.map(
-      (items, part): CarouselPage => ({ kind: "ingredients", items, part, parts: ingredientChunks.length }),
-    ),
-    ...kept.map(
-      (items, index): CarouselPage => ({ kind: "steps", items, more: more && index === kept.length - 1 }),
-    ),
-    { kind: "end" },
-  ];
+  const parts = ingredientChunks.length;
+  const ingredientPages: CarouselPage[] = ingredientChunks.map((items, part) => {
+    return { kind: "ingredients", items, part, parts };
+  });
+  const stepPagesKept: CarouselPage[] = kept.map((items, index) => {
+    return { kind: "steps", items, more: more && index === kept.length - 1 };
+  });
+  return [{ kind: "cover" }, ...ingredientPages, ...stepPagesKept, { kind: "end" }];
 }
 
 export const EXAMPLE_CAROUSEL: CarouselProps = {

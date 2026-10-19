@@ -28,12 +28,7 @@ function TiktokPublishPanel({
   onCancel,
 }: {
   busy: boolean;
-  onPublish: (choices: {
-    privacy: string;
-    allowComments: boolean;
-    allowDuet: boolean;
-    allowStitch: boolean;
-  }) => void;
+  onPublish: (choices: TiktokChoices) => void;
   onCancel: () => void;
 }) {
   const t = useTranslations("Publishing.tiktok");

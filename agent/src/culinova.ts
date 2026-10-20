@@ -42,6 +42,8 @@ export class CulinovaClient {
 
   private async call<T>(path: string, init: RequestInit = {}): Promise<T> {
     const response = await this.fetchImpl(`${this.baseUrl}${path}`, {
+      // Jamais d'attente sans fin : 2 minutes au plus par appel.
+      signal: AbortSignal.timeout(120_000),
       ...init,
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
@@ -82,6 +84,7 @@ export class CulinovaClient {
     const url = upload.url.startsWith("http") ? upload.url : `${this.baseUrl}${upload.url}`;
     const sameOrigin = url.startsWith(this.baseUrl);
     const response = await this.fetchImpl(url, {
+      signal: AbortSignal.timeout(180_000),
       method: upload.method,
       headers: { ...(sameOrigin ? { Authorization: `Bearer ${this.apiKey}` } : {}), ...upload.headers },
       body: bytes as unknown as BodyInit,

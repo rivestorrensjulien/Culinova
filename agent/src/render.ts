@@ -26,6 +26,17 @@ function arg(name: string): string | null {
   return found.includes("=") ? found.slice(found.indexOf("=") + 1) : "";
 }
 
+const started = Date.now();
+/** Étape visible dans le résumé de l'exécution GitHub (avec le temps écoulé). */
+function notice(message: string) {
+  const elapsed = Math.round((Date.now() - started) / 1000);
+  console.log(
+    process.env.GITHUB_ACTIONS
+      ? `::notice title=Agent (${elapsed} s)::${message}`
+      : `${elapsed} s · ${message}`,
+  );
+}
+
 /** Erreur visible dans le résumé de l'exécution GitHub (annotation), en plus du journal. */
 function annotate(title: string, note: string) {
   if (process.env.GITHUB_ACTIONS)
@@ -118,6 +129,7 @@ async function carousels(
         },
         join(output, `carrousel-${job.recipeId}`),
       );
+      notice(`Carrousel « ${job.name} » fabriqué (${files.length} images), envoi…`);
       const target = await client.registerCarousel({
         recipeId: job.recipeId,
         versionId: job.versionId,
@@ -129,7 +141,7 @@ async function carousels(
         await client.send(target.uploads[index]!, new Uint8Array(await readFile(file)));
       }
       await client.reportCarousel(target.carouselId, { status: "ready" });
-      console.log(`  envoyé (${files.length} images)`);
+      notice(`Carrousel « ${job.name} » envoyé`);
     } catch (error) {
       failures++;
       const note = error instanceof Error ? error.message : String(error);
@@ -189,6 +201,7 @@ async function main() {
         music,
       };
       const meta = await render(serveUrl, props, file);
+      notice(`Vidéo « ${job.name} » fabriquée (${meta.durationS.toFixed(0)} s), envoi…`);
       const { size } = await stat(file);
       const target = await client.register({
         recipeId: job.recipeId,
@@ -200,7 +213,7 @@ async function main() {
       videoId = target.videoId;
       await client.upload(target, new Uint8Array(await readFile(file)));
       await client.report(target.videoId, { status: "ready" });
-      console.log(`  envoyée (${(size / 1_000_000).toFixed(1)} Mo, ${meta.durationS.toFixed(1)} s)`);
+      notice(`Vidéo « ${job.name} » envoyée (${(size / 1_000_000).toFixed(1)} Mo)`);
     } catch (error) {
       failures++;
       const note = error instanceof Error ? error.message : String(error);

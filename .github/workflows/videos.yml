@@ -30,7 +30,7 @@ jobs:
   videos:
     name: Fabriquer les vidéos
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 50
     defaults:
       run:
         working-directory: agent

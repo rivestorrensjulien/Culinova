@@ -1,0 +1,60 @@
+name: Comparatif vidéo
+
+# Deux vidéos d'une même recette, pour choisir le style : animée (Julien dessiné) et
+# réaliste (Chef Ju en 3D dans une vraie cuisine, clips vidéo IA de fal.ai, environ 3 €).
+# Rien n'est envoyé à Culinova ni publié : les fichiers vont sur la branche comparatif-video.
+on:
+  workflow_dispatch:
+    inputs:
+      recette:
+        description: "Identifiant ou morceau du nom de la recette (vide : la première « à publier »)"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: comparatif
+  cancel-in-progress: false
+
+jobs:
+  comparatif:
+    name: Fabriquer les deux versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: agent
+    env:
+      CULINOVA_URL: ${{ vars.CULINOVA_URL || 'https://culinova.fr' }}
+      AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+      FAL_KEY: ${{ secrets.FAL_KEY }}
+      VESTE: ${{ vars.MASCOTTE_VESTE || 'blanche' }}
+      RECETTE: ${{ inputs.recette }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installation du studio vidéo
+        run: npm install --no-audit --no-fund
+      - name: Vérifications
+        run: npm run typecheck && npm test
+      - name: Fabrication des deux vidéos
+        run: npm run comparatif -- --recette="$RECETTE"
+      - name: Fichiers (téléchargeables)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: comparatif-video
+          path: agent/sortie/comparatif/
+          if-no-files-found: ignore
+      - name: Fichiers sur la branche comparatif-video
+        run: |
+          mkdir -p /tmp/comparatif && cp sortie/comparatif/* /tmp/comparatif/
+          cd /tmp/comparatif
+          git init -q -b comparatif-video
+          git config user.name "Agent Culinova"
+          git config user.email "agent@culinova.fr"
+          git add . && git commit -qm "Comparatif vidéo (${GITHUB_SHA::7})"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" comparatif-video

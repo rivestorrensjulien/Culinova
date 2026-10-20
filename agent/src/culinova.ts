@@ -58,6 +58,16 @@ export class CulinovaClient {
     return (await response.json()) as T;
   }
 
+  /** Recettes « à publier » (nom et identifiant), ou une recette précise. */
+  async queue(recipeId?: string): Promise<Array<{ recipeId: string; name: string }>> {
+    const query = recipeId ? `?recette=${encodeURIComponent(recipeId)}` : "";
+    return (
+      await this.call<{ recipes: Array<{ recipeId: string; name: string }> }>(
+        `/api/agent/publications${query}`,
+      )
+    ).recipes;
+  }
+
   async jobs(recipeId?: string): Promise<VideoJob[]> {
     const query = recipeId ? `?recette=${encodeURIComponent(recipeId)}` : "";
     return (await this.call<{ videos: VideoJob[] }>(`/api/agent/videos${query}`)).videos;

@@ -117,7 +117,7 @@ function DishCard({
 }
 
 /** Phrase révélée mot à mot (chaque mot monte et apparaît avec un léger rebond). */
-function Words({
+export function Words({
   text,
   start = 0,
   step = 3,
@@ -191,7 +191,7 @@ function BouncingMascot({
   );
 }
 
-function Brand() {
+export function Brand() {
   return (
     <div
       style={{
@@ -321,7 +321,7 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
   );
 }
 
-function RevealScene({ props, frames }: { props: VideoProps; frames: number }) {
+export function RevealScene({ props, frames }: { props: VideoProps; frames: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const zoom = interpolate(frame, [0, frames], [1.12, 1], { extrapolateRight: "clamp" });
@@ -365,7 +365,7 @@ function RevealScene({ props, frames }: { props: VideoProps; frames: number }) {
   );
 }
 
-function EndScene({ props }: { props: VideoProps }) {
+export function EndScene({ props }: { props: VideoProps }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const text = spring({ frame: frame - 10, fps, config: { damping: 15 } });

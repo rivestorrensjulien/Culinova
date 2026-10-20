@@ -26,6 +26,12 @@ function arg(name: string): string | null {
   return found.includes("=") ? found.slice(found.indexOf("=") + 1) : "";
 }
 
+/** Erreur visible dans le résumé de l'exécution GitHub (annotation), en plus du journal. */
+function annotate(title: string, note: string) {
+  if (process.env.GITHUB_ACTIONS)
+    console.log(`::error title=${title}::${note.replace(/\r?\n/g, " ").slice(0, 900)}`);
+}
+
 async function render(serveUrl: string, props: VideoProps, file: string) {
   const composition = await selectComposition({ serveUrl, id: COMPOSITION_ID, inputProps: props });
   await renderMedia({
@@ -128,6 +134,7 @@ async function carousels(
       failures++;
       const note = error instanceof Error ? error.message : String(error);
       console.error(`  échec : ${note}`);
+      annotate(`Carrousel ${job.name}`, note);
       if (carouselId)
         await client
           .reportCarousel(carouselId, { status: "failed", note: note.slice(0, 500) })
@@ -198,6 +205,7 @@ async function main() {
       failures++;
       const note = error instanceof Error ? error.message : String(error);
       console.error(`  échec : ${note}`);
+      annotate(`Vidéo ${job.name}`, note);
       if (videoId)
         await client.report(videoId, { status: "failed", note: note.slice(0, 500) }).catch(() => {});
     }
@@ -207,5 +215,6 @@ async function main() {
 
 main().catch((error) => {
   console.error(error);
+  annotate("Agent", error instanceof Error ? (error.stack ?? error.message) : String(error));
   process.exit(1);
 });

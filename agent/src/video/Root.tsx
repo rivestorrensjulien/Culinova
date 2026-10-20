@@ -1,6 +1,8 @@
 import { Composition, Still } from "remotion";
 import { CAROUSEL_HEIGHT, CAROUSEL_ID, CAROUSEL_WIDTH, EXAMPLE_CAROUSEL } from "./carousel.ts";
 import { CarouselSlide } from "./CarouselSlide.tsx";
+import { GESTURES_ID } from "./actions.ts";
+import { Gestures } from "./Gestures.tsx";
 import { RecipeVideo } from "./RecipeVideo.tsx";
 import {
   COMPOSITION_ID,
@@ -32,6 +34,7 @@ export function Root() {
         height={CAROUSEL_HEIGHT}
         defaultProps={EXAMPLE_CAROUSEL}
       />
+      <Still id={GESTURES_ID} component={Gestures} width={1080} height={1680} />
     </>
   );
 }

@@ -4,6 +4,9 @@
  */
 import type { Expression } from "./Mascot.tsx";
 
+/** Planche de contrôle de tous les gestes (aperçu, jamais publié). */
+export const GESTURES_ID = "GestesJulien";
+
 export type Action =
   | "disposer"
   | "couper"

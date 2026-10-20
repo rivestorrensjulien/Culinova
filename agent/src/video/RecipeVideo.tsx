@@ -311,11 +311,11 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
       </div>
       <DishCard
         props={props}
-        width={plating ? 300 : 190}
-        height={plating ? 380 : 240}
+        width={plating ? 280 : 190}
+        height={plating ? 350 : 240}
         delay={plating ? 18 : 6}
         tilt={index % 2 === 0 ? 4 : -4}
-        style={{ right: 50, top: plating ? 700 : 780 }}
+        style={{ right: 50, top: plating ? 680 : 780 }}
       />
     </AbsoluteFill>
   );

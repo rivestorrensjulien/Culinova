@@ -14,6 +14,7 @@ import { mkdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type CarouselJob, CulinovaClient } from "./culinova.ts";
+import { GESTURES_ID } from "./video/actions.ts";
 import { CAROUSEL_ID, carouselPages, type CarouselProps, EXAMPLE_CAROUSEL } from "./video/carousel.ts";
 import { COMPOSITION_ID, EXAMPLE_PROPS, FPS, timeline, type VideoProps } from "./video/timeline.ts";
 
@@ -78,6 +79,14 @@ async function stills(serveUrl: string, props: VideoProps) {
       scale: 0.5,
     });
   }
+  const gestures = await selectComposition({ serveUrl, id: GESTURES_ID, inputProps: {} });
+  await renderStill({
+    composition: gestures,
+    serveUrl,
+    output: join(root, "sortie", "apercu-gestes.png"),
+    inputProps: {},
+    scale: 0.75,
+  });
 }
 
 /** Images JPEG du carrousel (une par page), dans l'ordre. */

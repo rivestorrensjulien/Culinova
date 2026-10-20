@@ -312,7 +312,7 @@ function chauffer(frame: number): Pose {
 function four(frame: number): Pose {
   const p = clamp(frame / 36, 0, 1);
   const inside = frame > 40;
-  const tray = { x: 186 - p * 70, y: 238 - p * 14 };
+  const tray = { x: 200 - p * 90, y: 238 - p * 14 };
   const glow = 0.55 + wave(frame, 0.25) * 0.2 + (inside ? 0.25 : 0);
   const rest = { left: { x: 166, y: 246 }, right: { x: 236, y: 246 } };
   return {
@@ -331,10 +331,10 @@ function four(frame: number): Pose {
             />
           </g>
         )}
-        <rect x={10} y={150} width={104} height={108} rx={10} fill="#3b3633" {...line} strokeWidth={3} />
-        <rect x={22} y={174} width={80} height={64} rx={8} fill="#f08a2e" opacity={glow} {...line} />
-        {[34, 62, 90].map((x) => (
-          <circle key={x} cx={x} cy={162} r={4} fill="#cfc6bb" />
+        <rect x={64} y={156} width={90} height={102} rx={10} fill="#3b3633" {...line} strokeWidth={3} />
+        <rect x={74} y={178} width={70} height={60} rx={8} fill="#f08a2e" opacity={glow} {...line} />
+        {[84, 109, 134].map((x) => (
+          <circle key={x} cx={x} cy={167} r={4} fill="#cfc6bb" />
         ))}
       </g>
     ),
@@ -584,7 +584,7 @@ export function WorkingChef({
   const bob = wave(frame, 0.22) * 1.5;
   const tilt = wave(frame, 0.11) * 3;
   return (
-    <svg width={width} height={width * (340 / 400)} viewBox="0 40 400 340" aria-label="Julien en cuisine">
+    <svg width={width} height={width * (300 / 280)} viewBox="60 40 280 300" aria-label="Julien en cuisine">
       <g transform={`translate(0 ${bob})`}>
         <Torso jacket={jacket} />
         <g transform={`translate(100 6) rotate(${tilt} 100 150)`}>

@@ -13,7 +13,7 @@ import { createVideoStorage, type UploadInstructions, type VideoStorage } from "
 import { currentPhoto } from "./videos";
 
 const MAX_FAILURES = 3;
-const UPLOAD_GRACE_MS = 60 * 60 * 1000;
+const UPLOAD_GRACE_MS = 20 * 60 * 1000;
 /** Instagram accepte 10 images au plus par carrousel. */
 export const MAX_SLIDES = 10;
 
@@ -127,14 +127,20 @@ export async function registerCarousel(
   const prefix = `${input.recipeId}/carrousel-${row!.id}`;
   await db.update(s.recipeCarousels).set({ storagePrefix: prefix }).where(eq(s.recipeCarousels.id, row!.id));
   const uploads: UploadInstructions[] = [];
-  for (let slide = 1; slide <= input.slideCount; slide++) {
-    uploads.push(
-      (await storage.uploadInstructions(slideKey(prefix, slide), "image/jpeg")) ?? {
-        url: `/api/agent/carrousels/${row!.id}/fichier/${slide}`,
-        method: "PUT",
-        headers: { "Content-Type": "image/jpeg" },
-      },
-    );
+  try {
+    for (let slide = 1; slide <= input.slideCount; slide++) {
+      uploads.push(
+        (await storage.uploadInstructions(slideKey(prefix, slide), "image/jpeg")) ?? {
+          url: `/api/agent/carrousels/${row!.id}/fichier/${slide}`,
+          method: "PUT",
+          headers: { "Content-Type": "image/jpeg" },
+        },
+      );
+    }
+  } catch (error) {
+    // Pas de lien d'envoi : la ligne ne doit pas bloquer les prochains essais.
+    await db.delete(s.recipeCarousels).where(eq(s.recipeCarousels.id, row!.id));
+    throw error;
   }
   return { ok: true, carouselId: row!.id, uploads };
 }

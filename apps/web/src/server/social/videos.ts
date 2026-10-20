@@ -13,8 +13,8 @@ import { createVideoStorage, type UploadInstructions, type VideoStorage } from "
 
 /** Au-delà de 3 échecs pour une même version, l'agent ne réessaie plus seul. */
 const MAX_FAILURES = 3;
-/** Un envoi commencé il y a moins d'une heure est en cours : pas de seconde vidéo. */
-const UPLOAD_GRACE_MS = 60 * 60 * 1000;
+/** Un envoi commencé il y a moins de 20 minutes est en cours : pas de seconde vidéo. */
+const UPLOAD_GRACE_MS = 20 * 60 * 1000;
 
 export interface VideoJob {
   recipeId: string;
@@ -186,7 +186,15 @@ export async function registerVideo(
     .returning({ id: s.recipeVideos.id });
   const key = `${input.recipeId}/${row!.id}.mp4`;
   await db.update(s.recipeVideos).set({ storageKey: key }).where(eq(s.recipeVideos.id, row!.id));
-  const upload = (await storage.uploadInstructions(key)) ?? {
+  let instructions: UploadInstructions | null;
+  try {
+    instructions = await storage.uploadInstructions(key);
+  } catch (error) {
+    // Pas de lien d'envoi : la ligne ne doit pas bloquer les prochains essais.
+    await db.delete(s.recipeVideos).where(eq(s.recipeVideos.id, row!.id));
+    throw error;
+  }
+  const upload = instructions ?? {
     url: `/api/agent/videos/${row!.id}/fichier`,
     method: "PUT" as const,
     headers: { "Content-Type": "video/mp4" },

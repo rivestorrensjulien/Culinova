@@ -8,7 +8,7 @@ import { appUrl } from "../auth";
 import type { CurrentSession } from "../session";
 import { type SocialPlatform, saveAccount } from "./accounts";
 import { instagramAuthorizeUrl, instagramExchangeCode, instagramProfile } from "./instagram";
-import { tiktokAuthorizeUrl, tiktokExchangeCode, tiktokProfile } from "./tiktok";
+import { tiktokAuthorizeUrl, tiktokCreatorInfo, tiktokExchangeCode, tiktokProfile } from "./tiktok";
 
 export const OAUTH_COOKIE = "culinova_social_oauth";
 export const OAUTH_COOKIE_MAX_AGE_S = 600;
@@ -76,15 +76,18 @@ export async function completeConnection(
   }
   const token = await tiktokExchangeCode(code, redirectUri(platform), fetchImpl);
   const profile = await tiktokProfile(token.accessToken, fetchImpl).catch(() => null);
+  // Le nom du compte (@…) vient des informations du créateur (portée video.publish).
+  const creator = await tiktokCreatorInfo(token.accessToken, fetchImpl).catch(() => null);
+  const username = creator?.username || profile?.username || profile?.displayName || null;
   await saveAccount(db, adminId, {
     platform,
     accountId: token.openId,
-    username: profile?.username ?? profile?.displayName ?? null,
+    username,
     accessToken: token.accessToken,
     refreshToken: token.refreshToken,
     expiresAt: token.expiresAt,
     refreshExpiresAt: token.refreshExpiresAt,
     scopes: token.scopes,
   });
-  return { username: profile?.username ?? null };
+  return { username };
 }

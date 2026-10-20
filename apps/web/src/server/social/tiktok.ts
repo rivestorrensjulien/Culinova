@@ -127,7 +127,8 @@ export async function tiktokProfile(
   accessToken: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<TiktokProfile> {
-  const fields = "open_id,username,display_name,follower_count,likes_count,video_count";
+  // « username » demanderait la portée user.info.profile : on s'en tient aux portées accordées.
+  const fields = "open_id,display_name,follower_count,likes_count,video_count";
   const data = await read<{ user: Record<string, string | number | undefined> }>(
     await fetchImpl(`${API}/user/info/?fields=${fields}`, {
       headers: { Authorization: `Bearer ${accessToken}` },

@@ -72,7 +72,10 @@ class SupabaseVideoStorage implements VideoStorage {
       `${this.url}/storage/v1/object/upload/sign/${VIDEO_BUCKET}/${safeKey(key)}`,
       { method: "POST", headers: this.headers({ "Content-Type": "application/json", "x-upsert": "true" }) },
     );
-    if (!response.ok) throw new Error(`Lien d'envoi indisponible (${response.status})`);
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      throw new Error(`Lien d'envoi indisponible (${response.status}) : ${text.slice(0, 200)}`);
+    }
     const body = (await response.json()) as { url?: string };
     if (!body.url) throw new Error("Lien d'envoi absent de la réponse de Supabase.");
     return {

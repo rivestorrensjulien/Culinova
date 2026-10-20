@@ -36,7 +36,15 @@ export async function POST(request: Request) {
   if (refused) return refused;
   const parsed = registrationSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "invalid_body" }, { status: 400 });
-  const result = await registerCarousel(getDb(), { ...parsed.data, imageId: parsed.data.imageId ?? null });
+  let result: Awaited<ReturnType<typeof registerCarousel>>;
+  try {
+    result = await registerCarousel(getDb(), { ...parsed.data, imageId: parsed.data.imageId ?? null });
+  } catch (error) {
+    // Détail renvoyé à l'agent (porte protégée par sa clé) pour comprendre l'échec.
+    console.error("registerCarousel", error);
+    const detail = error instanceof Error ? error.message : String(error);
+    return Response.json({ error: "storage_error", detail: detail.slice(0, 500) }, { status: 500 });
+  }
   if (!result.ok) return Response.json({ error: result.reason }, { status: 404 });
   return Response.json({ carouselId: result.carouselId, uploads: result.uploads });
 }

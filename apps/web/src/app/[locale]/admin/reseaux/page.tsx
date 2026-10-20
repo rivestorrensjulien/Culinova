@@ -293,6 +293,12 @@ export default async function SocialPage({
             <SetupItem ok={setup.tiktok}>
               <code>TIKTOK_CLIENT_KEY</code> et <code>TIKTOK_CLIENT_SECRET</code> (TikTok for Developers ›
               Culinova Agent). Adresse de retour à déclarer : <code>{redirectUri("tiktok")}</code>
+              {setup.hints.tiktokClientKey ? (
+                <span className="block text-muted">
+                  Client key utilisé : <code>{setup.hints.tiktokClientKey}</code> (celui de la Sandbox
+                  commence en général par « sb »).
+                </span>
+              ) : null}
             </SetupItem>
           </ul>
         </CardBody>

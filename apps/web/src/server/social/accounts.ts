@@ -34,6 +34,16 @@ export interface SocialSetup {
   tokenKey: boolean;
   instagram: boolean;
   tiktok: boolean;
+  /**
+   * Début des identifiants publics utilisés (jamais les clés secrètes), pour vérifier
+   * qu'il s'agit des bons (ex. clé de la Sandbox TikTok, qui commence par « sb »).
+   */
+  hints: { instagramAppId: string | null; tiktokClientKey: string | null };
+}
+
+/** « sbaw…(18 caractères) » : assez pour reconnaître un identifiant public, sans l'afficher en entier. */
+function hint(value: string | undefined): string | null {
+  return value ? `${value.slice(0, 4)}… (${value.length} caractères)` : null;
 }
 
 export function socialSetup(env: Record<string, string | undefined> = process.env): SocialSetup {
@@ -41,6 +51,10 @@ export function socialSetup(env: Record<string, string | undefined> = process.en
     tokenKey: tokenKey(env) !== null,
     instagram: instagramConfig(env) !== null,
     tiktok: tiktokConfig(env) !== null,
+    hints: {
+      instagramAppId: hint(instagramConfig(env)?.appId),
+      tiktokClientKey: hint(tiktokConfig(env)?.clientKey),
+    },
   };
 }
 

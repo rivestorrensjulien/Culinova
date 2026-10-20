@@ -46,13 +46,25 @@ class SupabaseVideoStorage implements VideoStorage {
     private readonly fetchImpl: typeof fetch = fetch,
   ) {}
 
+  /** Appel à Supabase avec un délai maximal : une erreur claire plutôt qu'une attente sans fin. */
+  private async timed(url: string, init: RequestInit, ms = 20_000): Promise<Response> {
+    try {
+      return await this.fetchImpl(url, { ...init, signal: AbortSignal.timeout(ms) });
+    } catch (error) {
+      const path = url.replace(this.url, "").split("?")[0];
+      throw new Error(
+        `Stockage Supabase injoignable (${path}) : ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
   private headers(extra: Record<string, string> = {}) {
     return { Authorization: `Bearer ${this.serviceKey}`, apikey: this.serviceKey, ...extra };
   }
 
   private async ensureBucket() {
     if (this.bucketReady) return;
-    const response = await this.fetchImpl(`${this.url}/storage/v1/bucket`, {
+    const response = await this.timed(`${this.url}/storage/v1/bucket`, {
       method: "POST",
       headers: this.headers({ "Content-Type": "application/json" }),
       body: JSON.stringify({ id: VIDEO_BUCKET, name: VIDEO_BUCKET, public: false }),
@@ -68,7 +80,7 @@ class SupabaseVideoStorage implements VideoStorage {
 
   async uploadInstructions(key: string, contentType = "video/mp4"): Promise<UploadInstructions> {
     await this.ensureBucket();
-    const response = await this.fetchImpl(
+    const response = await this.timed(
       `${this.url}/storage/v1/object/upload/sign/${VIDEO_BUCKET}/${safeKey(key)}`,
       {
         method: "POST",
@@ -92,7 +104,7 @@ class SupabaseVideoStorage implements VideoStorage {
 
   async put(key: string, bytes: Uint8Array, contentType = "video/mp4") {
     await this.ensureBucket();
-    const response = await this.fetchImpl(`${this.url}/storage/v1/object/${VIDEO_BUCKET}/${safeKey(key)}`, {
+    const response = await this.timed(`${this.url}/storage/v1/object/${VIDEO_BUCKET}/${safeKey(key)}`, {
       method: "POST",
       headers: this.headers({ "Content-Type": contentType, "x-upsert": "true" }),
       body: bytes as unknown as BodyInit,
@@ -107,9 +119,12 @@ class SupabaseVideoStorage implements VideoStorage {
   }
 
   async read(key: string, range: string | null) {
-    const response = await this.fetchImpl(`${this.url}/storage/v1/object/${VIDEO_BUCKET}/${safeKey(key)}`, {
-      headers: this.headers(range ? { Range: range } : {}),
-    });
+    // Délai long : il couvre aussi la transmission en continu de la vidéo.
+    const response = await this.timed(
+      `${this.url}/storage/v1/object/${VIDEO_BUCKET}/${safeKey(key)}`,
+      { headers: this.headers(range ? { Range: range } : {}) },
+      290_000,
+    );
     if (response.status === 404 || response.status === 400) return null;
     if (!response.ok) throw new Error(`Lecture de la vidéo impossible (${response.status})`);
     return response;
@@ -117,7 +132,7 @@ class SupabaseVideoStorage implements VideoStorage {
 
   async remove(keys: string[]) {
     if (keys.length === 0) return;
-    const response = await this.fetchImpl(`${this.url}/storage/v1/object/${VIDEO_BUCKET}`, {
+    const response = await this.timed(`${this.url}/storage/v1/object/${VIDEO_BUCKET}`, {
       method: "DELETE",
       headers: this.headers({ "Content-Type": "application/json" }),
       body: JSON.stringify({ prefixes: keys.map(safeKey) }),

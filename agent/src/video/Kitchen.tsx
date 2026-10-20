@@ -114,7 +114,7 @@ type Pose = { left: Point; right: Point; back?: ReactNode; front?: ReactNode; cr
 
 function couper(frame: number): Pose {
   const chop = Math.abs(wave(frame, 0.42));
-  const hand = { x: 226, y: 212 - chop * 20 };
+  const hand = { x: 228, y: 232 - chop * 22 };
   const push = clamp(frame * 0.35, 0, 26);
   const slices = clamp(Math.floor(frame / 7), 0, 9);
   return {
@@ -148,11 +148,11 @@ function couper(frame: number): Pose {
     front: (
       <g>
         <path
-          d={`M${hand.x - 13} ${hand.y + 8} H${hand.x + 9} V${hand.y + 30} Q${hand.x - 13} ${hand.y + 34} ${hand.x - 13} ${hand.y + 28} Z`}
+          d={`M${hand.x - 4} ${hand.y - 7} L${hand.x - 46} ${hand.y - 2} Q${hand.x - 52} ${hand.y + 8} ${hand.x - 40} ${hand.y + 10} L${hand.x - 4} ${hand.y + 7} Z`}
           fill={STEEL}
           {...line}
         />
-        <rect x={hand.x - 4} y={hand.y - 10} width={8} height={18} rx={3} fill="#3a2a20" />
+        <rect x={hand.x - 6} y={hand.y - 5} width={26} height={10} rx={4} fill="#3a2a20" />
       </g>
     ),
   };

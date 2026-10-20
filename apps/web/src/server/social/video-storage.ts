@@ -70,7 +70,12 @@ class SupabaseVideoStorage implements VideoStorage {
     await this.ensureBucket();
     const response = await this.fetchImpl(
       `${this.url}/storage/v1/object/upload/sign/${VIDEO_BUCKET}/${safeKey(key)}`,
-      { method: "POST", headers: this.headers({ "Content-Type": "application/json", "x-upsert": "true" }) },
+      {
+        method: "POST",
+        headers: this.headers({ "Content-Type": "application/json", "x-upsert": "true" }),
+        // Supabase refuse un corps vide quand le type est JSON.
+        body: "{}",
+      },
     );
     if (!response.ok) {
       const text = await response.text().catch(() => "");

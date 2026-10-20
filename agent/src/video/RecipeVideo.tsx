@@ -19,8 +19,10 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { actionExpression, shotAction } from "./actions.ts";
+import { WorkingChef } from "./Kitchen.tsx";
 import { Mascot } from "./Mascot.tsx";
-import { shotExpression, timeline, type VideoProps } from "./timeline.ts";
+import { timeline, WIDTH, type VideoProps } from "./timeline.ts";
 
 const serif = loadSerif("normal", { weights: ["600"], subsets: ["latin", "latin-ext"] }).fontFamily;
 const sans = loadSans("normal", { weights: ["500"], subsets: ["latin", "latin-ext"] }).fontFamily;
@@ -234,20 +236,18 @@ function HookScene({ props }: { props: VideoProps }) {
 
 function ShotScene({ props, index, frames }: { props: VideoProps; index: number; frames: number }) {
   const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
   const count = props.shots.length;
+  const text = props.shots[index] ?? "";
+  const action = shotAction(text);
+  const enter = spring({ frame, fps, config: { damping: 13, mass: 0.7 } });
   const progress = interpolate(frame, [0, frames], [index / count, (index + 1) / count], {
     extrapolateRight: "clamp",
   });
+  const plating = action === "dresser";
   return (
     <AbsoluteFill>
       <PhotoBackdrop props={props} veil={0.8 - (index % 2) * 0.06} />
-      <DishCard
-        props={props}
-        width={420}
-        height={520}
-        tilt={index % 2 === 0 ? 3 : -3}
-        style={{ right: 150, top: 1050 }}
-      />
       <div
         style={{
           position: "absolute",
@@ -278,27 +278,44 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
         Étape {index + 1} / {count}
       </div>
       <Words
-        text={props.shots[index] ?? ""}
+        text={text}
         start={4}
         step={2}
         style={{
           position: "absolute",
-          top: 290,
+          top: 280,
           left: 90,
-          right: 150,
+          right: 90,
           fontFamily: serif,
-          fontSize: 96,
+          fontSize: 88,
           lineHeight: 1.08,
           color: COLORS.ink,
         }}
       />
-      <BouncingMascot
-        expression={shotExpression(index, count)}
-        jacket={props.jacket}
-        size={420}
-        bust
-        delay={2}
-        style={{ left: 50, top: 1100 }}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          bottom: 0,
+          opacity: enter,
+          transform: `translateY(${(1 - enter) * 160}px)`,
+        }}
+      >
+        <WorkingChef
+          action={action}
+          expression={actionExpression(action, index === count - 1)}
+          jacket={props.jacket}
+          frame={frame}
+          width={WIDTH}
+        />
+      </div>
+      <DishCard
+        props={props}
+        width={plating ? 300 : 190}
+        height={plating ? 380 : 240}
+        delay={plating ? 18 : 6}
+        tilt={index % 2 === 0 ? 4 : -4}
+        style={{ right: 50, top: plating ? 700 : 780 }}
       />
     </AbsoluteFill>
   );

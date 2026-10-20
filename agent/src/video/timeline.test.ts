@@ -3,10 +3,10 @@ import { test } from "node:test";
 import { EXAMPLE_PROPS, HOOK_FRAMES, shotExpression, shotFrames, timeline, totalFrames } from "./timeline.ts";
 
 test("un plan dure entre 1,8 et 3 secondes selon sa longueur", () => {
-  assert.equal(shotFrames("Mixer"), 54);
+  assert.equal(shotFrames("Mixer"), 72);
   assert.equal(
     shotFrames("un deux trois quatre cinq six sept huit neuf dix onze douze treize quatorze quinze"),
-    90,
+    105,
   );
 });
 
@@ -14,7 +14,7 @@ test("déroulé : accroche, plans, photo, fin", () => {
   const segments = timeline({ ...EXAMPLE_PROPS, photoUrl: "https://exemple/photo.jpg" });
   assert.deepEqual(
     segments.map((s) => s.kind),
-    ["hook", "shot", "shot", "shot", "shot", "shot", "reveal", "end"],
+    ["hook", "shot", "shot", "shot", "shot", "shot", "shot", "shot", "reveal", "end"],
   );
   assert.equal(segments[0]!.from, 0);
   assert.ok(segments[0]!.frames >= HOOK_FRAMES);

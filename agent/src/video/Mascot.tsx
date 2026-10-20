@@ -9,8 +9,8 @@ import type { CSSProperties, ReactNode } from "react";
 export type Expression = "content" | "waouh" | "croque" | "idee" | "fier" | "clin";
 export type Jacket = "blanche" | "noire";
 
-const INK = "#1f1a16";
-const SKIN = "#f3cdb2";
+export const INK = "#1f1a16";
+export const SKIN = "#f3cdb2";
 const BEARD = "#5a4638";
 const MOUTH = "#6b2a20";
 const stroke = { stroke: INK, strokeWidth: 3 } as const;
@@ -104,7 +104,7 @@ function Smile() {
   );
 }
 
-function Face({ expression, blinking }: { expression: Expression; blinking: boolean }) {
+export function Face({ expression, blinking }: { expression: Expression; blinking: boolean }) {
   const eyes = (left: ReactNode, right: ReactNode) =>
     blinking ? (
       <>
@@ -215,7 +215,7 @@ function Face({ expression, blinking }: { expression: Expression; blinking: bool
   }
 }
 
-function Head({ jacket }: { jacket: Jacket }) {
+export function Head({ jacket }: { jacket: Jacket }) {
   const fill = jacket === "blanche" ? "#ffffff" : "#24201d";
   return (
     <g>

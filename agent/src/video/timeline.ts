@@ -34,10 +34,10 @@ export const HOOK_FRAMES = 96;
 export const REVEAL_FRAMES = 120;
 export const END_FRAMES = 90;
 
-/** Durée d'un plan : le temps de lire la phrase (4 images par mot), entre 1,8 et 3 s. */
+/** Durée d'un plan : le temps de lire la phrase et de voir le geste (5 images par mot), entre 2,4 et 3,5 s. */
 export function shotFrames(text: string): number {
   const words = text.split(/\s+/).filter(Boolean).length;
-  return Math.min(90, Math.max(54, 30 + words * 4));
+  return Math.min(105, Math.max(72, 40 + words * 5));
 }
 
 const SHOT_EXPRESSIONS: Expression[] = ["idee", "content", "clin", "content", "waouh", "idee"];
@@ -78,11 +78,13 @@ export const EXAMPLE_PROPS: VideoProps = {
   name: "Baghrir, beurre fondu au miel",
   hook: "Les crêpes mille trous les plus moelleuses, sans levure chimique",
   shots: [
+    "Disposer la semoule, la farine, la levure et le miel",
     "Mixer la semoule fine, la farine et l'eau tiède",
     "Laisser reposer la pâte jusqu'à ce qu'elle bulle",
     "Cuire d'un seul côté dans une poêle bien chaude",
     "Faire fondre le beurre avec le miel",
-    "Napper les baghrir encore tièdes et servir",
+    "Napper les baghrir encore tièdes de beurre au miel",
+    "Dresser les baghrir en pile sur la planche en bois",
   ],
   photoUrl: null,
   handle: "@culinova.recette",

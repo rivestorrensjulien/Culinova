@@ -7,6 +7,8 @@ import { CHARACTER } from "./realistic.ts";
 import type { VideoProps } from "./timeline.ts";
 
 export const EXPLODED_ID = "RecetteEclatee";
+/** Piste audio de 5 s : la voix de Julien placée au moment où elle passe dans la scène « Et voilà ». */
+export const VOICE_TRACK_ID = "VoixCalee";
 /** Synchronisation des lèvres de Chef Ju sur la voix de Julien (≈ 0,07 € par clip de 5 s). */
 export const LIPSYNC_MODEL = "fal-ai/kling-video/lipsync/audio-to-video";
 

@@ -19,7 +19,6 @@ import { CulinovaClient } from "./culinova.ts";
 import { dataUri, download, FalClient, falUpload } from "./fal.ts";
 import {
   arg,
-  ffmpeg,
   finishing,
   keepClips,
   type ImageResult,
@@ -34,7 +33,7 @@ import {
   type ExplodedProps,
   explodedImagePrompt,
   LIPSYNC_MODEL,
-  VOICE_START,
+  VOICE_TRACK_ID,
   topAddPrompt,
   topEmptyPrompt,
   VOILA_MOTION,
@@ -153,18 +152,14 @@ async function main() {
   if (voice) {
     try {
       const padded = join(assets, "voix-calee.m4a");
-      const delay = Math.round((VOICE_START / 30) * 1000);
-      ffmpeg(root, [
-        "-i",
-        join(root, "public", voice),
-        "-af",
-        `adelay=${delay},apad=whole_dur=5`,
-        "-t",
-        "5",
-        "-c:a",
-        "aac",
-        padded,
-      ]);
+      const track = await selectComposition({ serveUrl, id: VOICE_TRACK_ID, inputProps: { voice } });
+      await renderMedia({
+        composition: track,
+        serveUrl,
+        codec: "aac",
+        outputLocation: padded,
+        inputProps: { voice },
+      });
       const videoUrl = await falUpload(
         falKey,
         new Uint8Array(await readFile(join(root, "public", voilaClip))),

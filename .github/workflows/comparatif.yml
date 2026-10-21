@@ -16,6 +16,13 @@ on:
       cle:
         description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
         required: false
+      envoyer:
+        description: "Envoyer la vidéo du comparatif à Culinova comme vidéo de la recette (à valider avant publication)"
+        type: boolean
+        default: false
+      fichier:
+        description: "Vidéo à envoyer (vide : D-format-eclate.mp4)"
+        required: false
       reprendre:
         description: "Vue éclatée : reprendre les clips de la fabrication précédente (seules les lèvres sont refaites)"
         type: boolean
@@ -75,8 +82,16 @@ jobs:
       - name: Vérifications
         run: npm run typecheck && npm test
       - name: Fabrication des deux vidéos
-        if: inputs.retouche_plan == '' && !inputs.eclate && !inputs.mascotte3d
+        if: inputs.retouche_plan == '' && !inputs.eclate && !inputs.mascotte3d && !inputs.envoyer
         run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE" --economique="$ECONOMIQUE" --cle="$CLE"
+      - name: Envoi à Culinova
+        if: inputs.envoyer
+        env:
+          FICHIER: ${{ inputs.fichier }}
+        run: |
+          git clone -q --depth 1 -b comparatif-video "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/precedent
+          mkdir -p sortie/comparatif && cp -r /tmp/precedent/. sortie/comparatif/ && rm -rf sortie/comparatif/.git
+          npm run envoyer -- --recette="$RECETTE" --fichier="$FICHIER"
       - name: Chef Ju en 3D
         if: inputs.mascotte3d
         run: npm run mascotte3d

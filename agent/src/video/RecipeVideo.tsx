@@ -234,6 +234,14 @@ function HookScene({ props }: { props: VideoProps }) {
   );
 }
 
+/** Texte du plan : plus petit quand il est long, pour ne jamais passer sur Chef Ju. */
+export function shotFontSize(text: string): number {
+  if (text.length > 150) return 56;
+  if (text.length > 110) return 64;
+  if (text.length > 70) return 74;
+  return 88;
+}
+
 function ShotScene({ props, index, frames }: { props: VideoProps; index: number; frames: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -287,7 +295,7 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
           left: 90,
           right: 90,
           fontFamily: serif,
-          fontSize: 88,
+          fontSize: shotFontSize(text),
           lineHeight: 1.08,
           color: COLORS.ink,
         }}

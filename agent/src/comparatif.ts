@@ -5,7 +5,7 @@
  *       Culinova en 1 à 3 scènes, une action chacune, avec image de départ, image d'arrivée
  *       et clip IA de 5 s entre les deux.
  *
- *   npm run comparatif -- --recette=<identifiant ou morceau du nom> [--nouveau=1]
+ *   npm run comparatif -- --recette=<identifiant ou morceau du nom> [--nouveau=1] [--animee=1 : version animée seule, sans frais]
  *
  * Variables : CULINOVA_URL, AGENT_API_KEY, FAL_KEY (environ 0,40 € par scène chez fal.ai).
  * Résultat dans sortie/comparatif/.
@@ -96,9 +96,9 @@ async function main() {
   const apiKey = process.env.AGENT_API_KEY?.trim();
   const falKey = process.env.FAL_KEY?.trim();
   if (!baseUrl || !apiKey) throw new Error("CULINOVA_URL et AGENT_API_KEY sont nécessaires.");
-  if (!falKey) throw new Error("FAL_KEY manquante : ajoutez le secret FAL_KEY dans GitHub.");
+  if (!falKey && arg("animee") !== "1") throw new Error("FAL_KEY manquante : ajoutez le secret FAL_KEY dans GitHub.");
   const client = new CulinovaClient(baseUrl, apiKey);
-  const fal = new FalClient(falKey);
+  const fal = new FalClient(falKey ?? "");
   const jacket = process.env.VESTE === "noire" ? "noire" : "blanche";
 
   const job = await pickJob(client, arg("recette"));
@@ -137,6 +137,7 @@ async function main() {
     inputProps: base,
   });
   notice("Version animée fabriquée");
+  if (arg("animee") === "1") return;
   const referenceFile = join(output, "mascotte-reference.png");
   const still = await selectComposition({ serveUrl, id: REFERENCE_ID, inputProps: {} });
   await renderStill({ composition: still, serveUrl, output: referenceFile, inputProps: {} });

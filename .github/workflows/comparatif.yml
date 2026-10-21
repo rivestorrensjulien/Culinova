@@ -16,6 +16,10 @@ on:
       cle:
         description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
         required: false
+      eclate:
+        description: "Format court « vue éclatée » (≈ 1,20 €)"
+        type: boolean
+        default: false
       retouche_plan:
         description: "Refaire seulement ce plan filmé de la version économique (numéro du plan, ≈ 0,40 €)"
         required: false
@@ -63,8 +67,11 @@ jobs:
       - name: Vérifications
         run: npm run typecheck && npm test
       - name: Fabrication des deux vidéos
-        if: inputs.retouche_plan == ''
+        if: inputs.retouche_plan == '' && !inputs.eclate
         run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE" --economique="$ECONOMIQUE" --cle="$CLE"
+      - name: Format « vue éclatée »
+        if: inputs.eclate
+        run: npm run eclate -- --recette="$RECETTE"
       - name: Retouche d'un plan
         if: inputs.retouche_plan != ''
         run: |

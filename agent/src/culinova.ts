@@ -2,6 +2,7 @@
  * Échanges avec Culinova (porte de l'agent, clé AGENT_API_KEY) : recettes dont la vidéo
  * est à fabriquer, lien d'envoi du fichier, puis compte rendu.
  */
+import type { LayerScript } from "./video/exploded.ts";
 import type { SceneScript } from "./video/realistic.ts";
 
 export interface VideoJob {
@@ -74,6 +75,12 @@ export class CulinovaClient {
   async scenes(recipeId: string, fresh = false): Promise<SceneScript> {
     const query = `?recette=${encodeURIComponent(recipeId)}${fresh ? "&nouveau=1" : ""}`;
     return (await this.call<{ scenes: SceneScript }>(`/api/agent/scenes${query}`)).scenes;
+  }
+
+  /** Couches de la vue éclatée (écrites par Claude côté Culinova, mises en cache). */
+  async layers(recipeId: string, fresh = false): Promise<LayerScript> {
+    const query = `?recette=${encodeURIComponent(recipeId)}${fresh ? "&nouveau=1" : ""}`;
+    return (await this.call<{ layers: LayerScript }>(`/api/agent/couches${query}`)).layers;
   }
 
   async jobs(recipeId?: string): Promise<VideoJob[]> {

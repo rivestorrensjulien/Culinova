@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { FakeLlmAdapter } from "../fake";
 import {
+  buildVideoLayersPrompt,
   buildVideoScenesPrompt,
+  VIDEO_LAYERS_PROMPT_VERSION,
+  videoLayersSchema,
   VIDEO_SCENES_PROMPT_VERSION,
   videoScenesProblems,
   videoScenesSchema,
@@ -33,5 +36,20 @@ describe("découpage en scènes de la vidéo réaliste", () => {
     });
     expect(videoScenesProblems(result.data, 2)).toEqual([]);
     expect(videoScenesProblems(result.data, 3)).toEqual(["plans : attendu 3, reçu 2."]);
+  });
+});
+
+describe("vue éclatée", () => {
+  it("transmet le dressage et rend les couches dans l'ordre de pose", async () => {
+    const { user } = buildVideoLayersPrompt(input);
+    expect(user).toContain("Dressage : Sur une planche en bois.");
+    expect(user).not.toContain("Plan 1");
+    const ai = new FakeLlmAdapter();
+    const result = await ai.generateStructured({
+      promptId: VIDEO_LAYERS_PROMPT_VERSION,
+      ...buildVideoLayersPrompt(input),
+      schema: videoLayersSchema,
+    });
+    expect(result.data.layers.length).toBeGreaterThanOrEqual(2);
   });
 });

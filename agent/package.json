@@ -11,9 +11,10 @@
     "exemple": "tsx src/render.ts --exemple --images",
     "rendre": "tsx src/render.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/video/timeline.test.ts src/video/carousel.test.ts src/video/actions.test.ts src/video/realistic.test.ts",
+    "test": "tsx --test src/video/timeline.test.ts src/video/carousel.test.ts src/video/actions.test.ts src/video/realistic.test.ts src/video/exploded.test.ts",
     "comparatif": "tsx src/comparatif.ts",
-    "retouche": "tsx src/retouche.ts"
+    "retouche": "tsx src/retouche.ts",
+    "eclate": "tsx src/eclate.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.300",

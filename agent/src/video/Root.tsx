@@ -5,6 +5,8 @@ import { GESTURES_ID } from "./actions.ts";
 import { Gestures } from "./Gestures.tsx";
 import { realisticFrames, REALISTIC_ID, REFERENCE_ID, type RealisticProps } from "./realistic.ts";
 import { MascotReference, RealisticVideo } from "./RealisticVideo.tsx";
+import { EXPLODED_ID, explodedFrames, type ExplodedProps } from "./exploded.ts";
+import { ExplodedVideo } from "./ExplodedVideo.tsx";
 import { RecipeVideo } from "./RecipeVideo.tsx";
 import {
   COMPOSITION_ID,
@@ -20,6 +22,14 @@ const REALISTIC_EXAMPLE: RealisticProps = {
   ...EXAMPLE_PROPS,
   hookClip: null,
   plans: EXAMPLE_PROPS.shots.map(() => ({ clips: [] })),
+};
+
+const EXPLODED_EXAMPLE: ExplodedProps = {
+  ...EXAMPLE_PROPS,
+  explodeClip: null,
+  topViews: [],
+  layerNames: ["Baghrir", "Beurre au miel"],
+  voilaClip: null,
 };
 
 export function Root() {
@@ -52,6 +62,18 @@ export function Root() {
         defaultProps={REALISTIC_EXAMPLE}
         calculateMetadata={({ props }: { props: RealisticProps }) => ({
           durationInFrames: realisticFrames(props),
+        })}
+      />
+      <Composition
+        id={EXPLODED_ID}
+        component={ExplodedVideo}
+        width={WIDTH}
+        height={HEIGHT}
+        fps={FPS}
+        durationInFrames={explodedFrames(EXPLODED_EXAMPLE)}
+        defaultProps={EXPLODED_EXAMPLE}
+        calculateMetadata={({ props }: { props: ExplodedProps }) => ({
+          durationInFrames: explodedFrames(props),
         })}
       />
       <Still id={REFERENCE_ID} component={MascotReference} width={1024} height={1024} />

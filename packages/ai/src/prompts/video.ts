@@ -87,3 +87,46 @@ export function videoScenesProblems(scenes: VideoScenes, shotCount: number): str
   if (total > 14) problems.push(`${total} scènes : 14 au plus.`);
   return problems;
 }
+
+/**
+ * Vue éclatée d'un plat (format court « les couches s'écartent puis se reposent ») : contenant
+ * du dressage et couches visibles, de la plus basse à la plus haute.
+ */
+export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@1";
+
+export const VIDEO_LAYERS_SYSTEM_PROMPT = `Tu prépares une vidéo culinaire courte en « vue éclatée » : à partir de la photo finale, les éléments du plat s'écartent verticalement au-dessus du contenant, puis, vus du dessus, ils se reposent un à un dans le contenant jusqu'au plat fini.
+
+À partir de la recette (ingrédients, étapes, dressage), décris :
+- container (anglais) : le contenant de service exact du dressage (planche, assiette, bol, barquette…), sa matière et sa couleur, et la surface sur laquelle il est posé.
+- layers : les éléments visibles du plat fini, de celui posé en premier dans le contenant à celui posé en dernier (3 à 7). Pour chacun : name (français, court, avec majuscule : « Pain de campagne grillé »), look (anglais : aspect exact, forme, quantité, disposition dans le contenant, comme sur le plat fini).
+- Regroupe ce qui se pose en même temps (« sel, poivre et piment » = une seule couche). Les accompagnements servis à côté (jus, sauce dans un petit bol) forment la dernière couche, posés à côté du plat.
+- layered : true si le plat se prête à une vue éclatée (tartines, burgers, sandwichs, bols composés, salades, verrines, desserts montés, assiettes avec plusieurs éléments) ; false pour une soupe, une purée, un plat mijoté ou tout ce qui est mélangé.`;
+
+export const videoLayersSchema = z.object({
+  container: z.string().min(1),
+  layered: z.boolean(),
+  layers: z
+    .array(z.object({ name: z.string().min(1), look: z.string().min(1) }))
+    .min(2)
+    .max(8),
+});
+
+export type VideoLayers = z.infer<typeof videoLayersSchema>;
+
+export function buildVideoLayersPrompt(input: Omit<VideoScenesInput, "hook" | "shots">): {
+  system: string;
+  user: string;
+} {
+  const user = [
+    `Recette : ${input.name}`,
+    "",
+    "Ingrédients :",
+    ...input.ingredients.map((i) => `- ${i.label} : ${i.amount}`),
+    "",
+    "Étapes :",
+    ...input.steps.map((step, index) => `${index + 1}. ${step}`),
+    "",
+    `Dressage : ${input.plating ?? "non précisé"}`,
+  ].join("\n");
+  return { system: VIDEO_LAYERS_SYSTEM_PROMPT, user };
+}

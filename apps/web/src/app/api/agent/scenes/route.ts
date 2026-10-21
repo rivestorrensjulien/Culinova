@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     return Response.json({ error: result.reason }, { status });
   }
   return Response.json(
-    { scenes: result.scenes, cached: result.cached },
+    { scenes: result.data, cached: result.cached },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

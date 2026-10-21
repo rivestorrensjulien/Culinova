@@ -443,6 +443,16 @@ function fakeVideoScenes(user: string) {
 
 const defaultResponder: Responder = (request) => {
   if (request.promptId.startsWith("insights.")) return fakeInsights();
+  if (request.promptId.startsWith("video.layers")) {
+    return {
+      container: "A light oak serving board on a linen tablecloth.",
+      layered: true,
+      layers: [
+        { name: "Pain grillé", look: "Two slices of toasted country bread side by side." },
+        { name: "Garniture", look: "A generous layer of topping spread evenly." },
+      ],
+    };
+  }
   if (request.promptId.startsWith("video.")) return fakeVideoScenes(request.user);
   if (request.promptId.startsWith("invoice.")) return fakeInvoice(request.user);
   if (request.promptId.startsWith("recipe.import")) {

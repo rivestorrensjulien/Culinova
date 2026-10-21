@@ -403,16 +403,16 @@ export function EndScene({ props }: { props: VideoProps }) {
       {props.endMascot ? (
         <Mascot3D
           src={props.endMascot}
-          style={{ left: 0, right: 0, margin: "0 auto", top: 230, height: 640 }}
+          style={{ left: 0, right: 0, margin: "0 auto", top: 420, height: 640 }}
         />
       ) : (
-        <BouncingMascot expression="clin" jacket={props.jacket} size={560} style={{ left: 260, top: 230 }} />
+        <BouncingMascot expression="clin" jacket={props.jacket} size={560} style={{ left: 260, top: 420 }} />
       )}
       {props.voice ? (
         <div
           style={{
             position: "absolute",
-            top: 110,
+            top: 290,
             left: 60,
             right: 60,
             textAlign: "center",
@@ -429,7 +429,7 @@ export function EndScene({ props }: { props: VideoProps }) {
       <div
         style={{
           position: "absolute",
-          top: 900,
+          top: 1090,
           left: 90,
           right: 90,
           textAlign: "center",

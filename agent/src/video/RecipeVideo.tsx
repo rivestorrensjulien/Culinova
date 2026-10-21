@@ -19,7 +19,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { actionExpression, shotAction } from "./actions.ts";
+import { actionExpression, shotAction, shotText, stepLabel } from "./actions.ts";
 import { WorkingChef } from "./Kitchen.tsx";
 import { Mascot } from "./Mascot.tsx";
 import { timeline, WIDTH, type VideoProps } from "./timeline.ts";
@@ -246,8 +246,8 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const count = props.shots.length;
-  const text = props.shots[index] ?? "";
-  const action = shotAction(text);
+  const text = shotText(props.shots, index);
+  const action = shotAction(props.shots[index] ?? "");
   const enter = spring({ frame, fps, config: { damping: 13, mass: 0.7 } });
   const progress = interpolate(frame, [0, frames], [index / count, (index + 1) / count], {
     extrapolateRight: "clamp",
@@ -283,7 +283,7 @@ function ShotScene({ props, index, frames }: { props: VideoProps; index: number;
           color: COLORS.copper,
         }}
       >
-        Étape {index + 1} / {count}
+        {stepLabel(props.shots, index)}
       </div>
       <Words
         text={text}

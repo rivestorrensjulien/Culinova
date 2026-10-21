@@ -16,6 +16,7 @@ import {
   useCurrentFrame,
 } from "remotion";
 import type { ReactNode } from "react";
+import { shotText, stepLabel } from "./actions.ts";
 import { Mascot } from "./Mascot.tsx";
 import {
   bandFontSize,
@@ -119,7 +120,7 @@ function RealShot({ props, index, frames }: { props: RealisticProps; index: numb
   const clips = props.plans[index]?.clips ?? [];
   const still = clips.length === 0 ? props.plans[index]?.still : null;
   const per = sceneFrames(Math.max(1, clips.length));
-  const text = props.shots[index] ?? "";
+  const text = shotText(props.shots, index);
   const progress = interpolate(frame, [0, frames], [index / count, (index + 1) / count], {
     extrapolateRight: "clamp",
   });
@@ -157,7 +158,7 @@ function RealShot({ props, index, frames }: { props: RealisticProps; index: numb
             color: COPPER,
           }}
         >
-          Étape {index + 1} / {count}
+          {stepLabel(props.shots, index)}
         </div>
         <Words
           text={text}

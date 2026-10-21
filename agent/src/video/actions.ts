@@ -100,3 +100,40 @@ export function actionExpression(action: Action, last: boolean): Expression {
       return "content";
   }
 }
+
+/**
+ * Plan de présentation des ingrédients (« Disposer les oranges, les tomates… sur le plan de
+ * travail ») : ce n'est pas une étape de la recette. La vidéo l'affiche en « Les ingrédients »
+ * avec leur liste, et numérote les étapes à partir du plan suivant. Null pour un autre plan.
+ */
+export function ingredientsIntro(shot: string): string[] | null {
+  if (shotAction(shot) !== "disposer") return null;
+  const items = shot
+    .replace(/^\s*\S+\s+/, "")
+    .replace(/\s+(sur|dans|devant)\s+(le|la|les)\s+(plan de travail|table|planche|comptoir)\b.*$/i, "")
+    .split(/\s*,\s*|\s+et\s+/)
+    .map((item) =>
+      item
+        .trim()
+        .replace(/^(les|la|le|l'|l’|des|du|de la|de l'|un|une)\s*/i, "")
+        .replace(/[.;:]+$/, ""),
+    )
+    .filter(Boolean);
+  if (items.length === 0) return null;
+  return items.map((item, i) => (i === 0 ? item.charAt(0).toUpperCase() + item.slice(1) : item));
+}
+
+/** Libellé d'étape d'un plan : « Les ingrédients », ou « Étape n / total » sans compter la présentation. */
+export function stepLabel(shots: string[], index: number): string {
+  const intro = shots.length > 0 && ingredientsIntro(shots[0]!) !== null;
+  if (intro && index === 0) return "Les ingrédients";
+  const offset = intro ? 1 : 0;
+  return `Étape ${index + 1 - offset} / ${shots.length - offset}`;
+}
+
+/** Texte affiché pour un plan (la liste des ingrédients pour le plan de présentation). */
+export function shotText(shots: string[], index: number): string {
+  const shot = shots[index] ?? "";
+  const items = index === 0 ? ingredientsIntro(shot) : null;
+  return items ? items.join(" · ") : shot;
+}

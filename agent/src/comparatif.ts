@@ -96,7 +96,8 @@ async function main() {
   const apiKey = process.env.AGENT_API_KEY?.trim();
   const falKey = process.env.FAL_KEY?.trim();
   if (!baseUrl || !apiKey) throw new Error("CULINOVA_URL et AGENT_API_KEY sont nécessaires.");
-  if (!falKey && arg("animee") !== "1") throw new Error("FAL_KEY manquante : ajoutez le secret FAL_KEY dans GitHub.");
+  if (!falKey && arg("animee") !== "1")
+    throw new Error("FAL_KEY manquante : ajoutez le secret FAL_KEY dans GitHub.");
   const client = new CulinovaClient(baseUrl, apiKey);
   const fal = new FalClient(falKey ?? "");
   const jacket = process.env.VESTE === "noire" ? "noire" : "blanche";

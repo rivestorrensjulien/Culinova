@@ -21,6 +21,7 @@ import {
   arg,
   finishing,
   type ImageResult,
+  keepClips,
   notice,
   pickJob,
   pool,

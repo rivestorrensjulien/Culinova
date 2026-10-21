@@ -16,6 +16,12 @@ on:
       cle:
         description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
         required: false
+      retouche_plan:
+        description: "Refaire seulement ce plan filmé de la version économique (numéro du plan, ≈ 0,40 €)"
+        required: false
+      consigne:
+        description: "Consigne en plus pour la retouche (en anglais de préférence)"
+        required: false
       animee:
         description: "Version animée seule (gratuit, sans fal.ai)"
         type: boolean
@@ -45,6 +51,8 @@ jobs:
       ANIMEE: ${{ inputs.animee && '1' || '0' }}
       ECONOMIQUE: ${{ inputs.economique && '1' || '0' }}
       CLE: ${{ inputs.cle }}
+      RETOUCHE: ${{ inputs.retouche_plan }}
+      CONSIGNE: ${{ inputs.consigne }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,7 +63,14 @@ jobs:
       - name: Vérifications
         run: npm run typecheck && npm test
       - name: Fabrication des deux vidéos
+        if: inputs.retouche_plan == ''
         run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE" --economique="$ECONOMIQUE" --cle="$CLE"
+      - name: Retouche d'un plan
+        if: inputs.retouche_plan != ''
+        run: |
+          git clone -q --depth 1 -b comparatif-video "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/precedent
+          mkdir -p sortie/comparatif && cp /tmp/precedent/* sortie/comparatif/
+          npm run retouche -- --recette="$RECETTE" --plan="$RETOUCHE" --cle="$CLE" --consigne="$CONSIGNE"
       - name: Fichiers (téléchargeables)
         if: always()
         uses: actions/upload-artifact@v4

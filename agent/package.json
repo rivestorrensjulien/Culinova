@@ -12,7 +12,8 @@
     "rendre": "tsx src/render.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/video/timeline.test.ts src/video/carousel.test.ts src/video/actions.test.ts src/video/realistic.test.ts",
-    "comparatif": "tsx src/comparatif.ts"
+    "comparatif": "tsx src/comparatif.ts",
+    "retouche": "tsx src/retouche.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.300",

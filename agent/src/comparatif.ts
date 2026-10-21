@@ -17,7 +17,8 @@ import { renderMedia, renderStill, selectComposition } from "@remotion/renderer"
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CulinovaClient, type VideoJob } from "./culinova.ts";
+import { arg, type ImageResult, notice, pickJob, pool, retry, type VideoResult } from "./outils.ts";
+import { CulinovaClient } from "./culinova.ts";
 import { dataUri, download, FalClient } from "./fal.ts";
 import { shotAction } from "./video/actions.ts";
 import {
@@ -39,62 +40,6 @@ import { COMPOSITION_ID, type VideoProps } from "./video/timeline.ts";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = join(root, "sortie", "comparatif");
 const assets = join(root, "public", "realiste");
-
-function arg(name: string): string | null {
-  const found = process.argv.find((a) => a.startsWith(`--${name}=`));
-  return found ? found.slice(found.indexOf("=") + 1).trim() : null;
-}
-
-function notice(message: string) {
-  console.log(process.env.GITHUB_ACTIONS ? `::notice title=Comparatif::${message}` : message);
-}
-
-const simplify = (text: string) => text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-
-async function pickJob(client: CulinovaClient, wanted: string | null): Promise<VideoJob> {
-  const uuid = /^[0-9a-f-]{36}$/i;
-  let recipeId = wanted && uuid.test(wanted) ? wanted : null;
-  if (!recipeId) {
-    const queue = await client.queue();
-    const found = wanted ? queue.find((r) => simplify(r.name).includes(simplify(wanted))) : queue[0];
-    if (!found) {
-      const names = queue.map((r) => r.name).join(" · ") || "aucune";
-      throw new Error(`Recette introuvable (« ${wanted ?? ""} »). Recettes à publier : ${names}`);
-    }
-    recipeId = found.recipeId;
-  }
-  const [job] = await client.jobs(recipeId);
-  if (!job) throw new Error("Cette recette n'a pas de script TikTok ou pas de photo 9:16.");
-  return job;
-}
-
-/** Exécute les tâches avec au plus `limit` en parallèle. */
-async function pool<T>(tasks: Array<() => Promise<T>>, limit: number): Promise<T[]> {
-  const results: T[] = new Array(tasks.length);
-  let next = 0;
-  await Promise.all(
-    Array.from({ length: Math.min(limit, tasks.length) }, async () => {
-      while (next < tasks.length) {
-        const i = next++;
-        results[i] = await tasks[i]!();
-      }
-    }),
-  );
-  return results;
-}
-
-/** Un second essai si fal.ai échoue (file chargée, erreur passagère). */
-async function retry<T>(task: () => Promise<T>): Promise<T> {
-  try {
-    return await task();
-  } catch (error) {
-    console.error(`  nouvel essai : ${error instanceof Error ? error.message : String(error)}`);
-    return task();
-  }
-}
-
-type ImageResult = { images: Array<{ url: string }> };
-type VideoResult = { video: { url: string } };
 
 async function main() {
   const baseUrl = process.env.CULINOVA_URL?.trim().replace(/\/$/, "");

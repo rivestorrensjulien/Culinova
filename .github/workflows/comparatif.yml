@@ -16,6 +16,10 @@ on:
       cle:
         description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
         required: false
+      mascotte3d:
+        description: "Propositions de Chef Ju en 3D, bras croisés (≈ 0,20 €)"
+        type: boolean
+        default: false
       eclate:
         description: "Format court « vue éclatée » (≈ 1,20 €)"
         type: boolean
@@ -67,8 +71,11 @@ jobs:
       - name: Vérifications
         run: npm run typecheck && npm test
       - name: Fabrication des deux vidéos
-        if: inputs.retouche_plan == '' && !inputs.eclate
+        if: inputs.retouche_plan == '' && !inputs.eclate && !inputs.mascotte3d
         run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE" --economique="$ECONOMIQUE" --cle="$CLE"
+      - name: Chef Ju en 3D
+        if: inputs.mascotte3d
+        run: npm run mascotte3d
       - name: Format « vue éclatée »
         if: inputs.eclate
         run: npm run eclate -- --recette="$RECETTE"

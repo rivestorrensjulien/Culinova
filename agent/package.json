@@ -14,7 +14,8 @@
     "test": "tsx --test src/video/timeline.test.ts src/video/carousel.test.ts src/video/actions.test.ts src/video/realistic.test.ts src/video/exploded.test.ts",
     "comparatif": "tsx src/comparatif.ts",
     "retouche": "tsx src/retouche.ts",
-    "eclate": "tsx src/eclate.ts"
+    "eclate": "tsx src/eclate.ts",
+    "mascotte3d": "tsx src/mascotte3d.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.300",

@@ -30,7 +30,9 @@ export const EXPLODE_FRAMES = 120;
 export const EMPTY_FRAMES = 24;
 export const LAYER_FRAMES = 27;
 export const FINAL_FRAMES = 48;
-export const VOILA_FRAMES = 150;
+export const VOILA_FRAMES = 165;
+/** Image de la scène « Et voilà » où commence la voix de Julien (après le baiser du chef). */
+export const VOICE_START = 40;
 export const EXPLODED_END_FRAMES = 90;
 
 export type ExplodedKind = "photo" | "explode" | "assemble" | "final" | "voila" | "end";

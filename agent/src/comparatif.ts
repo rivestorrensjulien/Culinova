@@ -17,7 +17,16 @@ import { renderMedia, renderStill, selectComposition } from "@remotion/renderer"
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { arg, type ImageResult, notice, pickJob, pool, retry, type VideoResult } from "./outils.ts";
+import {
+  arg,
+  finishing,
+  type ImageResult,
+  notice,
+  pickJob,
+  pool,
+  retry,
+  type VideoResult,
+} from "./outils.ts";
 import { CulinovaClient } from "./culinova.ts";
 import { dataUri, download, FalClient } from "./fal.ts";
 import { shotAction } from "./video/actions.ts";
@@ -69,6 +78,7 @@ async function main() {
     site: "culinova.fr",
     jacket,
     music: null,
+    ...finishing(root),
   };
 
   // 1. Version animée + image de référence de la mascotte.

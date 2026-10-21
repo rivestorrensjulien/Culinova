@@ -15,7 +15,7 @@ export const CLIP_SECONDS = 5;
 
 export const REAL_HOOK_FRAMES = 135;
 export const REAL_REVEAL_FRAMES = 105;
-export const REAL_END_FRAMES = 90;
+export const REAL_END_FRAMES = 120;
 /** Plan non filmé (version économique) : image réaliste avec zoom lent, le temps de lire. */
 export const STILL_FRAMES = 69;
 /** Durée à l'écran d'une scène selon le nombre de scènes du plan (le clip est accéléré). */

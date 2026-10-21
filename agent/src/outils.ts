@@ -1,5 +1,19 @@
 /** Outils partagés par le comparatif et la retouche d'une scène (vidéo réaliste). */
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { CulinovaClient, VideoJob } from "./culinova.ts";
+
+/**
+ * Fin des vidéos : voix de Julien (public/voix/et-voila.mp3) et Chef Ju en 3D
+ * (public/mascotte-3d.png), quand ces fichiers sont présents.
+ */
+export function finishing(root: string): { voice: string | null; endMascot: string | null } {
+  const has = (file: string) => existsSync(join(root, "public", file));
+  return {
+    voice: has("voix/et-voila.mp3") ? "voix/et-voila.mp3" : null,
+    endMascot: has("mascotte-3d.png") ? "mascotte-3d.png" : null,
+  };
+}
 
 export function arg(name: string): string | null {
   const found = process.argv.find((a) => a.startsWith(`--${name}=`));

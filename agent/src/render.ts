@@ -14,6 +14,7 @@ import { mkdir, readFile, stat } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { type CarouselJob, CulinovaClient } from "./culinova.ts";
+import { finishing } from "./outils.ts";
 import { GESTURES_ID } from "./video/actions.ts";
 import { CAROUSEL_ID, carouselPages, type CarouselProps, EXAMPLE_CAROUSEL } from "./video/carousel.ts";
 import { COMPOSITION_ID, EXAMPLE_PROPS, FPS, timeline, type VideoProps } from "./video/timeline.ts";
@@ -177,7 +178,13 @@ async function main() {
 
   if (arg("exemple") !== null) {
     const file = join(output, "exemple.mp4");
-    const props: VideoProps = { ...EXAMPLE_PROPS, photoUrl: "static:exemple.jpg", jacket, music };
+    const props: VideoProps = {
+      ...EXAMPLE_PROPS,
+      photoUrl: "static:exemple.jpg",
+      jacket,
+      music,
+      ...finishing(root),
+    };
     await render(serveUrl, props, file);
     console.log(`Vidéo d'exemple : ${file}`);
     if (arg("images") !== null) await stills(serveUrl, props);
@@ -208,6 +215,7 @@ async function main() {
         site: "culinova.fr",
         jacket,
         music,
+        ...finishing(root),
       };
       const meta = await render(serveUrl, props, file);
       notice(`Vidéo « ${job.name} » fabriquée (${meta.durationS.toFixed(0)} s), envoi…`);

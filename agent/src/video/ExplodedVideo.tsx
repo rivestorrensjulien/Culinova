@@ -8,6 +8,7 @@ import { loadFont as loadSerif } from "@remotion/google-fonts/Fraunces";
 import type { CSSProperties } from "react";
 import {
   AbsoluteFill,
+  Audio,
   Img,
   OffthreadVideo,
   Sequence,
@@ -24,6 +25,7 @@ import {
   type ExplodedProps,
   LAYER_FRAMES,
   layerAt,
+  VOICE_START,
 } from "./exploded.ts";
 import { EndScene, Words } from "./RecipeVideo.tsx";
 
@@ -222,11 +224,17 @@ function VoilaScene({ props }: { props: ExplodedProps }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const clip = src(props.voilaClip);
-  const words = spring({ frame: frame - 70, fps, config: { damping: 9, mass: 0.7 } });
+  const words = spring({ frame: frame - VOICE_START, fps, config: { damping: 9, mass: 0.7 } });
+  // « y'a plus qu'à se régaler » arrive environ 1,1 s après « Et voilà ».
+  const rest = spring({ frame: frame - VOICE_START - 34, fps, config: { damping: 14 } });
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
       {clip ? (
-        <OffthreadVideo src={clip} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <OffthreadVideo
+          src={clip}
+          muted={Boolean(props.voice)}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       ) : (
         <Cover path={props.photoUrl} />
       )}
@@ -247,6 +255,30 @@ function VoilaScene({ props }: { props: ExplodedProps }) {
       >
         Et voilà !
       </div>
+      {props.voice ? (
+        <>
+          <Sequence from={VOICE_START} layout="none">
+            <Audio src={staticFile(props.voice)} />
+          </Sequence>
+          <div
+            style={{
+              position: "absolute",
+              top: 380,
+              left: 60,
+              right: 60,
+              textAlign: "center",
+              fontFamily: script,
+              fontSize: 92,
+              color: "#ffffff",
+              textShadow: SHADOW,
+              opacity: rest,
+              transform: `translateY(${(1 - rest) * 30}px)`,
+            }}
+          >
+            y'a plus qu'à se régaler !
+          </div>
+        </>
+      ) : null}
     </AbsoluteFill>
   );
 }
@@ -261,7 +293,7 @@ export function ExplodedVideo(props: ExplodedProps) {
           {segment.kind === "assemble" ? <AssembleScene props={props} /> : null}
           {segment.kind === "final" ? <FinalScene props={props} frames={segment.frames} /> : null}
           {segment.kind === "voila" ? <VoilaScene props={props} /> : null}
-          {segment.kind === "end" ? <EndScene props={props} /> : null}
+          {segment.kind === "end" ? <EndScene props={{ ...props, voice: null }} /> : null}
         </Sequence>
       ))}
     </AbsoluteFill>

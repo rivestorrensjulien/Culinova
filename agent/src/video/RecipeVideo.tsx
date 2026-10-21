@@ -159,6 +159,25 @@ export function Words({
 }
 
 /** Mascotte qui arrive avec un rebond puis respire doucement. */
+/** Chef Ju en 3D (image détourée) qui arrive avec un rebond puis respire doucement. */
+export function Mascot3D({ src, style }: { src: string; style: CSSProperties }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const enter = spring({ frame, fps, config: { damping: 11, mass: 0.8 } });
+  const breathe = Math.sin(frame / 9) * 5;
+  return (
+    <Img
+      src={staticFile(src)}
+      style={{
+        position: "absolute",
+        objectFit: "contain",
+        transform: `translateY(${(1 - enter) * 500 + breathe}px)`,
+        ...style,
+      }}
+    />
+  );
+}
+
 function BouncingMascot({
   expression,
   jacket,
@@ -380,7 +399,30 @@ export function EndScene({ props }: { props: VideoProps }) {
   return (
     <AbsoluteFill style={{ alignItems: "center" }}>
       <PhotoBackdrop props={props} veil={0.85} />
-      <BouncingMascot expression="clin" jacket={props.jacket} size={560} style={{ left: 260, top: 230 }} />
+      {props.voice ? <Audio src={staticFile(props.voice)} /> : null}
+      {props.endMascot ? (
+        <Mascot3D src={props.endMascot} style={{ left: 290, top: 250, height: 600 }} />
+      ) : (
+        <BouncingMascot expression="clin" jacket={props.jacket} size={560} style={{ left: 260, top: 230 }} />
+      )}
+      {props.voice ? (
+        <div
+          style={{
+            position: "absolute",
+            top: 110,
+            left: 60,
+            right: 60,
+            textAlign: "center",
+            fontFamily: "'Dancing Script', cursive",
+            fontWeight: 600,
+            fontSize: 76,
+            color: COLORS.copper,
+            opacity: text,
+          }}
+        >
+          Et voilà, y'a plus qu'à se régaler !
+        </div>
+      ) : null}
       <div
         style={{
           position: "absolute",

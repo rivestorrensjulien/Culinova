@@ -27,12 +27,16 @@ export interface VideoProps {
   jacket: Jacket;
   /** Fichier de musique dans agent/public (libre de droits), ou null. */
   music: string | null;
+  /** Voix de Julien à la fin (« Et voilà, y'a plus qu'à se régaler ! », fichier de agent/public), ou null. */
+  voice?: string | null;
+  /** Chef Ju en 3D, bras croisés, pour la carte de fin (fichier de agent/public), sinon le dessin. */
+  endMascot?: string | null;
   [key: string]: unknown;
 }
 
 export const HOOK_FRAMES = 96;
 export const REVEAL_FRAMES = 120;
-export const END_FRAMES = 90;
+export const END_FRAMES = 120;
 
 /** Durée d'un plan : le temps de lire la phrase et de voir le geste (5 images par mot), entre 2,4 et 3,5 s. */
 export function shotFrames(text: string): number {
@@ -91,4 +95,5 @@ export const EXAMPLE_PROPS: VideoProps = {
   site: "culinova.fr",
   jacket: "blanche",
   music: null,
+  voice: "voix/et-voila.mp3",
 };

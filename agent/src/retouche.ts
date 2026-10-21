@@ -17,7 +17,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CulinovaClient } from "./culinova.ts";
 import { dataUri, download, FalClient } from "./fal.ts";
-import { arg, type ImageResult, notice, pickJob, retry, type VideoResult } from "./outils.ts";
+import { arg, finishing, type ImageResult, notice, pickJob, retry, type VideoResult } from "./outils.ts";
 import { shotAction } from "./video/actions.ts";
 import {
   joinMotions,
@@ -151,6 +151,7 @@ async function main() {
     site: "culinova.fr",
     jacket: process.env.VESTE === "noire" ? "noire" : "blanche",
     music: null,
+    ...finishing(root),
     hookClip: null,
     plans,
   };

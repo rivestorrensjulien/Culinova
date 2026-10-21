@@ -1,4 +1,5 @@
 /** Outils partagés par le comparatif et la retouche d'une scène (vidéo réaliste). */
+import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { copyFile, mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
@@ -79,4 +80,9 @@ export async function keepClips(assets: string, output: string): Promise<void> {
   for (const file of await readdir(assets)) {
     if (file.endsWith(".mp4")) await copyFile(join(assets, file), join(target, file));
   }
+}
+
+/** ffmpeg fourni par Remotion (pas besoin de l'installer). */
+export function ffmpeg(root: string, args: string[]): void {
+  execFileSync("npx", ["remotion", "ffmpeg", "-v", "error", "-y", ...args], { cwd: root, stdio: "inherit" });
 }

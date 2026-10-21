@@ -56,3 +56,36 @@ export async function download(url: string): Promise<Uint8Array> {
 export function dataUri(bytes: Uint8Array, type: string): string {
   return `data:${type};base64,${Buffer.from(bytes).toString("base64")}`;
 }
+
+/**
+ * Envoie un fichier sur le stockage de fal.ai et renvoie son lien (pour les vidéos, trop lourdes
+ * pour être passées en data URI). Repli : data URI.
+ */
+export async function falUpload(key: string, bytes: Uint8Array, type: string, name: string): Promise<string> {
+  try {
+    const initiate = await fetch(
+      "https://rest.alpha.fal.ai/storage/upload/initiate?storage_type=fal-cdn-v3",
+      {
+        method: "POST",
+        headers: { Authorization: `Key ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ content_type: type, file_name: name }),
+        signal: AbortSignal.timeout(60_000),
+      },
+    );
+    if (!initiate.ok) throw new Error(`${initiate.status} ${(await initiate.text()).slice(0, 200)}`);
+    const target = (await initiate.json()) as { upload_url: string; file_url: string };
+    const put = await fetch(target.upload_url, {
+      method: "PUT",
+      headers: { "Content-Type": type },
+      body: bytes as unknown as BodyInit,
+      signal: AbortSignal.timeout(180_000),
+    });
+    if (!put.ok) throw new Error(`${put.status} ${(await put.text()).slice(0, 200)}`);
+    return target.file_url;
+  } catch (error) {
+    console.error(
+      `Envoi sur fal.ai impossible (${error instanceof Error ? error.message : String(error)}), data URI.`,
+    );
+    return dataUri(bytes, type);
+  }
+}

@@ -4,19 +4,22 @@
  * → photo finale → Chef Ju fait le baiser du chef et dit « Et voilà ! » (clip IA avec le son).
  *
  *   npm run eclate -- --recette=<identifiant ou morceau du nom> [--nouveau=1]
+ *   [--reprendre=1] : réutilise les clips et images de la fabrication précédente (sortie/comparatif),
+ *   seule la synchronisation des lèvres est refaite (≈ 0,07 €)
  *
  * Variables : CULINOVA_URL, AGENT_API_KEY, FAL_KEY (environ 1,20 € par vidéo chez fal.ai).
  * Résultat : sortie/comparatif/D-format-eclate.mp4 et les images intermédiaires.
  */
 import { bundle } from "@remotion/bundler";
 import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CulinovaClient } from "./culinova.ts";
-import { dataUri, download, FalClient } from "./fal.ts";
+import { dataUri, download, FalClient, falUpload } from "./fal.ts";
 import {
   arg,
+  ffmpeg,
   finishing,
   keepClips,
   type ImageResult,
@@ -30,6 +33,8 @@ import {
   EXPLODED_ID,
   type ExplodedProps,
   explodedImagePrompt,
+  LIPSYNC_MODEL,
+  VOICE_START,
   topAddPrompt,
   topEmptyPrompt,
   VOILA_MOTION,
@@ -104,28 +109,85 @@ async function main() {
     return `realiste/${file}`;
   };
 
-  // 1. Vue éclatée (image), puis le clip où les couches s'écartent depuis la photo (lien signé 1 h).
-  const exploded = await edit(explodedImagePrompt(layers), [dish], "eclate-01-vue-eclatee.jpg");
-  const explodeTask = animate(job.photoUrl, exploded, EXPLODE_MOTION, "eclate.mp4");
-
-  // 2. Chef Ju et le baiser du chef (en parallèle des vues du dessus).
-  const voilaTask = (async () => {
-    const start = await edit(voilaImagePrompt(), [reference, dish], "eclate-90-et-voila.jpg");
-    return animate(start, null, VOILA_MOTION, "et-voila.mp4", true);
-  })();
-
-  // 3. Vues du dessus : contenant vide, puis une couche de plus à chaque image.
+  let explodeClip: string;
+  let voilaClip: string;
   const topViews: string[] = [];
-  let previous = await edit(topEmptyPrompt(layers), [dish], "dessus-00.jpg", true);
-  topViews.push("realiste/dessus-00.jpg");
-  for (const [i, layer] of layers.layers.entries()) {
-    const file = `dessus-${String(i + 1).padStart(2, "0")}.jpg`;
-    previous = await edit(topAddPrompt(layer), [previous, dish], file, true);
-    topViews.push(`realiste/${file}`);
+  if (arg("reprendre") === "1") {
+    // Clips et vues du dessus de la fabrication précédente (branche comparatif-video).
+    for (const file of ["eclate.mp4", "et-voila.mp4"]) {
+      await copyFile(join(output, "clips", file), join(assets, file));
+    }
+    for (const file of (await readdir(output)).filter((f) => /^dessus-\d+\.jpg$/.test(f)).sort()) {
+      await copyFile(join(output, file), join(assets, file));
+      topViews.push(`realiste/${file}`);
+    }
+    explodeClip = "realiste/eclate.mp4";
+    voilaClip = "realiste/et-voila.mp4";
+    notice("Clips et vues du dessus repris de la fabrication précédente");
+  } else {
+    // 1. Vue éclatée (image), puis le clip où les couches s'écartent depuis la photo (lien signé 1 h).
+    const exploded = await edit(explodedImagePrompt(layers), [dish], "eclate-01-vue-eclatee.jpg");
+    const explodeTask = animate(job.photoUrl, exploded, EXPLODE_MOTION, "eclate.mp4");
+
+    // 2. Chef Ju et le baiser du chef (en parallèle des vues du dessus).
+    const voilaTask = (async () => {
+      const start = await edit(voilaImagePrompt(), [reference, dish], "eclate-90-et-voila.jpg");
+      return animate(start, null, VOILA_MOTION, "et-voila.mp4");
+    })();
+
+    // 3. Vues du dessus : contenant vide, puis une couche de plus à chaque image.
+    let previous = await edit(topEmptyPrompt(layers), [dish], "dessus-00.jpg", true);
+    topViews.push("realiste/dessus-00.jpg");
+    for (const [i, layer] of layers.layers.entries()) {
+      const file = `dessus-${String(i + 1).padStart(2, "0")}.jpg`;
+      previous = await edit(topAddPrompt(layer), [previous, dish], file, true);
+      topViews.push(`realiste/${file}`);
+    }
+    notice("Vues du dessus prêtes");
+    [explodeClip, voilaClip] = await Promise.all([explodeTask, voilaTask]);
+    notice("Clips prêts");
   }
-  notice("Vues du dessus prêtes");
-  const [explodeClip, voilaClip] = await Promise.all([explodeTask, voilaTask]);
-  notice("Clips prêts");
+
+  // 4. Lèvres de Chef Ju synchronisées sur la voix de Julien (placée au même moment que dans la vidéo).
+  const voice = finishing(root).voice;
+  if (voice) {
+    try {
+      const padded = join(assets, "voix-calee.m4a");
+      const delay = Math.round((VOICE_START / 30) * 1000);
+      ffmpeg(root, [
+        "-i",
+        join(root, "public", voice),
+        "-af",
+        `adelay=${delay},apad=whole_dur=5`,
+        "-t",
+        "5",
+        "-c:a",
+        "aac",
+        padded,
+      ]);
+      const videoUrl = await falUpload(
+        falKey,
+        new Uint8Array(await readFile(join(root, "public", voilaClip))),
+        "video/mp4",
+        "et-voila.mp4",
+      );
+      const audioUrl = await falUpload(
+        falKey,
+        new Uint8Array(await readFile(padded)),
+        "audio/mp4",
+        "voix.m4a",
+      );
+      const synced = await retry(() =>
+        fal.run<VideoResult>(LIPSYNC_MODEL, { video_url: videoUrl, audio_url: audioUrl }, 30 * 60_000),
+      );
+      await writeFile(join(assets, "et-voila-levres.mp4"), await download(synced.video.url));
+      voilaClip = "realiste/et-voila-levres.mp4";
+      notice("Lèvres de Chef Ju synchronisées sur la voix");
+    } catch (error) {
+      const note = error instanceof Error ? error.message : String(error);
+      notice(`Synchronisation des lèvres impossible, voix seule : ${note.slice(0, 300)}`);
+    }
+  }
 
   serveUrl = await bundle({
     entryPoint: join(root, "src", "video", "index.ts"),

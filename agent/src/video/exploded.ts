@@ -7,6 +7,8 @@ import { CHARACTER } from "./realistic.ts";
 import type { VideoProps } from "./timeline.ts";
 
 export const EXPLODED_ID = "RecetteEclatee";
+/** Synchronisation des lèvres de Chef Ju sur la voix de Julien (≈ 0,07 € par clip de 5 s). */
+export const LIPSYNC_MODEL = "fal-ai/kling-video/lipsync/audio-to-video";
 
 /** Couches renvoyées par Culinova (GET /api/agent/couches). */
 export interface LayerScript {
@@ -122,5 +124,6 @@ export function voilaImagePrompt(): string {
 
 export const VOILA_MOTION =
   "The 3D chef kisses his pinched fingertips and throws his hand open outward in a classic, delighted " +
-  'chef\'s kiss, eyes closed, then smiles at the camera and says "Et voilà !" in a warm, cheerful voice. ' +
-  "The character keeps exactly the same appearance and outfit.";
+  "chef's kiss, eyes closed, then smiles at the camera and speaks a short cheerful sentence, " +
+  "his mouth clearly visible. " +
+  "The character keeps exactly the same appearance, blue-grey eyes and outfit.";

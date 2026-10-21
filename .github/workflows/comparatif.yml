@@ -16,6 +16,10 @@ on:
       cle:
         description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
         required: false
+      reprendre:
+        description: "Vue éclatée : reprendre les clips de la fabrication précédente (seules les lèvres sont refaites)"
+        type: boolean
+        default: false
       mascotte3d:
         description: "Propositions de Chef Ju en 3D, bras croisés (≈ 0,20 €)"
         type: boolean
@@ -78,7 +82,14 @@ jobs:
         run: npm run mascotte3d
       - name: Format « vue éclatée »
         if: inputs.eclate
-        run: npm run eclate -- --recette="$RECETTE"
+        run: |
+          if [ "${{ inputs.reprendre }}" = "true" ]; then
+            git clone -q --depth 1 -b comparatif-video "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/precedent
+            mkdir -p sortie/comparatif && cp -r /tmp/precedent/. sortie/comparatif/ && rm -rf sortie/comparatif/.git
+            npm run eclate -- --recette="$RECETTE" --reprendre=1
+          else
+            npm run eclate -- --recette="$RECETTE"
+          fi
       - name: Retouche d'un plan
         if: inputs.retouche_plan != ''
         run: |

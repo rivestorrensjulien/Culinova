@@ -151,12 +151,12 @@ async function main() {
   const voice = finishing(root).voice;
   if (voice) {
     try {
-      const padded = join(assets, "voix-calee.m4a");
+      const padded = join(assets, "voix-calee.wav");
       const track = await selectComposition({ serveUrl, id: VOICE_TRACK_ID, inputProps: { voice } });
       await renderMedia({
         composition: track,
         serveUrl,
-        codec: "aac",
+        codec: "wav",
         outputLocation: padded,
         inputProps: { voice },
       });
@@ -169,8 +169,8 @@ async function main() {
       const audioUrl = await falUpload(
         falKey,
         new Uint8Array(await readFile(padded)),
-        "audio/mp4",
-        "voix.m4a",
+        "audio/wav",
+        "voix.wav",
       );
       const synced = await retry(() =>
         fal.run<VideoResult>(LIPSYNC_MODEL, { video_url: videoUrl, audio_url: audioUrl }, 30 * 60_000),

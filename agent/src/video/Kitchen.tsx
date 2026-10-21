@@ -46,11 +46,12 @@ function Torso({ jacket }: { jacket: Jacket }) {
         x={214}
         y={184}
         fontFamily="'Dancing Script', cursive"
-        fontSize={9}
+        fontSize={12}
+        fontWeight={600}
         fill={text}
         textAnchor="middle"
       >
-        Julien
+        JU
       </text>
       {[200, 220, 240].map((y) => (
         <g key={y}>

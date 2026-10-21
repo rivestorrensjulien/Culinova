@@ -1,97 +1,122 @@
 /**
- * Version « réaliste » de la vidéo (comparatif) : Chef Ju en 3D dans une vraie cuisine,
- * un clip vidéo IA par plan. Consignes envoyées aux modèles et déroulé ; logique pure, testée.
+ * Version « réaliste » de la vidéo : Chef Ju en 3D dans une vraie cuisine. Chaque plan du script
+ * est découpé par Culinova en 1 à 3 scènes (une action visible chacune, état de départ et
+ * d'arrivée) ; chaque scène = image de départ, image d'arrivée et clip de 5 s entre les deux.
+ * Consignes envoyées aux modèles et déroulé ; logique pure, testée.
  */
-import type { Action } from "./actions.ts";
 import type { VideoProps } from "./timeline.ts";
 
 export const REALISTIC_ID = "RecetteRealiste";
 export const REFERENCE_ID = "MascotteReference";
 export const IMAGE_MODEL = "fal-ai/nano-banana/edit";
 export const VIDEO_MODEL = "fal-ai/kling-video/v2.6/pro/image-to-video";
+/** Durée d'un clip généré (secondes). */
+export const CLIP_SECONDS = 5;
 
 export const REAL_HOOK_FRAMES = 135;
-export const REAL_SHOT_FRAMES = 120;
 export const REAL_REVEAL_FRAMES = 105;
 export const REAL_END_FRAMES = 90;
+/** Durée à l'écran d'une scène selon le nombre de scènes du plan (le clip est accéléré). */
+const SCENE_FRAMES: Record<number, number> = { 1: 120, 2: 78, 3: 62 };
+
+/** Découpage renvoyé par Culinova (GET /api/agent/scenes). */
+export interface SceneScript {
+  kitchen: string;
+  hook: { start: string; motion: string };
+  plans: Array<{
+    plan: number;
+    scenes: Array<{ action: string; start: string; end: string; motion: string }>;
+  }>;
+}
 
 export interface RealisticProps extends VideoProps {
-  /** Clips (fichiers de agent/public) : 0 = accroche, puis un par plan. */
-  clips: string[];
+  /** Clip de l'accroche (fichier de agent/public). */
+  hookClip: string | null;
+  /** Clips de chaque plan, dans l'ordre (1 à 3 par plan). */
+  plans: Array<{ clips: string[] }>;
 }
 
-const GESTURES: Record<Action, string> = {
-  disposer: "placing fresh raw ingredients one by one on the counter",
-  couper: "chopping ingredients on a wooden cutting board with a chef's knife",
-  melanger: "whisking a mixture in a large mixing bowl",
-  poeler: "tossing food in a hot frying pan on the stove, the food sizzling",
-  chauffer: "stirring a saucepan on the stove with a wooden spoon, steam rising",
-  four: "sliding a baking tray into a hot, glowing oven",
-  repos: "waiting with crossed arms next to a covered bowl and a kitchen timer, with a wink",
-  verser: "pouring a liquid from a jug or a pan over the food",
-  petrir: "kneading and rolling out dough with a rolling pin on a floured counter",
-  assaisonner: "sprinkling seasoning and herbs with his fingertips over the food",
-  dresser: "carefully plating the finished dish",
-};
-
-export function gesture(action: Action): string {
-  return GESTURES[action];
-}
-
-const CHARACTER =
+export const CHARACTER =
   "The chef is the character from image 1, kept exactly the same: same face, shaved head, short dark " +
-  "beard with a grey patch on the chin, blue-grey eyes, white double-breasted chef jacket with a small " +
-  "French flag on the collar and 'Julien' embroidered in blue script, wristwatch. Render him as a " +
-  "high-end 3D animated-film character (chibi proportions kept) with realistic materials: cotton fabric " +
-  "texture, soft skin shading, real reflections.";
+  "beard with a grey patch on the chin, blue-grey eyes, white double-breasted chef jacket with only the " +
+  "letters 'JU' embroidered in blue script on the chest and a tiny French flag on the collar, wristwatch. " +
+  "Render him as a high-end 3D animated-film character (chibi proportions kept) with realistic materials: " +
+  "cotton fabric texture, soft skin shading, real reflections.";
 
 const REAL_WORLD =
-  "Everything around him is real and photographic: a warm, lived-in kitchen, a real wooden counter, real " +
-  "ingredients with natural textures, real utensils (stainless steel, wood, ceramic, cast iron), soft " +
-  "daylight from a window, shallow depth of field, like a frame from a cooking video filmed on a smartphone.";
+  "Everything around him is real and photographic: real ingredients with natural textures, real utensils " +
+  "(stainless steel, wood, ceramic, cast iron), shallow depth of field, like a frame from a cooking video " +
+  "filmed on a smartphone.";
 
 const FRAMING =
-  "Vertical 9:16 medium shot: the chef and his hands clearly visible, the counter in the lower third, the " +
-  "upper third calm and uncluttered for overlaid text. No text, no logo, no watermark.";
+  "Vertical 9:16 medium shot at counter height: the chef's head in the upper half, his hands and the " +
+  "counter clearly visible in the lower half. No text, no logo, no watermark.";
 
-/** Image de départ d'un plan (modèle d'édition : 1 = mascotte, 2 = photo du plat). */
-export function shotImagePrompt(name: string, plan: string, action: Action): string {
-  const dish =
-    action === "dresser"
-      ? "He is plating the dish exactly as shown in image 2 (same container, same presentation, same garnish)."
-      : "Ingredients and colours must match the finished dish in image 2, but the finished dish is not shown yet.";
+/** Accroche : image 1 = mascotte, image 2 = photo du plat. */
+export function hookImagePrompt(script: SceneScript): string {
   return [
-    `Photorealistic cooking scene for the recipe "${name}", step: « ${plan} ».`,
+    `Kitchen: ${script.kitchen}.`,
     CHARACTER,
-    `He is ${gesture(action)}.`,
-    dish,
+    `Scene: ${script.hook.start}`,
+    "The finished dish looks exactly like image 2 (same container, same presentation, same garnish).",
     REAL_WORLD,
     FRAMING,
   ].join(" ");
 }
 
-export function hookImagePrompt(name: string): string {
+/**
+ * Début d'une scène : image 1 = mascotte, image 2 = scène précédente (même cuisine, même cadrage),
+ * image 3 = photo du plat, pour le dressage seulement.
+ */
+export function sceneStartPrompt(script: SceneScript, start: string, plating: boolean): string {
   return [
-    `Photorealistic cooking scene for the recipe "${name}".`,
+    "Same kitchen, same lighting and same camera framing as image 2, a moment later.",
     CHARACTER,
-    "He proudly presents the finished dish from image 2 on the counter (same container, same presentation, " +
-      "same garnish), smiling, one hand pointing at it.",
+    `Now: ${start}`,
+    "Keep only what this description says is on the counter.",
+    plating ? "The dish being plated must match image 3 (same container, same presentation)." : "",
+    `Kitchen: ${script.kitchen}.`,
     REAL_WORLD,
     FRAMING,
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
-/** Mouvement demandé au modèle vidéo à partir de l'image de départ. */
-export function motionPrompt(what: string): string {
+/** Fin d'une scène : image 1 = mascotte, image 2 = début de la même scène. */
+export function sceneEndPrompt(end: string, plating: boolean): string {
+  return [
+    "Exactly the same scene, kitchen, framing and chef as image 2, a few seconds later.",
+    CHARACTER,
+    `Now: ${end}`,
+    plating ? "The finished dish must match image 3 (same container, same presentation, same garnish)." : "",
+    REAL_WORLD,
+    "No text, no logo, no watermark.",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** Mouvement demandé au modèle vidéo, de l'image de départ à l'image d'arrivée. */
+export function motionPrompt(motion: string): string {
   return (
-    `The 3D chef ${what}. Natural, smooth hand movements, realistic food physics, gentle steam when hot, ` +
-    "subtle handheld camera slowly pushing in. The character keeps exactly the same appearance and outfit."
+    `The 3D chef ${motion.replace(/^the chef\s+/i, "")} Realistic food physics, natural hand movements, ` +
+    "steady camera. The character keeps exactly the same appearance and outfit."
   );
 }
 
 export const NEGATIVE_PROMPT =
   "blur, distortion, low quality, text, subtitles, watermark, logo, extra fingers, deformed hands, " +
-  "deformed face, character change, flicker";
+  "deformed face, character change, flicker, objects appearing from nowhere";
+
+export function sceneFrames(sceneCount: number): number {
+  return SCENE_FRAMES[Math.min(3, Math.max(1, sceneCount))]!;
+}
+
+/** Vitesse de lecture d'un clip de 5 s pour qu'il tienne en `frames` images (fin toujours montrée). */
+export function playbackRate(frames: number, fps = 30): number {
+  return (CLIP_SECONDS * fps) / frames;
+}
 
 export interface RealSegment {
   kind: "hook" | "shot" | "reveal" | "end";
@@ -100,7 +125,7 @@ export interface RealSegment {
   index?: number;
 }
 
-export function realisticTimeline(props: Pick<VideoProps, "shots" | "photoUrl">): RealSegment[] {
+export function realisticTimeline(props: Pick<RealisticProps, "plans" | "photoUrl">): RealSegment[] {
   const segments: RealSegment[] = [];
   let from = 0;
   const push = (segment: Omit<RealSegment, "from">) => {
@@ -108,12 +133,23 @@ export function realisticTimeline(props: Pick<VideoProps, "shots" | "photoUrl">)
     from += segment.frames;
   };
   push({ kind: "hook", frames: REAL_HOOK_FRAMES });
-  props.shots.forEach((_, index) => push({ kind: "shot", frames: REAL_SHOT_FRAMES, index }));
+  props.plans.forEach((plan, index) => {
+    const count = Math.max(1, plan.clips.length);
+    push({ kind: "shot", frames: sceneFrames(count) * count, index });
+  });
   if (props.photoUrl) push({ kind: "reveal", frames: REAL_REVEAL_FRAMES });
   push({ kind: "end", frames: REAL_END_FRAMES });
   return segments;
 }
 
-export function realisticFrames(props: Pick<VideoProps, "shots" | "photoUrl">): number {
+export function realisticFrames(props: Pick<RealisticProps, "plans" | "photoUrl">): number {
   return realisticTimeline(props).reduce((sum, s) => sum + s.frames, 0);
+}
+
+/** Taille du texte du plan dans le bandeau, selon sa longueur. */
+export function bandFontSize(text: string): number {
+  if (text.length > 150) return 54;
+  if (text.length > 100) return 62;
+  if (text.length > 60) return 70;
+  return 80;
 }

@@ -15,4 +15,5 @@ export * from "./prompts/recipe";
 export * from "./prompts/request";
 export * from "./prompts/social";
 export * from "./prompts/translate";
+export * from "./prompts/video";
 export * from "./schemas";

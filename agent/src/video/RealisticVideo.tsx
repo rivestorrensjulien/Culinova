@@ -1,7 +1,7 @@
 /**
- * Version réaliste (comparatif) : chaque plan est un clip vidéo IA de Chef Ju en 3D dans une
- * vraie cuisine, avec le texte du plan par-dessus ; même photo et même carte de fin que la
- * version animée.
+ * Version réaliste : Chef Ju en 3D dans une vraie cuisine, 1 à 3 clips IA par plan (une action
+ * chacun). Le texte est dans un bandeau clair en haut, la vidéo dessous : il ne passe jamais
+ * sur le chef. Même photo et même carte de fin que la version animée.
  */
 import { loadFont as loadSans } from "@remotion/google-fonts/DMSans";
 import { loadFont as loadSerif } from "@remotion/google-fonts/Fraunces";
@@ -14,61 +14,80 @@ import {
   staticFile,
   useCurrentFrame,
 } from "remotion";
+import type { ReactNode } from "react";
 import { Mascot } from "./Mascot.tsx";
-import { realisticTimeline, type RealisticProps } from "./realistic.ts";
+import {
+  bandFontSize,
+  playbackRate,
+  REAL_HOOK_FRAMES,
+  realisticTimeline,
+  type RealisticProps,
+  sceneFrames,
+} from "./realistic.ts";
 import { EndScene, RevealScene, Words } from "./RecipeVideo.tsx";
 
 const serif = loadSerif("normal", { weights: ["600"], subsets: ["latin", "latin-ext"] }).fontFamily;
 const sans = loadSans("normal", { weights: ["500"], subsets: ["latin", "latin-ext"] }).fontFamily;
-const SHADOW = "0 4px 24px #000c, 0 2px 6px #0009";
+const BAND = 560;
+const IVORY = "#faf6ef";
+const INK = "#1f1a16";
+const COPPER = "#a84a24";
 
-function Clip({ src }: { src: string | undefined }) {
+function Clip({ src, frames }: { src: string | null | undefined; frames: number }) {
   return (
-    <AbsoluteFill style={{ backgroundColor: "#1f1a16" }}>
+    <div style={{ position: "absolute", top: BAND, left: 0, right: 0, bottom: 0, overflow: "hidden" }}>
       {src ? (
         <OffthreadVideo
           src={staticFile(src)}
           muted
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          playbackRate={playbackRate(frames)}
+          style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "50% 45%" }}
         />
       ) : null}
-      <AbsoluteFill style={{ background: "linear-gradient(180deg, #000b 0%, #0006 30%, #0000 52%)" }} />
-    </AbsoluteFill>
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "linear-gradient(180deg, #0004 0%, #0000 8%)",
+        }}
+      />
+    </div>
+  );
+}
+
+function Band({ children }: { children: ReactNode }) {
+  return (
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: BAND, backgroundColor: IVORY }}>
+      {children}
+    </div>
   );
 }
 
 function RealHook({ props }: { props: RealisticProps }) {
   return (
-    <AbsoluteFill>
-      <Clip src={props.clips[0]} />
-      <div
-        style={{
-          position: "absolute",
-          top: 110,
-          left: 90,
-          fontFamily: serif,
-          fontSize: 44,
-          color: "#ffffff",
-          textShadow: SHADOW,
-        }}
-      >
-        Culinova
-      </div>
-      <Words
-        text={props.hook}
-        start={8}
-        style={{
-          position: "absolute",
-          top: 230,
-          left: 90,
-          right: 90,
-          fontFamily: serif,
-          fontSize: 92,
-          lineHeight: 1.08,
-          color: "#ffffff",
-          textShadow: SHADOW,
-        }}
-      />
+    <AbsoluteFill style={{ backgroundColor: INK }}>
+      <Clip src={props.hookClip} frames={REAL_HOOK_FRAMES} />
+      <Band>
+        <div
+          style={{ position: "absolute", top: 90, left: 80, fontFamily: serif, fontSize: 44, color: COPPER }}
+        >
+          Culinova
+        </div>
+        <Words
+          text={props.hook}
+          start={8}
+          style={{
+            position: "absolute",
+            top: 170,
+            left: 80,
+            right: 80,
+            fontFamily: serif,
+            fontSize: bandFontSize(props.hook) + 6,
+            lineHeight: 1.08,
+            color: INK,
+          }}
+        />
+      </Band>
     </AbsoluteFill>
   );
 }
@@ -76,65 +95,70 @@ function RealHook({ props }: { props: RealisticProps }) {
 function RealShot({ props, index, frames }: { props: RealisticProps; index: number; frames: number }) {
   const frame = useCurrentFrame();
   const count = props.shots.length;
+  const clips = props.plans[index]?.clips ?? [];
+  const per = sceneFrames(Math.max(1, clips.length));
+  const text = props.shots[index] ?? "";
   const progress = interpolate(frame, [0, frames], [index / count, (index + 1) / count], {
     extrapolateRight: "clamp",
   });
   return (
-    <AbsoluteFill>
-      <Clip src={props.clips[index + 1]} />
-      <div
-        style={{
-          position: "absolute",
-          top: 80,
-          left: 90,
-          right: 90,
-          height: 10,
-          borderRadius: 5,
-          background: "#ffffff40",
-        }}
-      >
+    <AbsoluteFill style={{ backgroundColor: INK }}>
+      {clips.map((clip, i) => (
+        <Sequence key={clip} from={i * per} durationInFrames={per} layout="none">
+          <Clip src={clip} frames={per} />
+        </Sequence>
+      ))}
+      <Band>
         <div
-          style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 5, background: "#ffffff" }}
+          style={{
+            position: "absolute",
+            top: 70,
+            left: 80,
+            right: 80,
+            height: 10,
+            borderRadius: 5,
+            background: "#0000000f",
+          }}
+        >
+          <div style={{ width: `${progress * 100}%`, height: "100%", borderRadius: 5, background: COPPER }} />
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            top: 120,
+            left: 80,
+            fontFamily: sans,
+            fontSize: 38,
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            color: COPPER,
+          }}
+        >
+          Étape {index + 1} / {count}
+        </div>
+        <Words
+          text={text}
+          start={4}
+          step={2}
+          style={{
+            position: "absolute",
+            top: 190,
+            left: 80,
+            right: 80,
+            fontFamily: serif,
+            fontSize: bandFontSize(text),
+            lineHeight: 1.1,
+            color: INK,
+          }}
         />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          top: 170,
-          left: 90,
-          fontFamily: sans,
-          fontSize: 40,
-          letterSpacing: "0.16em",
-          textTransform: "uppercase",
-          color: "#ffffff",
-          textShadow: SHADOW,
-        }}
-      >
-        Étape {index + 1} / {count}
-      </div>
-      <Words
-        text={props.shots[index] ?? ""}
-        start={4}
-        step={2}
-        style={{
-          position: "absolute",
-          top: 250,
-          left: 90,
-          right: 90,
-          fontFamily: serif,
-          fontSize: 84,
-          lineHeight: 1.08,
-          color: "#ffffff",
-          textShadow: SHADOW,
-        }}
-      />
+      </Band>
     </AbsoluteFill>
   );
 }
 
 export function RealisticVideo(props: RealisticProps) {
   return (
-    <AbsoluteFill style={{ backgroundColor: "#1f1a16" }}>
+    <AbsoluteFill style={{ backgroundColor: INK }}>
       {props.music ? <Audio src={staticFile(props.music)} volume={0.35} /> : null}
       {realisticTimeline(props).map((segment) => (
         <Sequence

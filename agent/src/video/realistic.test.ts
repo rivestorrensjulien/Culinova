@@ -1,23 +1,48 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { EXAMPLE_PROPS } from "./timeline.ts";
-import { hookImagePrompt, realisticFrames, realisticTimeline, shotImagePrompt } from "./realistic.ts";
+import {
+  bandFontSize,
+  hookImagePrompt,
+  motionPrompt,
+  playbackRate,
+  realisticFrames,
+  realisticTimeline,
+  sceneEndPrompt,
+  sceneFrames,
+  sceneStartPrompt,
+  type SceneScript,
+} from "./realistic.ts";
 
-test("version réaliste : un clip par plan, entre l'accroche et la photo", () => {
-  const segments = realisticTimeline({ ...EXAMPLE_PROPS, photoUrl: "x" });
+const script: SceneScript = {
+  kitchen: "warm home kitchen, light oak counter",
+  hook: { start: "The chef presents the tostadas.", motion: "smiles." },
+  plans: [],
+};
+
+test("un plan à plusieurs actions dure plus longtemps, chaque scène est accélérée", () => {
+  const plans = [{ clips: ["a"] }, { clips: ["b", "c", "d"] }];
+  const segments = realisticTimeline({ plans, photoUrl: "x" });
   assert.deepEqual(
     segments.map((s) => s.kind),
-    ["hook", ...EXAMPLE_PROPS.shots.map(() => "shot"), "reveal", "end"],
+    ["hook", "shot", "shot", "reveal", "end"],
   );
-  const seconds = realisticFrames({ ...EXAMPLE_PROPS, photoUrl: "x" }) / 30;
-  assert.ok(seconds > 20 && seconds < 45, `durée ${seconds} s`);
+  assert.equal(segments[1]!.frames, 120);
+  assert.equal(segments[2]!.frames, sceneFrames(3) * 3);
+  assert.ok(playbackRate(sceneFrames(3)) > 2 && playbackRate(sceneFrames(3)) < 2.6);
+  const seconds = realisticFrames({ plans, photoUrl: "x" }) / 30;
+  assert.ok(seconds > 15 && seconds < 25, `durée ${seconds} s`);
 });
 
-test("les consignes gardent Chef Ju et le plat de la photo", () => {
-  const prompt = shotImagePrompt("Baghrir", "Napper de beurre au miel", "verser");
-  assert.match(prompt, /image 1/);
-  assert.match(prompt, /Napper de beurre au miel/);
-  assert.match(prompt, /pouring/);
-  assert.match(shotImagePrompt("Baghrir", "Dresser", "dresser"), /exactly as shown in image 2/);
-  assert.match(hookImagePrompt("Baghrir"), /presents the finished dish/);
+test("les consignes gardent Chef Ju (JU), la cuisine et le plat de la photo", () => {
+  assert.match(hookImagePrompt(script), /'JU'/);
+  assert.match(hookImagePrompt(script), /image 2/);
+  assert.match(sceneStartPrompt(script, "He slides the eggs.", false), /Same kitchen/);
+  assert.doesNotMatch(sceneStartPrompt(script, "x", false), /image 3/);
+  assert.match(sceneEndPrompt("Toast on the board.", true), /image 3/);
+  assert.equal(motionPrompt("The chef waits.").startsWith("The 3D chef waits."), true);
+});
+
+test("le texte des longs plans rapetisse pour tenir dans le bandeau", () => {
+  assert.equal(bandFontSize("Presser les oranges"), 80);
+  assert.ok(bandFontSize("x".repeat(160)) < 60);
 });

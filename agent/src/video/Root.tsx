@@ -16,6 +16,12 @@ import {
   type VideoProps,
 } from "./timeline.ts";
 
+const REALISTIC_EXAMPLE: RealisticProps = {
+  ...EXAMPLE_PROPS,
+  hookClip: null,
+  plans: EXAMPLE_PROPS.shots.map(() => ({ clips: [] })),
+};
+
 export function Root() {
   return (
     <>
@@ -42,8 +48,8 @@ export function Root() {
         width={WIDTH}
         height={HEIGHT}
         fps={FPS}
-        durationInFrames={realisticFrames(EXAMPLE_PROPS)}
-        defaultProps={{ ...EXAMPLE_PROPS, clips: [] } as RealisticProps}
+        durationInFrames={realisticFrames(REALISTIC_EXAMPLE)}
+        defaultProps={REALISTIC_EXAMPLE}
         calculateMetadata={({ props }: { props: RealisticProps }) => ({
           durationInFrames: realisticFrames(props),
         })}

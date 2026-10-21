@@ -418,8 +418,32 @@ function fakeInsights() {
   };
 }
 
+/** Découpage en scènes de la vidéo réaliste (video.scenes) : une scène par plan du script. */
+function fakeVideoScenes(user: string) {
+  const plans = [...user.matchAll(/^Plan (\d+) : (.+)$/gm)].map((match) => ({
+    plan: Number(match[1]),
+    scenes: [
+      {
+        action: match[2]!,
+        start: "The chef stands behind the counter with the ingredients for this step.",
+        end: "The step is done, the result sits on the counter.",
+        motion: "works calmly with both hands.",
+      },
+    ],
+  }));
+  return {
+    kitchen: "A warm home kitchen with a light oak counter and soft window light.",
+    hook: {
+      start: "The chef presents the finished dish on the counter.",
+      motion: "smiles and points at the dish.",
+    },
+    plans,
+  };
+}
+
 const defaultResponder: Responder = (request) => {
   if (request.promptId.startsWith("insights.")) return fakeInsights();
+  if (request.promptId.startsWith("video.")) return fakeVideoScenes(request.user);
   if (request.promptId.startsWith("invoice.")) return fakeInvoice(request.user);
   if (request.promptId.startsWith("recipe.import")) {
     const recipe = fakeRecipe(request.user, 0);

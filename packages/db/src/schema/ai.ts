@@ -28,6 +28,7 @@ export const AI_GENERATION_KINDS = [
   "base",
   "import",
   "social_analysis",
+  "video_scenes",
 ] as const;
 export type AiGenerationKind = (typeof AI_GENERATION_KINDS)[number];
 

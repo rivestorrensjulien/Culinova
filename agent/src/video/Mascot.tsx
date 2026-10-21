@@ -1,7 +1,7 @@
 /**
  * Mascotte de Culinova : Julien en version chibi (validée par Julien le 18 octobre 2026).
  * Crâne rasé, barbe courte avec la touche grise au menton, yeux bleu-gris, veste de chef
- * (blanche ou noire) avec le drapeau au col et « Julien » brodé, bras croisés, montre.
+ * (blanche ou noire) avec un petit drapeau français au col et « JU » brodé, bras croisés, montre.
  * Six expressions : content, waouh, croque, idee, fier, clin.
  */
 import type { CSSProperties, ReactNode } from "react";
@@ -18,9 +18,9 @@ const stroke = { stroke: INK, strokeWidth: 3 } as const;
 function Flag({ x, y }: { x: number; y: number }) {
   return (
     <g>
-      <rect x={x} y={y} width={3.4} height={7} fill="#2d4f9e" />
-      <rect x={x + 3.4} y={y} width={3.4} height={7} fill="#ffffff" />
-      <rect x={x + 6.8} y={y} width={3.4} height={7} fill="#d33a2c" />
+      <rect x={x} y={y} width={2} height={4.2} fill="#2d4f9e" />
+      <rect x={x + 2} y={y} width={2} height={4.2} fill="#ffffff" />
+      <rect x={x + 4} y={y} width={2} height={4.2} fill="#d33a2c" />
     </g>
   );
 }
@@ -220,7 +220,7 @@ export function Head({ jacket }: { jacket: Jacket }) {
   return (
     <g>
       <rect x={70} y={146} width={60} height={18} rx={7} fill={fill} {...stroke} />
-      <Flag x={112} y={151} />
+      <Flag x={114} y={152.5} />
       <ellipse cx={49} cy={104} rx={9} ry={11} fill={SKIN} {...stroke} />
       <ellipse cx={151} cy={104} rx={9} ry={11} fill={SKIN} {...stroke} />
       <ellipse cx={100} cy={100} rx={52} ry={51} fill={SKIN} {...stroke} />
@@ -254,11 +254,12 @@ function Body({ jacket }: { jacket: Jacket }) {
         x={112}
         y={172}
         fontFamily="'Dancing Script', cursive"
-        fontSize={9}
+        fontSize={12}
+        fontWeight={600}
         fill={text}
         textAnchor="middle"
       >
-        Julien
+        JU
       </text>
       <rect x={52} y={178} width={96} height={22} rx={11} fill={fill} {...stroke} />
       <rect x={72} y={180} width={56} height={17} rx={8.5} fill={SKIN} {...stroke} />

@@ -30,9 +30,9 @@ async function main() {
     recipeId: job.recipeId,
     versionId: job.versionId,
     imageId: job.imageId,
-    durationS: meta.durationInSeconds,
-    width: meta.width,
-    height: meta.height,
+    durationS: meta.durationInSeconds ?? 0,
+    width: meta.width ?? 1080,
+    height: meta.height ?? 1920,
     sizeBytes: size,
   });
   try {

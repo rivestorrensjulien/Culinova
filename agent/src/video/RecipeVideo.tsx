@@ -401,7 +401,10 @@ export function EndScene({ props }: { props: VideoProps }) {
       <PhotoBackdrop props={props} veil={0.85} />
       {props.voice ? <Audio src={staticFile(props.voice)} /> : null}
       {props.endMascot ? (
-        <Mascot3D src={props.endMascot} style={{ left: 290, top: 250, height: 600 }} />
+        <Mascot3D
+          src={props.endMascot}
+          style={{ left: 0, right: 0, margin: "0 auto", top: 230, height: 640 }}
+        />
       ) : (
         <BouncingMascot expression="clin" jacket={props.jacket} size={560} style={{ left: 260, top: 230 }} />
       )}

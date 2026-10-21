@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   bandFontSize,
+  joinMotions,
+  keyPlans,
+  STILL_FRAMES,
   hookImagePrompt,
   motionPrompt,
   playbackRate,
@@ -45,4 +48,17 @@ test("les consignes gardent Chef Ju (JU), la cuisine et le plat de la photo", ()
 test("le texte des longs plans rapetisse pour tenir dans le bandeau", () => {
   assert.equal(bandFontSize("Presser les oranges"), 80);
   assert.ok(bandFontSize("x".repeat(160)) < 60);
+});
+
+test("version économique : ingrédients, geste signature et présentation filmés", () => {
+  const actions = ["disposer", "couper", "melanger", "chauffer", "chauffer", "dresser", "dresser"];
+  assert.deepEqual(keyPlans(actions), [0, 4, 6]);
+  assert.deepEqual(keyPlans(actions, 4), [0, 3, 6]);
+  assert.deepEqual(keyPlans(["disposer", "couper", "dresser"]), [0, 1, 2]);
+  assert.equal(joinMotions(["slides the eggs in.", "waits"]), "slides the eggs in, then waits.");
+  const segments = realisticTimeline({
+    plans: [{ clips: ["a"] }, { clips: [], still: "x.jpg" }, { clips: ["b"] }],
+    photoUrl: null,
+  });
+  assert.equal(segments[2]!.frames, STILL_FRAMES);
 });

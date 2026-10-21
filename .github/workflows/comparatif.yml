@@ -9,6 +9,13 @@ on:
       recette:
         description: "Identifiant ou morceau du nom de la recette (vide : la première « à publier »)"
         required: false
+      economique:
+        description: "Version réaliste économique (3 plans filmés, ≈ 1,50 €)"
+        type: boolean
+        default: false
+      cle:
+        description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
+        required: false
       animee:
         description: "Version animée seule (gratuit, sans fal.ai)"
         type: boolean
@@ -36,6 +43,8 @@ jobs:
       VESTE: ${{ vars.MASCOTTE_VESTE || 'blanche' }}
       RECETTE: ${{ inputs.recette }}
       ANIMEE: ${{ inputs.animee && '1' || '0' }}
+      ECONOMIQUE: ${{ inputs.economique && '1' || '0' }}
+      CLE: ${{ inputs.cle }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,7 +55,7 @@ jobs:
       - name: Vérifications
         run: npm run typecheck && npm test
       - name: Fabrication des deux vidéos
-        run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE"
+        run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE" --economique="$ECONOMIQUE" --cle="$CLE"
       - name: Fichiers (téléchargeables)
         if: always()
         uses: actions/upload-artifact@v4

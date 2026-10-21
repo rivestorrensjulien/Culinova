@@ -8,6 +8,7 @@ import { loadFont as loadSerif } from "@remotion/google-fonts/Fraunces";
 import {
   AbsoluteFill,
   Audio,
+  Img,
   OffthreadVideo,
   Sequence,
   interpolate,
@@ -55,6 +56,26 @@ function Clip({ src, frames }: { src: string | null | undefined; frames: number 
   );
 }
 
+/** Plan non filmé : image réaliste avec un zoom lent (effet « caméra qui avance »). */
+function StillShot({ src, frames }: { src: string; frames: number }) {
+  const frame = useCurrentFrame();
+  const zoom = interpolate(frame, [0, frames], [1.02, 1.12]);
+  return (
+    <div style={{ position: "absolute", top: BAND, left: 0, right: 0, bottom: 0, overflow: "hidden" }}>
+      <Img
+        src={staticFile(src)}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          objectPosition: "50% 45%",
+          transform: `scale(${zoom})`,
+        }}
+      />
+    </div>
+  );
+}
+
 function Band({ children }: { children: ReactNode }) {
   return (
     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: BAND, backgroundColor: IVORY }}>
@@ -96,6 +117,7 @@ function RealShot({ props, index, frames }: { props: RealisticProps; index: numb
   const frame = useCurrentFrame();
   const count = props.shots.length;
   const clips = props.plans[index]?.clips ?? [];
+  const still = clips.length === 0 ? props.plans[index]?.still : null;
   const per = sceneFrames(Math.max(1, clips.length));
   const text = props.shots[index] ?? "";
   const progress = interpolate(frame, [0, frames], [index / count, (index + 1) / count], {
@@ -103,6 +125,7 @@ function RealShot({ props, index, frames }: { props: RealisticProps; index: numb
   });
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
+      {still ? <StillShot src={still} frames={frames} /> : null}
       {clips.map((clip, i) => (
         <Sequence key={clip} from={i * per} durationInFrames={per} layout="none">
           <Clip src={clip} frames={per} />

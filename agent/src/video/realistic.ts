@@ -16,6 +16,8 @@ export const CLIP_SECONDS = 5;
 export const REAL_HOOK_FRAMES = 135;
 export const REAL_REVEAL_FRAMES = 105;
 export const REAL_END_FRAMES = 90;
+/** Plan non filmé (version économique) : image réaliste avec zoom lent, le temps de lire. */
+export const STILL_FRAMES = 69;
 /** Durée à l'écran d'une scène selon le nombre de scènes du plan (le clip est accéléré). */
 const SCENE_FRAMES: Record<number, number> = { 1: 120, 2: 78, 3: 62 };
 
@@ -32,8 +34,11 @@ export interface SceneScript {
 export interface RealisticProps extends VideoProps {
   /** Clip de l'accroche (fichier de agent/public). */
   hookClip: string | null;
-  /** Clips de chaque plan, dans l'ordre (1 à 3 par plan). */
-  plans: Array<{ clips: string[] }>;
+  /**
+   * Chaque plan, dans l'ordre : 1 à 3 clips filmés, ou (version économique) une seule image
+   * réaliste animée par un zoom lent quand le plan n'est pas un plan clé.
+   */
+  plans: Array<{ clips: string[]; still?: string | null }>;
 }
 
 export const CHARACTER =
@@ -134,6 +139,7 @@ export function realisticTimeline(props: Pick<RealisticProps, "plans" | "photoUr
   };
   push({ kind: "hook", frames: REAL_HOOK_FRAMES });
   props.plans.forEach((plan, index) => {
+    if (plan.clips.length === 0 && plan.still) return push({ kind: "shot", frames: STILL_FRAMES, index });
     const count = Math.max(1, plan.clips.length);
     push({ kind: "shot", frames: sceneFrames(count) * count, index });
   });
@@ -152,4 +158,32 @@ export function bandFontSize(text: string): number {
   if (text.length > 100) return 62;
   if (text.length > 60) return 70;
   return 80;
+}
+
+const SIGNATURE_ACTIONS = new Set(["poeler", "chauffer", "four", "verser", "petrir"]);
+
+/**
+ * Version économique : plans filmés = le premier (les ingrédients), le dernier (la présentation)
+ * et un plan « signature » entre les deux (geste de cuisson le plus parlant, le plus tardif ;
+ * ou le plan choisi, numéroté à partir de 1). Les autres plans deviennent des images animées.
+ */
+export function keyPlans(actions: string[], chosen?: number | null): number[] {
+  const last = actions.length - 1;
+  if (actions.length <= 3) return actions.map((_, i) => i);
+  let signature = chosen && chosen > 1 && chosen < actions.length ? chosen - 1 : -1;
+  if (signature < 0) {
+    for (let i = last - 1; i > 0; i--) {
+      if (SIGNATURE_ACTIONS.has(actions[i]!)) {
+        signature = i;
+        break;
+      }
+    }
+  }
+  if (signature < 0) signature = Math.floor(last / 2);
+  return [0, signature, last];
+}
+
+/** Un seul clip pour un plan à plusieurs scènes : les mouvements s'enchaînent. */
+export function joinMotions(motions: string[]): string {
+  return motions.map((m) => m.trim().replace(/\.$/, "")).join(", then ") + ".";
 }

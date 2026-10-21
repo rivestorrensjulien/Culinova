@@ -6,6 +6,8 @@
  *       et clip IA de 5 s entre les deux.
  *
  *   npm run comparatif -- --recette=<identifiant ou morceau du nom> [--nouveau=1] [--animee=1 : version animée seule, sans frais]
+ *   [--economique=1 [--cle=N]] : accroche + 3 plans filmés (ingrédients, plan N, présentation),
+ *   les autres plans en images animées (≈ 1,50 €)
  *
  * Variables : CULINOVA_URL, AGENT_API_KEY, FAL_KEY (environ 0,40 € par scène chez fal.ai).
  * Résultat dans sortie/comparatif/.
@@ -17,8 +19,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CulinovaClient, type VideoJob } from "./culinova.ts";
 import { dataUri, download, FalClient } from "./fal.ts";
+import { shotAction } from "./video/actions.ts";
 import {
   hookImagePrompt,
+  joinMotions,
+  keyPlans,
   IMAGE_MODEL,
   motionPrompt,
   NEGATIVE_PROMPT,
@@ -173,12 +178,40 @@ async function main() {
   const hookImage = await edit(hookImagePrompt(script), [reference, dish], "scene-00-accroche.jpg");
   type Planned = { plan: number; scene: number; start: string; end: string; motion: string };
   const planned: Planned[] = [];
+  const stills = new Map<number, string>();
+  const economic = arg("economique") === "1";
+  const keys = economic
+    ? keyPlans(
+        job.shots.map((shot) => shotAction(shot)),
+        Number(arg("cle")) || null,
+      )
+    : script.plans.map((_, p) => p);
+  if (economic) notice(`Version économique : plans filmés ${keys.map((k) => k + 1).join(", ")}`);
   let previous = hookImage;
   for (const [p, plan] of script.plans.entries()) {
     const plating = p === script.plans.length - 1;
-    for (const [i, scene] of plan.scenes.entries()) {
-      const name = `scene-${String(p + 1).padStart(2, "0")}-${i + 1}`;
-      const extra = plating ? [dish] : [];
+    const extra = plating ? [dish] : [];
+    const prefix = `scene-${String(p + 1).padStart(2, "0")}`;
+    const first = plan.scenes[0]!;
+    const last = plan.scenes[plan.scenes.length - 1]!;
+    if (economic && !keys.includes(p)) {
+      // Plan non filmé : une image du résultat du plan, dans la même cuisine.
+      const url = await edit(
+        sceneStartPrompt(script, last.end, plating),
+        [reference, previous, ...extra],
+        `${prefix}-image.jpg`,
+      );
+      const file = `still-${String(p + 1).padStart(2, "0")}.jpg`;
+      await writeFile(join(assets, file), await download(url));
+      stills.set(p, `realiste/${file}`);
+      previous = url;
+      continue;
+    }
+    const scenes = economic
+      ? [{ ...first, end: last.end, motion: joinMotions(plan.scenes.map((x) => x.motion)) }]
+      : plan.scenes;
+    for (const [i, scene] of scenes.entries()) {
+      const name = `${prefix}-${i + 1}`;
       const start = await edit(
         sceneStartPrompt(script, scene.start, plating),
         [reference, previous, ...extra],
@@ -220,6 +253,7 @@ async function main() {
   notice("Clips prêts");
   const plans = script.plans.map((_, p) => ({
     clips: planned.flatMap((s, k) => (s.plan === p ? [sceneClips[k]!] : [])),
+    still: stills.get(p) ?? null,
   }));
 
   // 4. Version réaliste (nouveau paquet : les clips doivent faire partie des fichiers publics).
@@ -236,7 +270,7 @@ async function main() {
     crf: 20,
     pixelFormat: "yuv420p",
     enforceAudioTrack: true,
-    outputLocation: join(output, "B-version-realiste.mp4"),
+    outputLocation: join(output, economic ? "C-version-realiste-economique.mp4" : "B-version-realiste.mp4"),
     inputProps: props,
     timeoutInMilliseconds: 120_000,
   });

@@ -15,7 +15,16 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { CulinovaClient } from "./culinova.ts";
 import { dataUri, download, FalClient } from "./fal.ts";
-import { arg, finishing, type ImageResult, notice, pickJob, retry, type VideoResult } from "./outils.ts";
+import {
+  arg,
+  finishing,
+  keepClips,
+  type ImageResult,
+  notice,
+  pickJob,
+  retry,
+  type VideoResult,
+} from "./outils.ts";
 import {
   EXPLODE_MOTION,
   EXPLODED_ID,
@@ -149,6 +158,7 @@ async function main() {
     inputProps: props,
     timeoutInMilliseconds: 120_000,
   });
+  await keepClips(assets, output);
   notice("Format « vue éclatée » fabriqué");
 }
 

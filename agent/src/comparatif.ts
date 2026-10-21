@@ -229,6 +229,7 @@ async function main() {
     inputProps: props,
     timeoutInMilliseconds: 120_000,
   });
+  await keepClips(assets, output);
   notice("Version réaliste fabriquée");
 }
 

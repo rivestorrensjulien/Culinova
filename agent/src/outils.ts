@@ -1,5 +1,6 @@
 /** Outils partagés par le comparatif et la retouche d'une scène (vidéo réaliste). */
 import { existsSync } from "node:fs";
+import { copyFile, mkdir, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type { CulinovaClient, VideoJob } from "./culinova.ts";
 
@@ -70,3 +71,12 @@ export async function retry<T>(task: () => Promise<T>): Promise<T> {
 
 export type ImageResult = { images: Array<{ url: string }> };
 export type VideoResult = { video: { url: string } };
+
+/** Garde les clips IA avec le résultat (sous-dossier « clips ») : une retouche n'a pas à les refaire. */
+export async function keepClips(assets: string, output: string): Promise<void> {
+  const target = join(output, "clips");
+  await mkdir(target, { recursive: true });
+  for (const file of await readdir(assets)) {
+    if (file.endsWith(".mp4")) await copyFile(join(assets, file), join(target, file));
+  }
+}

@@ -83,7 +83,7 @@ jobs:
         if: inputs.retouche_plan != ''
         run: |
           git clone -q --depth 1 -b comparatif-video "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" /tmp/precedent
-          mkdir -p sortie/comparatif && cp /tmp/precedent/* sortie/comparatif/
+          mkdir -p sortie/comparatif && cp -r /tmp/precedent/. sortie/comparatif/ && rm -rf sortie/comparatif/.git
           npm run retouche -- --recette="$RECETTE" --plan="$RETOUCHE" --cle="$CLE" --consigne="$CONSIGNE"
       - name: Fichiers (téléchargeables)
         if: always()
@@ -94,7 +94,7 @@ jobs:
           if-no-files-found: ignore
       - name: Fichiers sur la branche comparatif-video
         run: |
-          mkdir -p /tmp/comparatif && cp sortie/comparatif/* /tmp/comparatif/
+          mkdir -p /tmp/comparatif && cp -r sortie/comparatif/. /tmp/comparatif/
           cd /tmp/comparatif
           git init -q -b comparatif-video
           git config user.name "Agent Culinova"

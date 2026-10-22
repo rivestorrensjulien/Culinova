@@ -23,6 +23,19 @@ export function tiktokConfig(env: Env = process.env) {
   return clientKey && secret ? { clientKey, secret } : null;
 }
 
+/** Erreurs TikTok expliquées simplement (les autres gardent le message de TikTok). */
+const TIKTOK_ERRORS: Record<string, string> = {
+  unaudited_client_can_only_post_to_private_accounts:
+    "tant que l'application n'a pas passé l'audit de TikTok, le compte TikTok doit être en mode privé " +
+    "(TikTok → Profil → ☰ → Paramètres et confidentialité → Confidentialité → Compte privé), puis réessayez",
+  spam_risk_too_many_posts: "trop de publications aujourd'hui sur ce compte, réessayez demain",
+  reached_active_user_cap: "limite quotidienne d'utilisateurs de l'application atteinte, réessayez demain",
+  privacy_level_option_mismatch: "choisissez une confidentialité proposée par TikTok",
+  url_ownership_unverified: "le domaine culinova.fr n'est pas vérifié dans l'application TikTok",
+  access_token_invalid: "le compte TikTok doit être relié à nouveau (Administration → Réseaux)",
+  scope_not_authorized: "autorisation manquante : reliez à nouveau le compte TikTok",
+};
+
 type Envelope<T> = { data?: T; error?: { code?: string; message?: string; log_id?: string } };
 type TiktokBody<T> = Envelope<T> & { error_description?: string; access_token?: string };
 
@@ -30,8 +43,13 @@ async function read<T>(response: Response, what: string): Promise<T> {
   const body = (await response.json().catch(() => null)) as TiktokBody<T> | null;
   const code = body?.error?.code;
   if (!response.ok || !body || (code && code !== "ok")) {
-    const detail = body?.error?.message || body?.error_description || code || String(response.status);
-    throw new SocialApiError(`TikTok · ${what} : ${detail}`, response.status);
+    const detail =
+      (code && TIKTOK_ERRORS[code]) ||
+      body?.error?.message ||
+      body?.error_description ||
+      code ||
+      String(response.status);
+    throw new SocialApiError(`TikTok · ${what} : ${detail}${code ? ` (${code})` : ""}`, response.status);
   }
   return (body.data ?? (body as unknown)) as T;
 }

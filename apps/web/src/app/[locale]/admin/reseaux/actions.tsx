@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   analyzeStatsAction,
   collectStatsAction,
+  createPinterestBoardAction,
   disconnectAccountAction,
   pinterestBoardsAction,
   saveCaptionSettingsAction,
@@ -219,10 +220,28 @@ export function PinterestBoardPicker({ selected }: { selected: PinterestBoardSet
     return <Notice tone="danger">Tableaux Pinterest illisibles : reliez le compte à nouveau.</Notice>;
   if (boards.length === 0) {
     return (
-      <Notice tone="warning">
-        Aucun tableau sur ce compte : créez-en un sur Pinterest (par exemple « Recettes Culinova »), puis
-        rechargez la page.
-      </Notice>
+      <div className="flex flex-col gap-2">
+        <Notice tone="warning">Aucun tableau sur ce compte.</Notice>
+        <div>
+          <Button
+            size="sm"
+            disabled={pending}
+            onClick={() =>
+              start(async () => {
+                const board = await createPinterestBoardAction();
+                if (board) {
+                  setBoards([board]);
+                  setBoardId(board.id);
+                  setSaved(true);
+                  router.refresh();
+                }
+              })
+            }
+          >
+            Créer le tableau « Recettes Culinova »
+          </Button>
+        </div>
+      </div>
     );
   }
   return (

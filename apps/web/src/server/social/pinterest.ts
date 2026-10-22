@@ -1,7 +1,7 @@
 /**
  * API Pinterest v5 (application « Culinova » sur developers.pinterest.com) : connexion OAuth,
  * tableaux, création d'épingles (photo de la recette + lien vers culinova.fr), statistiques.
- * Portées : boards:read, pins:read, pins:write, user_accounts:read.
+ * Portées : boards:read, boards:write (création du tableau), pins:read, pins:write, user_accounts:read.
  * Variables : PINTEREST_APP_ID, PINTEREST_APP_SECRET ; PINTEREST_API_URL facultative
  * (https://api-sandbox.pinterest.com tant que l'application est en accès d'essai).
  * En accès d'essai (« Trial »), les épingles créées ne sont visibles que par le compte qui les crée :
@@ -11,7 +11,13 @@ import { type PostMetrics, SocialApiError } from "./instagram";
 
 type Env = Record<string, string | undefined>;
 
-export const PINTEREST_SCOPES = ["boards:read", "pins:read", "pins:write", "user_accounts:read"] as const;
+export const PINTEREST_SCOPES = [
+  "boards:read",
+  "boards:write",
+  "pins:read",
+  "pins:write",
+  "user_accounts:read",
+] as const;
 export const PIN_TITLE_MAX = 100;
 export const PIN_DESCRIPTION_MAX = 800;
 
@@ -72,9 +78,10 @@ async function tokenRequest(
   env: Env,
   now: Date,
 ): Promise<PinterestToken> {
-  const { appId, secret, api } = config(env);
+  // Les jetons se demandent toujours à l'API de production, même en bac à sable.
+  const { appId, secret } = config(env);
   const body = await read<TokenBody>(
-    await fetchImpl(`${api}/oauth/token`, {
+    await fetchImpl("https://api.pinterest.com/v5/oauth/token", {
       method: "POST",
       headers: {
         Authorization: `Basic ${Buffer.from(`${appId}:${secret}`).toString("base64")}`,
@@ -171,6 +178,28 @@ export async function pinterestBoards(
     if (!bookmark) break;
   }
   return boards;
+}
+
+/**
+ * Crée un tableau public (utile en bac à sable, où les tableaux du vrai compte n'existent pas).
+ * Portée boards:write nécessaire : demandée avec les autres.
+ */
+export async function pinterestCreateBoard(
+  accessToken: string,
+  name: string,
+  description: string,
+  fetchImpl: typeof fetch = fetch,
+  env: Env = process.env,
+): Promise<PinterestBoard> {
+  const body = await read<PinterestBoard>(
+    await fetchImpl(`${config(env).api}/boards`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ name, description, privacy: "PUBLIC" }),
+    }),
+    "création du tableau",
+  );
+  return { id: body.id, name: body.name, privacy: body.privacy };
 }
 
 export interface PinInput {

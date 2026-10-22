@@ -19,7 +19,7 @@ import {
   type TiktokChoices,
 } from "../social/publish";
 import { analyzeStats, type AnalyzeResult, collectStats } from "../social/stats";
-import { type PinterestBoard, pinterestBoards } from "../social/pinterest";
+import { type PinterestBoard, pinterestBoards, pinterestCreateBoard } from "../social/pinterest";
 import { getPinterestBoard, type PinterestBoardSetting, savePinterestBoard } from "../social/pinterest-board";
 import { type CreatorInfo, tiktokCreatorInfo } from "../social/tiktok";
 
@@ -161,4 +161,21 @@ export async function savePinterestBoardAction(boardId: string, boardName: strin
   if (!session || !/^\d{1,30}$/.test(boardId)) return false;
   await savePinterestBoard(getDb(), session.user.id, { boardId, boardName: String(boardName ?? "") });
   return true;
+}
+
+/** Crée le tableau « Recettes Culinova » et le choisit pour les épingles. */
+export async function createPinterestBoardAction(): Promise<PinterestBoard | null> {
+  const session = await admin();
+  if (!session) return null;
+  const db = getDb();
+  const account = await accountToken(db, "pinterest").catch(() => null);
+  if (!account) return null;
+  const board = await pinterestCreateBoard(
+    account.accessToken,
+    "Recettes Culinova",
+    "Recettes pesées et chiffrées, créées avec Culinova (culinova.fr).",
+  ).catch(() => null);
+  if (!board) return null;
+  await savePinterestBoard(db, session.user.id, { boardId: board.id, boardName: board.name });
+  return board;
 }

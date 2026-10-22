@@ -23,7 +23,7 @@ import { actionExpression, shotAction, shotText, stepLabel } from "./actions.ts"
 import { WorkingChef } from "./Kitchen.tsx";
 import { Mascot } from "./Mascot.tsx";
 import { BackgroundMusic } from "./Music.tsx";
-import { timeline, VOICE_FRAMES, WIDTH, type VideoProps } from "./timeline.ts";
+import { timeline, WIDTH, type VideoProps } from "./timeline.ts";
 
 const serif = loadSerif("normal", { weights: ["600"], subsets: ["latin", "latin-ext"] }).fontFamily;
 const sans = loadSans("normal", { weights: ["500"], subsets: ["latin", "latin-ext"] }).fontFamily;
@@ -456,11 +456,7 @@ export function RecipeVideo(props: VideoProps) {
   const end = segments[segments.length - 1]!;
   return (
     <AbsoluteFill style={{ backgroundColor: COLORS.ivory }}>
-      <BackgroundMusic
-        src={props.music}
-        total={total}
-        voice={props.voice ? [end.from, end.from + VOICE_FRAMES] : null}
-      />
+      <BackgroundMusic src={props.music} total={total} voiceFrom={props.voice ? end.from : null} />
       {segments.map((segment) => (
         <Sequence
           key={`${segment.kind}-${segment.from}`}

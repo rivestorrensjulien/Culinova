@@ -98,26 +98,21 @@ export const EXAMPLE_PROPS: VideoProps = {
   voice: "voix/et-voila.mp3",
 };
 
-/** Volume normal de la musique de fond, et pendant la voix de Julien (la voix reste devant). */
+/** Volume de la musique de fond. */
 export const MUSIC_VOLUME = 0.22;
-export const MUSIC_UNDER_VOICE = 0.06;
+/** La musique s'éteint en fondu et finit juste avant que Chef Ju parle (demande de Julien). */
+export const MUSIC_FADE_FRAMES = 12;
+export const MUSIC_STOP_BEFORE_VOICE = 4;
 
 /**
- * Volume de la musique à l'image `frame` : arrivée douce, baisse pendant la voix ([début, fin]),
- * fondu final.
+ * Volume de la musique à l'image `frame` : arrivée douce, puis fondu qui se termine juste avant la
+ * voix de Julien (`voiceFrom`) ; sans voix, fondu à la fin de la vidéo. Plus de musique ensuite.
  */
-export function musicVolume(frame: number, total: number, voice: [number, number] | null): number {
+export function musicVolume(frame: number, total: number, voiceFrom: number | null): number {
+  const stop = voiceFrom === null ? total : voiceFrom - MUSIC_STOP_BEFORE_VOICE;
   const fadeIn = Math.min(1, frame / 15);
-  const fadeOut = Math.min(1, Math.max(0, (total - frame) / 24));
-  let level = MUSIC_VOLUME;
-  if (voice) {
-    const [from, to] = voice;
-    const down = Math.min(1, Math.max(0, (frame - (from - 8)) / 8));
-    const up = Math.min(1, Math.max(0, (frame - to) / 12));
-    const ducked = down * (1 - up);
-    level = MUSIC_VOLUME - (MUSIC_VOLUME - MUSIC_UNDER_VOICE) * ducked;
-  }
-  return level * fadeIn * fadeOut;
+  const fadeOut = Math.min(1, Math.max(0, (stop - frame) / MUSIC_FADE_FRAMES));
+  return MUSIC_VOLUME * fadeIn * fadeOut;
 }
 
 /** Durée de la voix de Julien (« Et voilà, y'a plus qu'à se régaler ! »), en images. */

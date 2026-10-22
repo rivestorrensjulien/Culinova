@@ -12,6 +12,7 @@
  */
 import { bundle } from "@remotion/bundler";
 import { renderMedia, renderStill, selectComposition } from "@remotion/renderer";
+import { existsSync } from "node:fs";
 import { copyFile, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -110,6 +111,7 @@ async function main() {
 
   let explodeClip: string;
   let voilaClip: string;
+  let synced = false;
   const topViews: string[] = [];
   if (arg("reprendre") === "1") {
     // Clips et vues du dessus de la fabrication précédente (branche comparatif-video).
@@ -122,6 +124,12 @@ async function main() {
     }
     explodeClip = "realiste/eclate.mp4";
     voilaClip = "realiste/et-voila.mp4";
+    // Lèvres déjà synchronisées la fois précédente : rien à refaire (gratuit).
+    if (existsSync(join(output, "clips", "et-voila-levres.mp4"))) {
+      await copyFile(join(output, "clips", "et-voila-levres.mp4"), join(assets, "et-voila-levres.mp4"));
+      voilaClip = "realiste/et-voila-levres.mp4";
+      synced = true;
+    }
     notice("Clips et vues du dessus repris de la fabrication précédente");
   } else {
     // 1. Vue éclatée (image), puis le clip où les couches s'écartent depuis la photo (lien signé 1 h).
@@ -149,7 +157,7 @@ async function main() {
 
   // 4. Lèvres de Chef Ju synchronisées sur la voix de Julien (placée au même moment que dans la vidéo).
   const voice = finishing(root).voice;
-  if (voice) {
+  if (voice && !synced) {
     try {
       const padded = join(assets, "voix-calee.wav");
       const track = await selectComposition({ serveUrl, id: VOICE_TRACK_ID, inputProps: { voice } });

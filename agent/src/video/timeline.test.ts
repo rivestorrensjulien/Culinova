@@ -3,7 +3,6 @@ import { test } from "node:test";
 import {
   EXAMPLE_PROPS,
   HOOK_FRAMES,
-  MUSIC_UNDER_VOICE,
   MUSIC_VOLUME,
   musicVolume,
   shotExpression,
@@ -44,11 +43,11 @@ test("le dernier plan (dressage) rend la mascotte fière", () => {
   assert.notEqual(shotExpression(0, 5), "fier");
 });
 
-test("la musique baisse sous la voix de Julien et s'éteint en fondu", () => {
+test("la musique s'arrête juste avant que Chef Ju parle, et ne reprend pas", () => {
   assert.equal(musicVolume(0, 600, null), 0);
-  assert.equal(musicVolume(100, 600, null), MUSIC_VOLUME);
-  assert.equal(musicVolume(450, 600, [440, 540]), MUSIC_UNDER_VOICE);
-  assert.ok(musicVolume(430, 600, [440, 540]) > MUSIC_UNDER_VOICE);
-  assert.equal(musicVolume(570, 600, [440, 540]), MUSIC_VOLUME);
+  assert.equal(musicVolume(100, 600, 440), MUSIC_VOLUME);
+  assert.ok(musicVolume(430, 600, 440) < MUSIC_VOLUME);
+  assert.equal(musicVolume(436, 600, 440), 0);
+  assert.equal(musicVolume(500, 600, 440), 0);
   assert.equal(musicVolume(600, 600, null), 0);
 });

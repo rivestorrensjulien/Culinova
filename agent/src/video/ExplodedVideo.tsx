@@ -29,7 +29,6 @@ import {
 } from "./exploded.ts";
 import { BackgroundMusic } from "./Music.tsx";
 import { EndScene, Words } from "./RecipeVideo.tsx";
-import { VOICE_FRAMES } from "./timeline.ts";
 
 const serif = loadSerif("normal", { weights: ["600"], subsets: ["latin", "latin-ext"] }).fontFamily;
 const sans = loadSans("normal", { weights: ["500"], subsets: ["latin", "latin-ext"] }).fontFamily;
@@ -292,11 +291,7 @@ export function ExplodedVideo(props: ExplodedProps) {
   const voiceFrom = voila.from + VOICE_START;
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
-      <BackgroundMusic
-        src={props.music}
-        total={total}
-        voice={props.voice ? [voiceFrom, voiceFrom + VOICE_FRAMES] : null}
-      />
+      <BackgroundMusic src={props.music} total={total} voiceFrom={props.voice ? voiceFrom : null} />
       {segments.map((segment) => (
         <Sequence key={segment.kind} from={segment.from} durationInFrames={segment.frames}>
           {segment.kind === "photo" ? <PhotoScene props={props} frames={segment.frames} /> : null}

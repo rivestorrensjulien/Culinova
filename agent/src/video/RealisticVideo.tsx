@@ -18,7 +18,6 @@ import type { ReactNode } from "react";
 import { shotText, stepLabel } from "./actions.ts";
 import { Mascot } from "./Mascot.tsx";
 import { BackgroundMusic } from "./Music.tsx";
-import { VOICE_FRAMES } from "./timeline.ts";
 import {
   bandFontSize,
   playbackRate,
@@ -187,11 +186,7 @@ export function RealisticVideo(props: RealisticProps) {
   const end = segments[segments.length - 1]!;
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
-      <BackgroundMusic
-        src={props.music}
-        total={total}
-        voice={props.voice ? [end.from, end.from + VOICE_FRAMES] : null}
-      />
+      <BackgroundMusic src={props.music} total={total} voiceFrom={props.voice ? end.from : null} />
       {segments.map((segment) => (
         <Sequence
           key={`${segment.kind}-${segment.from}`}

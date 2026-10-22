@@ -1,6 +1,7 @@
 /**
  * API TikTok (application « Culinova Agent » : Login Kit et Content Posting API, Direct Post).
- * Portées : user.info.basic, user.info.stats, video.list, video.publish, video.upload.
+ * Portées : user.info.basic, user.info.stats, video.list, video.publish (video.upload sera demandée
+ * avec les brouillons TikTok : une portée non utilisée fait refuser l'audit).
  * Variables : TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET. Tant que l'application n'a pas passé
  * l'audit de TikTok, les vidéos ne peuvent être publiées qu'en privé (SELF_ONLY).
  */
@@ -8,13 +9,7 @@ import { type PostMetrics, SocialApiError } from "./instagram";
 
 type Env = Record<string, string | undefined>;
 
-export const TIKTOK_SCOPES = [
-  "user.info.basic",
-  "user.info.stats",
-  "video.list",
-  "video.publish",
-  "video.upload",
-] as const;
+export const TIKTOK_SCOPES = ["user.info.basic", "user.info.stats", "video.list", "video.publish"] as const;
 const API = "https://open.tiktokapis.com/v2";
 
 export function tiktokConfig(env: Env = process.env) {

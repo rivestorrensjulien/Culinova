@@ -150,7 +150,6 @@ async function main() {
     handle: "@culinova.recette",
     site: "culinova.fr",
     jacket: process.env.VESTE === "noire" ? "noire" : "blanche",
-    music: null,
     ...finishing(root),
     hookClip: null,
     plans,

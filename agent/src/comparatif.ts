@@ -78,7 +78,6 @@ async function main() {
     handle: "@culinova.recette",
     site: "culinova.fr",
     jacket,
-    music: null,
     ...finishing(root),
   };
 

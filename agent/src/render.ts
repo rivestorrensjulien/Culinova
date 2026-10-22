@@ -168,7 +168,6 @@ async function carousels(
 
 async function main() {
   await mkdir(output, { recursive: true });
-  const music = existsSync(join(root, "public", "musique.mp3")) ? "musique.mp3" : null;
   const jacket = process.env.VESTE === "noire" ? "noire" : "blanche";
   console.log("Préparation du studio vidéo…");
   const serveUrl = await bundle({
@@ -182,7 +181,6 @@ async function main() {
       ...EXAMPLE_PROPS,
       photoUrl: "static:exemple.jpg",
       jacket,
-      music,
       ...finishing(root),
     };
     await render(serveUrl, props, file);
@@ -214,7 +212,6 @@ async function main() {
         handle: "@culinova.recette",
         site: "culinova.fr",
         jacket,
-        music,
         ...finishing(root),
       };
       const meta = await render(serveUrl, props, file);

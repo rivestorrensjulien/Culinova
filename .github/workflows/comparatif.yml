@@ -126,11 +126,15 @@ jobs:
           path: agent/sortie/comparatif/
           if-no-files-found: ignore
       - name: Fichiers sur la branche comparatif-video
+        # On garde les fichiers déjà présents (clips, images) et on ajoute ou remplace les nouveaux.
         run: |
-          mkdir -p /tmp/comparatif && cp -r sortie/comparatif/. /tmp/comparatif/
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if ! git clone -q --depth 1 -b comparatif-video "$url" /tmp/comparatif 2>/dev/null; then
+            mkdir -p /tmp/comparatif && git -C /tmp/comparatif init -q -b comparatif-video
+          fi
+          cp -r sortie/comparatif/. /tmp/comparatif/
           cd /tmp/comparatif
-          git init -q -b comparatif-video
           git config user.name "Agent Culinova"
           git config user.email "agent@culinova.fr"
-          git add . && git commit -qm "Comparatif vidéo (${GITHUB_SHA::7})"
-          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" comparatif-video
+          git add -A && git commit -qm "Comparatif vidéo (${GITHUB_SHA::7})" || echo "Rien de nouveau"
+          git push -q "$url" HEAD:comparatif-video

@@ -97,3 +97,28 @@ export const EXAMPLE_PROPS: VideoProps = {
   music: null,
   voice: "voix/et-voila.mp3",
 };
+
+/** Volume normal de la musique de fond, et pendant la voix de Julien (la voix reste devant). */
+export const MUSIC_VOLUME = 0.22;
+export const MUSIC_UNDER_VOICE = 0.06;
+
+/**
+ * Volume de la musique à l'image `frame` : arrivée douce, baisse pendant la voix ([début, fin]),
+ * fondu final.
+ */
+export function musicVolume(frame: number, total: number, voice: [number, number] | null): number {
+  const fadeIn = Math.min(1, frame / 15);
+  const fadeOut = Math.min(1, Math.max(0, (total - frame) / 24));
+  let level = MUSIC_VOLUME;
+  if (voice) {
+    const [from, to] = voice;
+    const down = Math.min(1, Math.max(0, (frame - (from - 8)) / 8));
+    const up = Math.min(1, Math.max(0, (frame - to) / 12));
+    const ducked = down * (1 - up);
+    level = MUSIC_VOLUME - (MUSIC_VOLUME - MUSIC_UNDER_VOICE) * ducked;
+  }
+  return level * fadeIn * fadeOut;
+}
+
+/** Durée de la voix de Julien (« Et voilà, y'a plus qu'à se régaler ! »), en images. */
+export const VOICE_FRAMES = 106;

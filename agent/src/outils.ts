@@ -6,12 +6,17 @@ import { join } from "node:path";
 import type { CulinovaClient, VideoJob } from "./culinova.ts";
 
 /**
- * Fin des vidéos : voix de Julien (public/voix/et-voila.mp3) et Chef Ju en 3D
- * (public/mascotte-3d.png), quand ces fichiers sont présents.
+ * Habillage des vidéos : musique de fond (public/musique.mp3), voix de Julien
+ * (public/voix/et-voila.mp3) et Chef Ju en 3D (public/mascotte-3d.png), quand ces fichiers sont présents.
  */
-export function finishing(root: string): { voice: string | null; endMascot: string | null } {
+export function finishing(root: string): {
+  voice: string | null;
+  endMascot: string | null;
+  music: string | null;
+} {
   const has = (file: string) => existsSync(join(root, "public", file));
   return {
+    music: has("musique.mp3") ? "musique.mp3" : null,
     voice: has("voix/et-voila.mp3") ? "voix/et-voila.mp3" : null,
     endMascot: has("mascotte-3d.png") ? "mascotte-3d.png" : null,
   };

@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { EXAMPLE_PROPS, HOOK_FRAMES, shotExpression, shotFrames, timeline, totalFrames } from "./timeline.ts";
+import {
+  EXAMPLE_PROPS,
+  HOOK_FRAMES,
+  MUSIC_UNDER_VOICE,
+  MUSIC_VOLUME,
+  musicVolume,
+  shotExpression,
+  shotFrames,
+  timeline,
+  totalFrames,
+} from "./timeline.ts";
 
 test("un plan dure entre 1,8 et 3 secondes selon sa longueur", () => {
   assert.equal(shotFrames("Mixer"), 72);
@@ -32,4 +42,13 @@ test("sans photo, pas de dévoilement", () => {
 test("le dernier plan (dressage) rend la mascotte fière", () => {
   assert.equal(shotExpression(4, 5), "fier");
   assert.notEqual(shotExpression(0, 5), "fier");
+});
+
+test("la musique baisse sous la voix de Julien et s'éteint en fondu", () => {
+  assert.equal(musicVolume(0, 600, null), 0);
+  assert.equal(musicVolume(100, 600, null), MUSIC_VOLUME);
+  assert.equal(musicVolume(450, 600, [440, 540]), MUSIC_UNDER_VOICE);
+  assert.ok(musicVolume(430, 600, [440, 540]) > MUSIC_UNDER_VOICE);
+  assert.equal(musicVolume(570, 600, [440, 540]), MUSIC_VOLUME);
+  assert.equal(musicVolume(600, 600, null), 0);
 });

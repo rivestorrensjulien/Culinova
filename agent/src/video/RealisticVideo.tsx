@@ -7,7 +7,6 @@ import { loadFont as loadSans } from "@remotion/google-fonts/DMSans";
 import { loadFont as loadSerif } from "@remotion/google-fonts/Fraunces";
 import {
   AbsoluteFill,
-  Audio,
   Img,
   OffthreadVideo,
   Sequence,
@@ -18,6 +17,8 @@ import {
 import type { ReactNode } from "react";
 import { shotText, stepLabel } from "./actions.ts";
 import { Mascot } from "./Mascot.tsx";
+import { BackgroundMusic } from "./Music.tsx";
+import { VOICE_FRAMES } from "./timeline.ts";
 import {
   bandFontSize,
   playbackRate,
@@ -181,10 +182,17 @@ function RealShot({ props, index, frames }: { props: RealisticProps; index: numb
 }
 
 export function RealisticVideo(props: RealisticProps) {
+  const segments = realisticTimeline(props);
+  const total = segments.reduce((sum, s) => sum + s.frames, 0);
+  const end = segments[segments.length - 1]!;
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
-      {props.music ? <Audio src={staticFile(props.music)} volume={0.35} /> : null}
-      {realisticTimeline(props).map((segment) => (
+      <BackgroundMusic
+        src={props.music}
+        total={total}
+        voice={props.voice ? [end.from, end.from + VOICE_FRAMES] : null}
+      />
+      {segments.map((segment) => (
         <Sequence
           key={`${segment.kind}-${segment.from}`}
           from={segment.from}

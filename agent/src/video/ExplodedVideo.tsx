@@ -27,7 +27,9 @@ import {
   layerAt,
   VOICE_START,
 } from "./exploded.ts";
+import { BackgroundMusic } from "./Music.tsx";
 import { EndScene, Words } from "./RecipeVideo.tsx";
+import { VOICE_FRAMES } from "./timeline.ts";
 
 const serif = loadSerif("normal", { weights: ["600"], subsets: ["latin", "latin-ext"] }).fontFamily;
 const sans = loadSans("normal", { weights: ["500"], subsets: ["latin", "latin-ext"] }).fontFamily;
@@ -284,9 +286,18 @@ function VoilaScene({ props }: { props: ExplodedProps }) {
 }
 
 export function ExplodedVideo(props: ExplodedProps) {
+  const segments = explodedTimeline(props);
+  const total = segments.reduce((sum, s) => sum + s.frames, 0);
+  const voila = segments.find((s) => s.kind === "voila")!;
+  const voiceFrom = voila.from + VOICE_START;
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
-      {explodedTimeline(props).map((segment) => (
+      <BackgroundMusic
+        src={props.music}
+        total={total}
+        voice={props.voice ? [voiceFrom, voiceFrom + VOICE_FRAMES] : null}
+      />
+      {segments.map((segment) => (
         <Sequence key={segment.kind} from={segment.from} durationInFrames={segment.frames}>
           {segment.kind === "photo" ? <PhotoScene props={props} frames={segment.frames} /> : null}
           {segment.kind === "explode" ? <ExplodeScene props={props} /> : null}

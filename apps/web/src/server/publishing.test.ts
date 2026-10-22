@@ -83,7 +83,7 @@ describe.skipIf(!hasTestDb)("file de publication", () => {
     const queue = await agentQueue(db, "https://culinova.app", { recipeId });
     expect(queue).toHaveLength(1);
     expect(queue[0]).toMatchObject({ recipeId, pending: ["instagram", "tiktok"] });
-    expect(queue[0]!.social.map((c) => c.platform).sort()).toEqual(["instagram", "tiktok"]);
+    expect(queue[0]!.social.map((c) => c.platform).sort()).toEqual(["instagram", "pinterest", "tiktok"]);
     expect((await agentQueue(db, "https://culinova.app")).some((r) => r.recipeId === recipeId)).toBe(true);
 
     expect(

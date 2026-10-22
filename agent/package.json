@@ -16,7 +16,8 @@
     "retouche": "tsx src/retouche.ts",
     "eclate": "tsx src/eclate.ts",
     "mascotte3d": "tsx src/mascotte3d.ts",
-    "envoyer": "tsx src/envoyer.ts"
+    "envoyer": "tsx src/envoyer.ts",
+    "musique": "tsx src/musique.ts"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.300",

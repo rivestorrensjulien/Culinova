@@ -16,6 +16,10 @@ on:
       cle:
         description: "Numéro du plan « signature » filmé en version économique (vide : choisi automatiquement)"
         required: false
+      musique:
+        description: "Composer 4 musiques de fond à écouter (≈ 0,80 €)"
+        type: boolean
+        default: false
       envoyer:
         description: "Envoyer la vidéo du comparatif à Culinova comme vidéo de la recette (à valider avant publication)"
         type: boolean
@@ -82,8 +86,11 @@ jobs:
       - name: Vérifications
         run: npm run typecheck && npm test
       - name: Fabrication des deux vidéos
-        if: inputs.retouche_plan == '' && !inputs.eclate && !inputs.mascotte3d && !inputs.envoyer
+        if: inputs.retouche_plan == '' && !inputs.eclate && !inputs.mascotte3d && !inputs.envoyer && !inputs.musique
         run: npm run comparatif -- --recette="$RECETTE" --animee="$ANIMEE" --economique="$ECONOMIQUE" --cle="$CLE"
+      - name: Musiques de fond
+        if: inputs.musique
+        run: npm run musique
       - name: Envoi à Culinova
         if: inputs.envoyer
         env:

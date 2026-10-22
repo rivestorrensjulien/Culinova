@@ -45,13 +45,8 @@ export interface PublishOptions {
 }
 
 type MissingRefusal = "not_found" | "no_video" | "no_photo" | "no_carousel" | "outdated";
-type PostRefusal =
-  | "not_connected"
-  | "no_board"
-  | "invalid_format"
-  | "invalid_privacy"
-  | "too_long"
-  | "failed";
+type AccountRefusal = "not_connected" | "no_board";
+type PostRefusal = AccountRefusal | "invalid_format" | "invalid_privacy" | "too_long" | "failed";
 type StartRefusal = { ok: false; reason: MissingRefusal | PostRefusal; detail?: string };
 export type StartResult = { ok: true } | StartRefusal;
 

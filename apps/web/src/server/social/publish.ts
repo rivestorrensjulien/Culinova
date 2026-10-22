@@ -1,7 +1,8 @@
 /**
  * Publication d'une recette après validation par l'administrateur :
  * Instagram — photo dans le fil, carrousel (photo, ingrédients, étapes) ou Reel ;
- * TikTok — vidéo (téléchargée par TikTok depuis culinova.fr), étiquetée « générée par IA ».
+ * TikTok — vidéo (téléchargée par TikTok depuis culinova.fr), étiquetée « générée par IA » ;
+ * Pinterest — épingle (photo 4:5, titre, description, lien vers culinova.fr), publiée aussitôt.
  * Une publication passe par « processing » puis « published » ou « failed ».
  */
 import type { Database } from "@culinova/db";
@@ -11,7 +12,7 @@ import { audit } from "../audit";
 import { appUrl } from "../auth";
 import { adminRecipe, signedImagePath, signedSlidePath, signedVideoPath } from "../publishing";
 import { accountToken, type SocialPlatform } from "./accounts";
-import { captionFor, MAX_CAPTION } from "./captions";
+import { captionFor, MAX_CAPTION, pinTitleFor } from "./captions";
 import { latestCarousel } from "./carousels";
 import {
   instagramContainerStatus,
@@ -21,6 +22,8 @@ import {
   instagramPublish,
   SocialApiError,
 } from "./instagram";
+import { getPinterestBoard } from "./pinterest-board";
+import { pinterestCreatePin } from "./pinterest";
 import { tiktokCreatorInfo, tiktokInitPost, tiktokPostStatus, type TiktokPostOptions } from "./tiktok";
 import { currentPhoto, latestVideo } from "./videos";
 
@@ -42,7 +45,13 @@ export interface PublishOptions {
 }
 
 type MissingRefusal = "not_found" | "no_video" | "no_photo" | "no_carousel" | "outdated";
-type PostRefusal = "not_connected" | "invalid_format" | "invalid_privacy" | "too_long" | "failed";
+type PostRefusal =
+  | "not_connected"
+  | "no_board"
+  | "invalid_format"
+  | "invalid_privacy"
+  | "too_long"
+  | "failed";
 type StartRefusal = { ok: false; reason: MissingRefusal | PostRefusal; detail?: string };
 export type StartResult = { ok: true } | StartRefusal;
 
@@ -50,6 +59,7 @@ export type StartResult = { ok: true } | StartRefusal;
 export const FORMATS_BY_PLATFORM: Record<SocialPlatform, readonly PublicationFormat[]> = {
   instagram: ["photo", "carousel", "video"],
   tiktok: ["video"],
+  pinterest: ["photo"],
 };
 
 async function setPublication(
@@ -125,6 +135,48 @@ export async function startPublication(
     return `${appUrl()}${path}`;
   };
 
+  if (platform === "pinterest") {
+    const board = await getPinterestBoard(db);
+    if (!board) return { ok: false, reason: "no_board" };
+    try {
+      const title = await pinTitleFor(db, recipe.versionId);
+      const pin = await pinterestCreatePin(
+        account.accessToken,
+        {
+          boardId: board.boardId,
+          title,
+          description: caption,
+          link: `${appUrl()}/?utm_source=pinterest&utm_medium=social&utm_campaign=recette`,
+          altText: title,
+          imageUrl: signed(signedImagePath(mediaId, deps.now)),
+        },
+        fetchImpl,
+      );
+      const now = deps.now ?? new Date();
+      await setPublication(db, recipeId, platform, format, {
+        status: "published",
+        externalId: pin.id,
+        videoId: mediaId,
+        privacy: null,
+        postId: pin.id,
+        postUrl: pin.url,
+        publishedAt: now,
+        note: null,
+      });
+      await audit(db, {
+        actorId: adminId,
+        action: "publication.published",
+        entity: "recipe",
+        entityId: recipeId,
+        after: { platform, format, mediaId, postUrl: pin.url, board: board.boardName },
+      });
+      return { ok: true };
+    } catch (error) {
+      await setPublication(db, recipeId, platform, format, { status: "failed", note: message(error) });
+      return { ok: false, reason: "failed", detail: message(error) };
+    }
+  }
+
   try {
     let externalId: string;
     let privacy: string | null = null;
@@ -166,6 +218,10 @@ export async function startPublication(
       if (!choices) return { ok: false, reason: "invalid_privacy" };
       const creator = await tiktokCreatorInfo(account.accessToken, fetchImpl);
       if (!creator.privacyOptions.includes(choices.privacy)) return { ok: false, reason: "invalid_privacy" };
+      // Règle de TikTok : un contenu de marque ne peut pas être privé.
+      if (choices.brandedContent && choices.privacy === "SELF_ONLY") {
+        return { ok: false, reason: "invalid_privacy" };
+      }
       if (durationS > creator.maxDurationS) return { ok: false, reason: "too_long" };
       externalId = await tiktokInitPost(
         account.accessToken,
@@ -177,6 +233,7 @@ export async function startPublication(
           allowDuet: choices.allowDuet && !creator.duetDisabled,
           allowStitch: choices.allowStitch && !creator.stitchDisabled,
           promoteOwnBrand: choices.promoteOwnBrand,
+          brandedContent: choices.brandedContent,
         },
         fetchImpl,
       );

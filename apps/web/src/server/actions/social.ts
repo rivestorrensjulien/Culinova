@@ -19,6 +19,8 @@ import {
   type TiktokChoices,
 } from "../social/publish";
 import { analyzeStats, type AnalyzeResult, collectStats } from "../social/stats";
+import { type PinterestBoard, pinterestBoards } from "../social/pinterest";
+import { getPinterestBoard, type PinterestBoardSetting, savePinterestBoard } from "../social/pinterest-board";
 import { type CreatorInfo, tiktokCreatorInfo } from "../social/tiktok";
 
 const uuid = z.uuid();
@@ -52,6 +54,7 @@ const choicesSchema = z.object({
   allowDuet: z.boolean(),
   allowStitch: z.boolean(),
   promoteOwnBrand: z.boolean(),
+  brandedContent: z.boolean(),
 });
 
 export type PublishResult = { result: StartResult; statuses: PublicationStatus[] } | null;
@@ -137,4 +140,25 @@ export async function analyzeStatsAction(): Promise<AnalyzeResult | null> {
   const session = await admin();
   if (!session) return null;
   return analyzeStats(getDb(), createLlmAdapter(process.env, { effort: "medium" }), session.user.id);
+}
+
+/** Tableaux du compte Pinterest relié, et celui choisi pour les épingles. */
+export async function pinterestBoardsAction(): Promise<{
+  boards: PinterestBoard[];
+  selected: PinterestBoardSetting | null;
+} | null> {
+  if (!(await admin())) return null;
+  const db = getDb();
+  const account = await accountToken(db, "pinterest").catch(() => null);
+  if (!account) return null;
+  const boards = await pinterestBoards(account.accessToken).catch(() => null);
+  if (!boards) return null;
+  return { boards, selected: await getPinterestBoard(db) };
+}
+
+export async function savePinterestBoardAction(boardId: string, boardName: string): Promise<boolean> {
+  const session = await admin();
+  if (!session || !/^\d{1,30}$/.test(boardId)) return false;
+  await savePinterestBoard(getDb(), session.user.id, { boardId, boardName: String(boardName ?? "") });
+  return true;
 }

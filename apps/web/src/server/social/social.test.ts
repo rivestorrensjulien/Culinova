@@ -12,6 +12,7 @@ import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { publicationStatuses, queuePublication, signedVideoPath, verifyVideoSignature } from "../publishing";
 import { accountToken, listAccounts, saveAccount } from "./accounts";
+import { savePinterestBoard } from "./pinterest-board";
 import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slideKey } from "./carousels";
 import { advancePublication, captionFor, startPublication } from "./publish";
 import { analyzeStats, collectStats, engagementRate, statsOverview } from "./stats";
@@ -100,6 +101,11 @@ function fakeNetwork(routes: Array<[RegExp, unknown | (() => unknown)]>) {
   return { impl, calls };
 }
 
+/** Épingle Pinterest dans la vue d'ensemble des statistiques. */
+function overview0(overview: Awaited<ReturnType<typeof statsOverview>>) {
+  return overview.posts.find((p) => p.postUrl === "https://www.pinterest.com/pin/987654321/");
+}
+
 describe("liens de vidéo et lecture partielle", () => {
   it("signe des liens de vidéo valables 6 heures, distincts des liens de photo", () => {
     const env = { AGENT_API_KEY: "v".repeat(40) };
@@ -135,6 +141,8 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     AGENT_API_KEY: process.env.AGENT_API_KEY,
     SOCIAL_TOKEN_KEY: process.env.SOCIAL_TOKEN_KEY,
     IMAGE_STORAGE_DIR: process.env.IMAGE_STORAGE_DIR,
+    PINTEREST_APP_ID: process.env.PINTEREST_APP_ID,
+    PINTEREST_APP_SECRET: process.env.PINTEREST_APP_SECRET,
   };
   afterAll(() => {
     for (const [key, value] of Object.entries(saved)) {
@@ -147,6 +155,8 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     process.env.AGENT_API_KEY = "a".repeat(40);
     process.env.SOCIAL_TOKEN_KEY = randomBytes(32).toString("base64");
     process.env.IMAGE_STORAGE_DIR = join(tmpdir(), `culinova-test-${randomBytes(4).toString("hex")}`);
+    process.env.PINTEREST_APP_ID = "1500000";
+    process.env.PINTEREST_APP_SECRET = "p".repeat(40);
     admin = await createTestUser({ role: "admin" });
     recipeId = await recipeOf(admin.id);
     await queuePublication(testDb(), admin.id, recipeId, ["instagram", "tiktok"]);
@@ -308,6 +318,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       allowDuet: true,
       allowStitch: false,
       promoteOwnBrand: false,
+      brandedContent: false,
     };
     expect(
       await startPublication(
@@ -323,6 +334,18 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       ok: false,
       reason: "invalid_privacy",
     });
+    // Règle de TikTok : un contenu de marque ne peut pas être privé.
+    expect(
+      await startPublication(
+        db,
+        admin.id,
+        recipeId,
+        "tiktok",
+        "video",
+        { tiktok: { ...choices, privacy: "SELF_ONLY", brandedContent: true } },
+        { fetchImpl: network.impl },
+      ),
+    ).toEqual({ ok: false, reason: "invalid_privacy" });
     expect(
       await startPublication(
         db,
@@ -452,6 +475,53 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     }
   });
 
+  it("Pinterest : épingle la photo sur le tableau choisi, avec un lien vers culinova.fr", async () => {
+    const db = testDb();
+    const now = new Date();
+    await saveAccount(db, admin.id, {
+      platform: "pinterest",
+      accountId: "culinova",
+      username: "culinova",
+      accessToken: "pina_test",
+      refreshToken: "pinr_test",
+      expiresAt: new Date(now.getTime() + 30 * 86400_000),
+      refreshExpiresAt: new Date(now.getTime() + 365 * 86400_000),
+      scopes: ["pins:write"],
+    });
+    const network = fakeNetwork([[/\/v5\/pins$/, { id: "987654321" }]]);
+    // Sans tableau choisi, rien n'est épinglé.
+    expect(
+      await startPublication(db, admin.id, recipeId, "pinterest", "photo", {}, { fetchImpl: network.impl }),
+    ).toEqual({ ok: false, reason: "no_board" });
+    await savePinterestBoard(db, admin.id, { boardId: "112233", boardName: "Recettes Culinova" });
+    expect(await startPublication(db, admin.id, recipeId, "pinterest", "video")).toEqual({
+      ok: false,
+      reason: "invalid_format",
+    });
+    expect(
+      await startPublication(db, admin.id, recipeId, "pinterest", "photo", {}, { fetchImpl: network.impl }),
+    ).toEqual({ ok: true });
+    const pin = JSON.parse(network.calls.find((c) => /\/v5\/pins$/.test(c.url))!.body!);
+    expect(pin.board_id).toBe("112233");
+    expect(pin.title.length).toBeLessThanOrEqual(100);
+    expect(pin.description.length).toBeLessThanOrEqual(800);
+    expect(pin.description).not.toMatch(/@\w/);
+    expect(pin.link).toContain("utm_source=pinterest");
+    expect(pin.media_source).toMatchObject({ source_type: "image_url" });
+    expect(pin.media_source.url).toContain("/api/agent/images/");
+    const [row] = await db
+      .select()
+      .from(s.recipePublications)
+      .where(
+        and(eq(s.recipePublications.recipeId, recipeId), eq(s.recipePublications.platform, "pinterest")),
+      );
+    expect(row).toMatchObject({
+      status: "published",
+      format: "photo",
+      postUrl: "https://www.pinterest.com/pin/987654321/",
+    });
+  });
+
   it("légende : texte du réseau suivi des hashtags", async () => {
     const db = testDb();
     const [recipe] = await db.select().from(s.recipes).where(eq(s.recipes.id, recipeId));
@@ -487,6 +557,8 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
           error: { code: "ok" },
         },
       ],
+      [/\/v5\/user_account/, { username: "culinova", follower_count: 25 }],
+      [/\/v5\/pins\/987654321\/analytics/, { all: { summary_metrics: { IMPRESSION: 300, SAVE: 12 } } }],
       [
         /video\/list/,
         {
@@ -497,7 +569,13 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
         },
       ],
     ]);
-    expect(await collectStats(db, { fetchImpl: network.impl })).toEqual({ instagram: "ok", tiktok: "ok" });
+    expect(await collectStats(db, { fetchImpl: network.impl })).toEqual({
+      instagram: "ok",
+      tiktok: "ok",
+      pinterest: "ok",
+    });
+    const pin = overview0(await statsOverview(db));
+    expect(pin?.metrics).toMatchObject({ views: 300, saves: 12 });
     const overview = await statsOverview(db);
     expect(overview.accounts.find((a) => a.platform === "instagram")?.followers).toBe(120);
     const reel = overview.posts.find((p) => p.postUrl === "https://www.instagram.com/reel/abc/");

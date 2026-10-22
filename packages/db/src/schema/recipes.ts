@@ -328,7 +328,7 @@ export const recipeViews = pgTable(
   (t) => [index("recipe_views_recipe_idx").on(t.recipeId, t.at)],
 );
 
-export const PUBLICATION_PLATFORMS = ["tiktok", "instagram"] as const;
+export const PUBLICATION_PLATFORMS = ["tiktok", "instagram", "pinterest"] as const;
 export type PublicationPlatform = (typeof PUBLICATION_PLATFORMS)[number];
 export type PublicationStatusValue = "queued" | "processing" | "published" | "failed";
 /** Format publié : vidéo (Reel, TikTok), photo seule ou carrousel (Instagram). */

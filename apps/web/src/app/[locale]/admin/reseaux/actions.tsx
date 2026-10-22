@@ -1,15 +1,19 @@
 "use client";
 
 import type { InsightsAnalysis } from "@culinova/ai";
-import { Badge, Button, Notice, Textarea } from "@culinova/ui";
+import { Badge, Button, Notice, Select, Textarea } from "@culinova/ui";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   analyzeStatsAction,
   collectStatsAction,
   disconnectAccountAction,
+  pinterestBoardsAction,
   saveCaptionSettingsAction,
+  savePinterestBoardAction,
 } from "@/server/actions/social";
+import type { PinterestBoard } from "@/server/social/pinterest";
+import type { PinterestBoardSetting } from "@/server/social/pinterest-board";
 
 /** Même texte que AI_NOTICE (server/social/captions.ts), affiché dans le réglage. */
 const AI_NOTICE_TEXT = "📸 Visuel généré par IA à partir de la recette.";
@@ -195,5 +199,71 @@ export function CaptionSettingsForm({ mentions, aiNotice }: { mentions: string[]
         </Button>
       </div>
     </form>
+  );
+}
+
+/** Tableau Pinterest où sont épinglées les recettes (liste lue sur le compte relié). */
+export function PinterestBoardPicker({ selected }: { selected: PinterestBoardSetting | null }) {
+  const router = useRouter();
+  const [boards, setBoards] = useState<PinterestBoard[] | null | undefined>(undefined);
+  const [boardId, setBoardId] = useState(selected?.boardId ?? "");
+  const [saved, setSaved] = useState(false);
+  const [pending, start] = useTransition();
+  useEffect(() => {
+    pinterestBoardsAction()
+      .then((result) => setBoards(result?.boards ?? null))
+      .catch(() => setBoards(null));
+  }, []);
+  if (boards === undefined) return <p className="text-muted">Lecture des tableaux Pinterest…</p>;
+  if (boards === null)
+    return <Notice tone="danger">Tableaux Pinterest illisibles : reliez le compte à nouveau.</Notice>;
+  if (boards.length === 0) {
+    return (
+      <Notice tone="warning">
+        Aucun tableau sur ce compte : créez-en un sur Pinterest (par exemple « Recettes Culinova »), puis
+        rechargez la page.
+      </Notice>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2" data-testid="pinterest-board">
+      <label className="flex flex-col gap-1">
+        <span className="font-medium">Tableau des épingles</span>
+        <Select
+          value={boardId}
+          onChange={(e) => {
+            setBoardId(e.target.value);
+            setSaved(false);
+          }}
+        >
+          <option value="" disabled>
+            Choisir…
+          </option>
+          {boards.map((board) => (
+            <option key={board.id} value={board.id}>
+              {board.name}
+              {board.privacy === "SECRET" ? " (secret)" : ""}
+            </option>
+          ))}
+        </Select>
+      </label>
+      <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          disabled={pending || !boardId || boardId === selected?.boardId}
+          onClick={() =>
+            start(async () => {
+              const board = boards.find((b) => b.id === boardId);
+              const ok = await savePinterestBoardAction(boardId, board?.name ?? "");
+              setSaved(ok);
+              router.refresh();
+            })
+          }
+        >
+          Enregistrer
+        </Button>
+        {saved ? <Badge tone="success">Enregistré</Badge> : null}
+      </div>
+    </div>
   );
 }

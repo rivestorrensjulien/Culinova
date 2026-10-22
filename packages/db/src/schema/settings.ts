@@ -12,6 +12,8 @@ export const SETTING_KEYS = {
   homeShowcase: "home.showcase",
   /** Réglages des légendes des réseaux : comptes à mentionner, mention « photo générée par IA ». */
   socialCaptions: "social.captions",
+  /** Pinterest : tableau où sont épinglées les recettes. */
+  socialPinterest: "social.pinterest",
 } as const;
 
 /** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */

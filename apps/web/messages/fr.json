@@ -1277,7 +1277,8 @@
     "agentOff": "Agent non configuré : ajoutez la variable AGENT_API_KEY dans Vercel pour ouvrir sa porte d’accès.",
     "platforms": {
       "tiktok": "TikTok",
-      "instagram": "Instagram"
+      "instagram": "Instagram",
+      "pinterest": "Pinterest"
     },
     "none": "Non prévu",
     "queued": "À publier",
@@ -1318,7 +1319,8 @@
       "outdated": "Ce contenu ne correspond plus à la recette ou à sa photo : une nouvelle version est en préparation.",
       "no_photo": "Générez d’abord la photo de la recette.",
       "no_carousel": "Pas encore de carrousel à publier.",
-      "invalid_format": "Format non disponible sur ce réseau."
+      "invalid_format": "Format non disponible sur ce réseau.",
+      "no_board": "Choisissez d’abord le tableau Pinterest dans Administration › Réseaux."
     },
     "tiktok": {
       "loading": "Lecture du compte TikTok…",
@@ -1343,9 +1345,18 @@
       "processing": "Après la publication, la vidéo peut mettre quelques minutes à apparaître sur le profil.",
       "publish": "Publier sur TikTok",
       "cancel": "Annuler",
-      "ownBrand": "Cette vidéo fait la promotion de ma propre marque (Culinova)",
-      "ownBrandHint": "TikTok l’affichera comme « Contenu promotionnel ».",
-      "aiLabel": "La vidéo sera étiquetée « générée par IA » par TikTok (les visuels sont créés par IA)."
+      "aiLabel": "La vidéo sera étiquetée « générée par IA » par TikTok (les visuels sont créés par IA).",
+      "disclose": "Déclarer un contenu commercial",
+      "discloseHint": "Activez si la vidéo fait la promotion d’une marque, d’un produit ou d’un service.",
+      "yourBrand": "Votre marque",
+      "yourBrandHint": "Vous faites la promotion de votre propre marque ou activité (Culinova).",
+      "brandedContent": "Contenu de marque",
+      "brandedContentHint": "Vous faites la promotion d’une autre marque ou d’un partenaire.",
+      "labelPromotional": "La vidéo sera étiquetée « Contenu promotionnel ».",
+      "labelPaid": "La vidéo sera étiquetée « Partenariat rémunéré ».",
+      "needOne": "Indiquez si la vidéo fait la promotion de votre marque, d’un contenu de marque, ou des deux.",
+      "brandedPrivate": "Un contenu de marque ne peut pas être privé.",
+      "consentBranded": "En publiant, vous acceptez la <brand>politique relative au contenu de marque</brand> et la <link>confirmation d’utilisation de la musique</link> de TikTok."
     },
     "formats": {
       "instagram": {
@@ -1355,6 +1366,9 @@
       },
       "tiktok": {
         "video": "TikTok · vidéo"
+      },
+      "pinterest": {
+        "photo": "Pinterest · épingle (photo)"
       }
     },
     "carousel": {
@@ -1365,7 +1379,7 @@
       "none": "Le carrousel (photo, ingrédients, étapes) est fabriqué automatiquement quand la recette est marquée « à publier »."
     },
     "caption": "Légende {platform}",
-    "captionHint": "{count} / 2 200 caractères · comptes mentionnés et mention IA réglés dans Administration › Réseaux",
+    "captionHint": "{count} / {max, number} caractères · comptes mentionnés et mention IA réglés dans Administration › Réseaux",
     "publishAgain": "Publier à nouveau"
   },
   "Install": {

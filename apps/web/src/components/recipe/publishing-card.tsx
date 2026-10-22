@@ -17,10 +17,12 @@ import type { TiktokChoices } from "@/server/social/publish";
 import type { CreatorInfo } from "@/server/social/tiktok";
 
 const MUSIC_CONFIRMATION = "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en";
+const BRANDED_CONTENT_POLICY = "https://www.tiktok.com/legal/page/global/bc-policy/en";
 
 /**
- * Choix exigés par TikTok avant chaque publication : compte, confidentialité (sans
- * valeur par défaut), interactions autorisées et accord sur l'utilisation de la musique.
+ * Choix exigés par TikTok avant chaque publication (règles de partage de contenu) : compte,
+ * confidentialité sans valeur par défaut, interactions autorisées, déclaration de contenu
+ * commercial (votre marque / contenu de marque) et accord sur la musique.
  */
 function TiktokPublishPanel({
   busy,
@@ -37,7 +39,9 @@ function TiktokPublishPanel({
   const [allowComments, setAllowComments] = useState(false);
   const [allowDuet, setAllowDuet] = useState(false);
   const [allowStitch, setAllowStitch] = useState(false);
+  const [disclose, setDisclose] = useState(false);
   const [promoteOwnBrand, setPromoteOwnBrand] = useState(false);
+  const [brandedContent, setBrandedContent] = useState(false);
   useEffect(() => {
     tiktokCreatorInfoAction()
       .then(setCreator)
@@ -47,6 +51,9 @@ function TiktokPublishPanel({
   if (creator === null) return <Notice tone="danger">{t("unavailable")}</Notice>;
   const onlyPrivate =
     creator.privacyOptions.length > 0 && creator.privacyOptions.every((o) => o === "SELF_ONLY");
+  const ownBrand = disclose && promoteOwnBrand;
+  const branded = disclose && brandedContent;
+  const missingDisclosure = disclose && !promoteOwnBrand && !brandedContent;
   const toggles = [
     { key: "comments", value: allowComments, set: setAllowComments, disabled: creator.commentDisabled },
     { key: "duet", value: allowDuet, set: setAllowDuet, disabled: creator.duetDisabled },
@@ -62,7 +69,7 @@ function TiktokPublishPanel({
             {t("choose")}
           </option>
           {creator.privacyOptions.map((option) => (
-            <option key={option} value={option}>
+            <option key={option} value={option} disabled={branded && option === "SELF_ONLY"}>
               {t.has(`privacyOptions.${option}`)
                 ? t(`privacyOptions.${option}` as "privacyOptions.SELF_ONLY")
                 : option}
@@ -86,24 +93,74 @@ function TiktokPublishPanel({
           </label>
         ))}
       </fieldset>
-      <label className="flex items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-0.5 size-4 accent-primary"
-          checked={promoteOwnBrand}
-          onChange={(e) => setPromoteOwnBrand(e.target.checked)}
-        />
-        <span>
-          {t("ownBrand")}
-          <span className="block text-muted">{t("ownBrandHint")}</span>
-        </span>
-      </label>
+      <div className="flex flex-col gap-2 rounded-lg bg-background p-3">
+        <label className="flex items-start gap-2">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-primary"
+            checked={disclose}
+            onChange={(e) => setDisclose(e.target.checked)}
+            data-testid="tiktok-disclose"
+          />
+          <span>
+            <span className="font-medium">{t("disclose")}</span>
+            <span className="block text-muted">{t("discloseHint")}</span>
+          </span>
+        </label>
+        {disclose ? (
+          <div className="flex flex-col gap-2 pl-6">
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                className="mt-0.5 size-4 accent-primary"
+                checked={promoteOwnBrand}
+                onChange={(e) => setPromoteOwnBrand(e.target.checked)}
+              />
+              <span>
+                {t("yourBrand")}
+                <span className="block text-muted">{t("yourBrandHint")}</span>
+              </span>
+            </label>
+            <label className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                className="mt-0.5 size-4 accent-primary"
+                checked={brandedContent}
+                disabled={privacy === "SELF_ONLY"}
+                onChange={(e) => setBrandedContent(e.target.checked)}
+              />
+              <span>
+                {t("brandedContent")}
+                <span className="block text-muted">
+                  {privacy === "SELF_ONLY" ? t("brandedPrivate") : t("brandedContentHint")}
+                </span>
+              </span>
+            </label>
+            {missingDisclosure ? <Notice tone="warning">{t("needOne")}</Notice> : null}
+            {branded ? (
+              <p className="text-muted">{t("labelPaid")}</p>
+            ) : ownBrand ? (
+              <p className="text-muted">{t("labelPromotional")}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
       <p className="text-muted">{t("aiLabel")}</p>
       <p className="text-muted">
-        {t.rich("consent", {
+        {t.rich(branded ? "consentBranded" : "consent", {
           link: (chunks) => (
             <a
               href={MUSIC_CONFIRMATION}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
+              {chunks}
+            </a>
+          ),
+          brand: (chunks) => (
+            <a
+              href={BRANDED_CONTENT_POLICY}
               target="_blank"
               rel="noreferrer"
               className="text-primary hover:underline"
@@ -117,8 +174,17 @@ function TiktokPublishPanel({
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
-          disabled={busy || !privacy}
-          onClick={() => onPublish({ privacy, allowComments, allowDuet, allowStitch, promoteOwnBrand })}
+          disabled={busy || !privacy || missingDisclosure}
+          onClick={() =>
+            onPublish({
+              privacy,
+              allowComments,
+              allowDuet,
+              allowStitch,
+              promoteOwnBrand: ownBrand,
+              brandedContent: branded,
+            })
+          }
         >
           {t("publish")}
         </Button>
@@ -132,12 +198,16 @@ function TiktokPublishPanel({
 
 const PLATFORMS: Platform[] = ["tiktok", "instagram"];
 type Format = PublicationStatus["format"];
-/** Ce que l'administrateur peut publier : photo, carrousel et Reel sur Instagram, vidéo sur TikTok. */
+/**
+ * Ce que l'administrateur peut publier : photo, carrousel et Reel sur Instagram, vidéo sur TikTok,
+ * épingle (photo) sur Pinterest.
+ */
 const ROWS: Array<{ platform: Platform; format: Format }> = [
   { platform: "instagram", format: "photo" },
   { platform: "instagram", format: "carousel" },
   { platform: "instagram", format: "video" },
   { platform: "tiktok", format: "video" },
+  { platform: "pinterest", format: "photo" },
 ];
 
 /** Statut de publication par réseau, pour les recettes de l'administrateur. */
@@ -152,7 +222,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [tiktokOpen, setTiktokOpen] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [captions, setCaptions] = useState<Record<Platform, string>>(
-    recipe.publishing?.captions ?? { instagram: "", tiktok: "" },
+    recipe.publishing?.captions ?? { instagram: "", tiktok: "", pinterest: "" },
   );
   const processing = statuses.some((s) => s.status === "processing");
   useEffect(() => {
@@ -292,18 +362,21 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
           )}
         </div>
         <div className="grid gap-3 md:grid-cols-2">
-          {(["instagram", "tiktok"] as const).map((platform) => (
+          {(["instagram", "tiktok", "pinterest"] as const).map((platform) => (
             <label key={platform} className="flex flex-col gap-1">
               <span className="font-medium">{t("caption", { platform: t(`platforms.${platform}`) })}</span>
               <Textarea
                 value={captions[platform]}
-                maxLength={2200}
+                maxLength={platform === "pinterest" ? 800 : 2200}
                 rows={7}
                 onChange={(e) => setCaptions((all) => ({ ...all, [platform]: e.target.value }))}
                 data-testid={`caption-${platform}`}
               />
               <span className="text-xs text-muted">
-                {t("captionHint", { count: captions[platform].length })}
+                {t("captionHint", {
+                  count: captions[platform].length,
+                  max: platform === "pinterest" ? 800 : 2200,
+                })}
               </span>
             </label>
           ))}

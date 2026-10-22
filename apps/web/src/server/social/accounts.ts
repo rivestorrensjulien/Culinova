@@ -1,7 +1,7 @@
 /**
  * Comptes Instagram et TikTok reliés par l'administrateur : jetons chiffrés en base,
  * renouvelés automatiquement avant expiration (Instagram : 60 jours ; TikTok : 24 h,
- * avec un jeton de renouvellement valable un an).
+ * avec un jeton de renouvellement valable un an ; Pinterest : 30 jours, renouvellement un an).
  */
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { audit } from "../audit";
 import { decryptToken, encryptToken, tokenKey } from "./crypto";
 import { instagramConfig, instagramRefresh } from "./instagram";
+import { pinterestConfig, pinterestRefresh } from "./pinterest";
 import { tiktokConfig, tiktokRefresh } from "./tiktok";
 
 export type SocialPlatform = s.PublicationPlatform;
@@ -34,11 +35,18 @@ export interface SocialSetup {
   tokenKey: boolean;
   instagram: boolean;
   tiktok: boolean;
+  pinterest: boolean;
   /**
    * Début des identifiants publics utilisés (jamais les clés secrètes), pour vérifier
    * qu'il s'agit des bons (ex. clé de la Sandbox TikTok, qui commence par « sb »).
    */
-  hints: { instagramAppId: string | null; tiktokClientKey: string | null };
+  hints: {
+    instagramAppId: string | null;
+    tiktokClientKey: string | null;
+    pinterestAppId: string | null;
+    /** Pinterest en bac à sable (accès d'essai) : les épingles ne sont visibles que par le compte. */
+    pinterestSandbox: boolean;
+  };
 }
 
 /** « sbaw…(18 caractères) » : assez pour reconnaître un identifiant public, sans l'afficher en entier. */
@@ -51,9 +59,12 @@ export function socialSetup(env: Record<string, string | undefined> = process.en
     tokenKey: tokenKey(env) !== null,
     instagram: instagramConfig(env) !== null,
     tiktok: tiktokConfig(env) !== null,
+    pinterest: pinterestConfig(env) !== null,
     hints: {
       instagramAppId: hint(instagramConfig(env)?.appId),
       tiktokClientKey: hint(tiktokConfig(env)?.clientKey),
+      pinterestAppId: hint(pinterestConfig(env)?.appId),
+      pinterestSandbox: Boolean(pinterestConfig(env)?.api.includes("sandbox")),
     },
   };
 }
@@ -105,7 +116,9 @@ export async function disconnectAccount(db: Database, adminId: string, platform:
 }
 
 function isExpired(row: typeof s.socialAccounts.$inferSelect, now: Date): boolean {
-  if (row.platform === "tiktok") return Boolean(row.refreshExpiresAt && row.refreshExpiresAt <= now);
+  if (row.platform === "tiktok" || (row.platform === "pinterest" && row.refreshExpiresAt)) {
+    return Boolean(row.refreshExpiresAt && row.refreshExpiresAt <= now);
+  }
   return Boolean(row.expiresAt && row.expiresAt <= now);
 }
 
@@ -115,7 +128,11 @@ export async function listAccounts(db: Database, now = new Date()): Promise<Acco
     platform: row.platform,
     username: row.username,
     connectedAt: row.updatedAt.toISOString(),
-    expiresAt: (row.platform === "tiktok" ? row.refreshExpiresAt : row.expiresAt)?.toISOString() ?? null,
+    expiresAt:
+      (row.platform === "instagram"
+        ? row.expiresAt
+        : (row.refreshExpiresAt ?? row.expiresAt)
+      )?.toISOString() ?? null,
     expired: isExpired(row, now),
   }));
 }
@@ -156,6 +173,18 @@ export async function accountToken(
         refreshTokenEnc: encryptToken(fresh.refreshToken),
         expiresAt: fresh.expiresAt,
         refreshExpiresAt: fresh.refreshExpiresAt,
+      })
+      .where(eq(s.socialAccounts.id, row.id));
+  } else if (platform === "pinterest" && expiresSoon(3 * DAY) && row.refreshTokenEnc) {
+    const fresh = await pinterestRefresh(decryptToken(row.refreshTokenEnc), fetchImpl, process.env, now);
+    accessToken = fresh.accessToken;
+    await db
+      .update(s.socialAccounts)
+      .set({
+        accessTokenEnc: encryptToken(fresh.accessToken),
+        ...(fresh.refreshToken ? { refreshTokenEnc: encryptToken(fresh.refreshToken) } : {}),
+        expiresAt: fresh.expiresAt,
+        ...(fresh.refreshExpiresAt ? { refreshExpiresAt: fresh.refreshExpiresAt } : {}),
       })
       .where(eq(s.socialAccounts.id, row.id));
   }

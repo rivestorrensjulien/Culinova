@@ -324,7 +324,7 @@ export async function agentQueue(
         .where(
           and(
             eq(s.socialContents.recipeVersionId, recipe.versionId),
-            inArray(s.socialContents.platform, ["instagram", "tiktok"]),
+            inArray(s.socialContents.platform, ["instagram", "tiktok", "pinterest"]),
           ),
         ),
       db

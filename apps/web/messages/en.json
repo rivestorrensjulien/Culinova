@@ -1277,7 +1277,8 @@
     "agentOff": "Agent not configured: add the AGENT_API_KEY variable in Vercel to open its gate.",
     "platforms": {
       "tiktok": "TikTok",
-      "instagram": "Instagram"
+      "instagram": "Instagram",
+      "pinterest": "Pinterest"
     },
     "none": "Not planned",
     "queued": "To publish",
@@ -1318,7 +1319,8 @@
       "outdated": "This content no longer matches the recipe or its photo: a new one is being made.",
       "no_photo": "Generate the recipe photo first.",
       "no_carousel": "No carousel to publish yet.",
-      "invalid_format": "Format not available on this network."
+      "invalid_format": "Format not available on this network.",
+      "no_board": "Choose the Pinterest board first in Administration › Networks."
     },
     "tiktok": {
       "loading": "Reading the TikTok account…",
@@ -1343,9 +1345,18 @@
       "processing": "After posting, the video may take a few minutes to appear on the profile.",
       "publish": "Post to TikTok",
       "cancel": "Cancel",
-      "ownBrand": "This video promotes my own brand (Culinova)",
-      "ownBrandHint": "TikTok will show it as “Promotional content”.",
-      "aiLabel": "TikTok will label the video “AI-generated” (the visuals are made with AI)."
+      "aiLabel": "TikTok will label the video “AI-generated” (the visuals are made with AI).",
+      "disclose": "Disclose video content",
+      "discloseHint": "Turn on to disclose that this video promotes goods or services in exchange for something of value.",
+      "yourBrand": "Your brand",
+      "yourBrandHint": "You are promoting yourself or your own business (Culinova).",
+      "brandedContent": "Branded content",
+      "brandedContentHint": "You are promoting another brand or a third party.",
+      "labelPromotional": "Your video will be labeled “Promotional content”.",
+      "labelPaid": "Your video will be labeled “Paid partnership”.",
+      "needOne": "You need to indicate if your content promotes yourself, a third party, or both.",
+      "brandedPrivate": "Branded content visibility cannot be set to private.",
+      "consentBranded": "By posting, you agree to TikTok’s <brand>Branded Content Policy</brand> and <link>Music Usage Confirmation</link>."
     },
     "formats": {
       "instagram": {
@@ -1355,6 +1366,9 @@
       },
       "tiktok": {
         "video": "TikTok · video"
+      },
+      "pinterest": {
+        "photo": "Pinterest · Pin (photo)"
       }
     },
     "carousel": {
@@ -1365,7 +1379,7 @@
       "none": "The carousel (photo, ingredients, steps) is made automatically when the recipe is marked “to publish”."
     },
     "caption": "{platform} caption",
-    "captionHint": "{count} / 2,200 characters · mentions and AI notice set in Admin › Social",
+    "captionHint": "{count} / {max} characters · mentions and AI notice set in Admin › Social",
     "publishAgain": "Publish again"
   },
   "Install": {

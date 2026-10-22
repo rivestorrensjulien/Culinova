@@ -1,5 +1,5 @@
 /**
- * Connexion des comptes Instagram et TikTok (OAuth) depuis l'administration.
+ * Connexion des comptes Instagram, TikTok et Pinterest (OAuth) depuis l'administration.
  * Un état aléatoire est gardé dans un cookie de 10 minutes et vérifié au retour.
  */
 import type { Database } from "@culinova/db";
@@ -8,18 +8,19 @@ import { appUrl } from "../auth";
 import type { CurrentSession } from "../session";
 import { type SocialPlatform, saveAccount } from "./accounts";
 import { instagramAuthorizeUrl, instagramExchangeCode, instagramProfile } from "./instagram";
+import { pinterestAuthorizeUrl, pinterestExchangeCode, pinterestProfile } from "./pinterest";
 import { tiktokAuthorizeUrl, tiktokCreatorInfo, tiktokExchangeCode, tiktokProfile } from "./tiktok";
 
 export const OAUTH_COOKIE = "culinova_social_oauth";
 export const OAUTH_COOKIE_MAX_AGE_S = 600;
 
-/** Adresse de retour à déclarer chez Meta et chez TikTok. */
+/** Adresse de retour à déclarer chez Meta, TikTok et Pinterest. */
 export function redirectUri(platform: SocialPlatform): string {
   return `${appUrl()}/api/agent/${platform}/callback`;
 }
 
 export function isSocialPlatform(value: string): value is SocialPlatform {
-  return value === "instagram" || value === "tiktok";
+  return value === "instagram" || value === "tiktok" || value === "pinterest";
 }
 
 /** Administrateur avec second facteur validé, hors « se connecter en tant que ». */
@@ -46,9 +47,9 @@ export function stateMatches(
 }
 
 export function authorizeUrl(platform: SocialPlatform, state: string): string {
-  return platform === "instagram"
-    ? instagramAuthorizeUrl(state, redirectUri(platform))
-    : tiktokAuthorizeUrl(state, redirectUri(platform));
+  if (platform === "instagram") return instagramAuthorizeUrl(state, redirectUri(platform));
+  if (platform === "pinterest") return pinterestAuthorizeUrl(state, redirectUri(platform));
+  return tiktokAuthorizeUrl(state, redirectUri(platform));
 }
 
 /** Retour de Meta ou de TikTok : échange du code, profil, jetons chiffrés en base. */
@@ -71,6 +72,21 @@ export async function completeConnection(
       expiresAt: token.expiresAt,
       refreshExpiresAt: null,
       scopes: [],
+    });
+    return { username: profile.username };
+  }
+  if (platform === "pinterest") {
+    const token = await pinterestExchangeCode(code, redirectUri(platform), fetchImpl);
+    const profile = await pinterestProfile(token.accessToken, fetchImpl);
+    await saveAccount(db, adminId, {
+      platform,
+      accountId: profile.username,
+      username: profile.username,
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+      expiresAt: token.expiresAt,
+      refreshExpiresAt: token.refreshExpiresAt,
+      scopes: token.scopes,
     });
     return { username: profile.username };
   }

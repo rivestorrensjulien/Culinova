@@ -18,6 +18,7 @@ import { and, asc, desc, eq, gte, isNotNull } from "drizzle-orm";
 import { getAiBudgetCap, getAiSpend, recordAiSpend } from "../quotas";
 import { accountToken, type SocialPlatform } from "./accounts";
 import { instagramMediaInsights, instagramProfile, type PostMetrics } from "./instagram";
+import { pinterestPinMetrics, pinterestProfile } from "./pinterest";
 import { tiktokProfile, tiktokVideoList } from "./tiktok";
 
 const DAY = 24 * 3600 * 1000;
@@ -29,7 +30,11 @@ type CollectOutcome = "ok" | "not_connected" | { error: string };
 
 async function publishedPosts(db: Database, platform: SocialPlatform, now: Date) {
   return db
-    .select({ id: s.recipePublications.id, postId: s.recipePublications.postId })
+    .select({
+      id: s.recipePublications.id,
+      postId: s.recipePublications.postId,
+      publishedAt: s.recipePublications.publishedAt,
+    })
     .from(s.recipePublications)
     .where(
       and(
@@ -107,6 +112,32 @@ export async function collectStats(
       result.tiktok = { error: error instanceof Error ? error.message : String(error) };
     }
   }
+
+  const pinterest = await accountToken(db, "pinterest", { fetchImpl, now }).catch(() => null);
+  if (!pinterest) result.pinterest = "not_connected";
+  else {
+    try {
+      const profile = await pinterestProfile(pinterest.accessToken, fetchImpl);
+      await db.insert(s.socialAccountStats).values({
+        platform: "pinterest",
+        collectedAt: now,
+        followers: profile.followers,
+      });
+      for (const post of await publishedPosts(db, "pinterest", now)) {
+        const stats = await pinterestPinMetrics(
+          pinterest.accessToken,
+          post.postId!,
+          post.publishedAt ?? now,
+          now,
+          fetchImpl,
+        ).catch(() => null);
+        if (stats) await savePostStats(db, post.id, stats.metrics, stats.raw, now);
+      }
+      result.pinterest = "ok";
+    } catch (error) {
+      result.pinterest = { error: error instanceof Error ? error.message : String(error) };
+    }
+  }
   return result;
 }
 
@@ -155,7 +186,7 @@ export async function statsOverview(db: Database, now = new Date()): Promise<Sta
     .from(s.socialAccountStats)
     .where(gte(s.socialAccountStats.collectedAt, since))
     .orderBy(asc(s.socialAccountStats.collectedAt));
-  const accounts = (["instagram", "tiktok"] as const).map((platform): AccountTrend => {
+  const accounts = (["instagram", "tiktok", "pinterest"] as const).map((platform): AccountTrend => {
     const rows = accountRows.filter((r) => r.platform === platform);
     const byDay = new Map<string, number | null>();
     for (const row of rows) byDay.set(row.collectedAt.toISOString().slice(0, 10), row.followers);

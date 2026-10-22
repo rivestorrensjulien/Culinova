@@ -11,7 +11,9 @@ import type { SocialPlatform } from "./accounts";
 
 export const MAX_CAPTION = 2200;
 const MAX_MENTIONS = 20;
-const MAX_HASHTAGS = { instagram: 15, tiktok: 8 } as const;
+/** Pinterest : la recherche repose sur le texte, peu de hashtags. */
+const MAX_HASHTAGS = { instagram: 15, tiktok: 8, pinterest: 3 } as const;
+const MAX_LENGTH = { instagram: MAX_CAPTION, tiktok: MAX_CAPTION, pinterest: 800 } as const;
 
 export const AI_NOTICE = "📸 Visuel généré par IA à partir de la recette.";
 
@@ -60,7 +62,9 @@ export function buildCaption(input: {
   platform: SocialPlatform;
   settings: CaptionSettings;
 }): string {
-  const mentions = input.settings.mentions.map((name) => `@${name}`).join(" ");
+  // Les @ n'ont pas de sens sur Pinterest (comptes différents).
+  const mentions =
+    input.platform === "pinterest" ? "" : input.settings.mentions.map((name) => `@${name}`).join(" ");
   const hashtags = input.hashtags
     .map((tag) => tag.replace(/^#/, "").replace(/\s+/g, ""))
     .filter(Boolean)
@@ -70,7 +74,7 @@ export function buildCaption(input: {
   const notice = input.settings.aiNotice ? AI_NOTICE : "";
   const tail = [mentions, hashtags, notice].filter(Boolean).join("\n\n");
   // La fin (mentions, hashtags, mention IA) est toujours gardée : on raccourcit le texte si besoin.
-  const room = MAX_CAPTION - (tail ? tail.length + 2 : 0);
+  const room = MAX_LENGTH[input.platform] - (tail ? tail.length + 2 : 0);
   const text = input.text.trim().slice(0, Math.max(0, room));
   return [text, tail].filter(Boolean).join("\n\n");
 }
@@ -83,14 +87,32 @@ export async function captionFor(db: Database, versionId: string, platform: Soci
     .where(eq(s.socialContents.recipeVersionId, versionId));
   const instagram = contents.find((c) => c.platform === "instagram");
   const tiktok = contents.find((c) => c.platform === "tiktok");
+  const pinterest = contents.find((c) => c.platform === "pinterest");
   const text =
     platform === "instagram"
       ? (instagram?.caption ?? instagram?.description ?? "")
-      : [tiktok?.title, tiktok?.description].filter(Boolean).join("\n\n") || (instagram?.caption ?? "");
+      : platform === "pinterest"
+        ? (pinterest?.description ?? instagram?.description ?? "")
+        : [tiktok?.title, tiktok?.description].filter(Boolean).join("\n\n") || (instagram?.caption ?? "");
   return buildCaption({
     text,
     hashtags: instagram?.hashtags.length ? instagram.hashtags : (tiktok?.hashtags ?? []),
     platform,
     settings: await getCaptionSettings(db),
   });
+}
+
+/** Titre de l'épingle Pinterest : le titre accrocheur rédigé avec la recette, sinon son nom. */
+export async function pinTitleFor(db: Database, versionId: string): Promise<string> {
+  const contents = await db
+    .select({ platform: s.socialContents.platform, title: s.socialContents.title })
+    .from(s.socialContents)
+    .where(eq(s.socialContents.recipeVersionId, versionId));
+  const titled = contents.find((c) => c.title);
+  if (titled?.title) return titled.title.slice(0, 100);
+  const [version] = await db
+    .select({ name: s.recipeVersions.name })
+    .from(s.recipeVersions)
+    .where(eq(s.recipeVersions.id, versionId));
+  return (version?.name ?? "Recette Culinova").slice(0, 100);
 }

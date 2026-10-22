@@ -135,7 +135,7 @@ export interface RecipeView {
     video: RecipeVideoView | null;
     carousel: RecipeCarouselView | null;
     /** Légendes proposées (modifiables avant publication). */
-    captions: { instagram: string; tiktok: string };
+    captions: { instagram: string; tiktok: string; pinterest: string };
     videoFailure: { note: string | null; at: string } | null;
     accounts: AccountSummary[];
   } | null;
@@ -256,6 +256,7 @@ export async function loadRecipeView(
           captions: {
             instagram: await captionFor(db, version.id, "instagram"),
             tiktok: await captionFor(db, version.id, "tiktok"),
+            pinterest: await captionFor(db, version.id, "pinterest"),
           },
           videoFailure: await lastVideoFailure(db, recipe.id),
           accounts: await listAccounts(db),

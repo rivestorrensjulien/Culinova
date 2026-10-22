@@ -8,10 +8,25 @@ import { listAccounts, socialSetup } from "@/server/social/accounts";
 import { getCaptionSettings } from "@/server/social/captions";
 import { redirectUri } from "@/server/social/oauth";
 import { type AccountTrend, statsOverview } from "@/server/social/stats";
-import { AnalysisView, AnalyzeButton, CaptionSettingsForm, CollectButton, DisconnectButton } from "./actions";
+import { getPinterestBoard } from "@/server/social/pinterest-board";
+import {
+  AnalysisView,
+  AnalyzeButton,
+  CaptionSettingsForm,
+  CollectButton,
+  DisconnectButton,
+  PinterestBoardPicker,
+} from "./actions";
 
-const LABELS = { instagram: "Instagram", tiktok: "TikTok" } as const;
+const LABELS = { instagram: "Instagram", tiktok: "TikTok", pinterest: "Pinterest" } as const;
 const FORMAT_LABELS = { video: "vidéo", photo: "photo", carousel: "carrousel" } as const;
+/** Pinterest : la photo publiée est une épingle. */
+const formatLabel = (platform: string, format: keyof typeof FORMAT_LABELS) =>
+  platform === "instagram" && format === "video"
+    ? "Reel"
+    : platform === "pinterest"
+      ? "épingle"
+      : FORMAT_LABELS[format];
 const ERRORS: Record<string, string> = {
   configuration:
     "Configuration incomplète : ajoutez les variables indiquées ci-dessous dans Vercel, puis redéployez.",
@@ -72,10 +87,11 @@ export default async function SocialPage({
   const query = await searchParams;
   const db = getDb();
   const setup = socialSetup();
-  const [accounts, overview, captions] = await Promise.all([
+  const [accounts, overview, captions, pinterestBoard] = await Promise.all([
     listAccounts(db),
     statsOverview(db),
     getCaptionSettings(db),
+    getPinterestBoard(db),
   ]);
   const agent = agentEnabled();
 
@@ -84,12 +100,13 @@ export default async function SocialPage({
       <div>
         <h1 className="font-display text-4xl">Réseaux sociaux</h1>
         <p className="mt-2 text-muted">
-          Comptes reliés, statistiques d&apos;Instagram et de TikTok, et analyse de l&apos;IA. Les vidéos se
-          valident et se publient depuis la page de chaque recette (encart « Publication sur les réseaux »).
+          Comptes reliés, statistiques d&apos;Instagram, de TikTok et de Pinterest, et analyse de l&apos;IA.
+          Les publications se valident depuis la page de chaque recette (encart « Publication sur les réseaux
+          »).
         </p>
       </div>
 
-      {query.relie === "instagram" || query.relie === "tiktok" ? (
+      {query.relie === "instagram" || query.relie === "tiktok" || query.relie === "pinterest" ? (
         <Notice tone="success">Compte {LABELS[query.relie]} relié.</Notice>
       ) : null}
       {query.erreur ? (
@@ -99,8 +116,8 @@ export default async function SocialPage({
         </Notice>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {(["instagram", "tiktok"] as const).map((platform) => {
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {(["instagram", "tiktok", "pinterest"] as const).map((platform) => {
           const account = accounts.find((a) => a.platform === platform);
           const trend = overview.accounts.find((a) => a.platform === platform);
           const ready = setup.tokenKey && setup[platform];
@@ -132,9 +149,20 @@ export default async function SocialPage({
                   </p>
                 ) : (
                   <p className="text-muted">
-                    Reliez le compte @culinova.recette pour publier les vidéos et lire les statistiques.
+                    {platform === "pinterest"
+                      ? "Reliez le compte Pinterest professionnel de Culinova pour épingler les recettes."
+                      : "Reliez le compte @culinova.recette pour publier les vidéos et lire les statistiques."}
                   </p>
                 )}
+                {platform === "pinterest" && account && !account.expired ? (
+                  <PinterestBoardPicker selected={pinterestBoard} />
+                ) : null}
+                {platform === "pinterest" && setup.hints.pinterestSandbox ? (
+                  <Notice tone="info">
+                    Accès d&apos;essai (bac à sable) : les épingles ne sont visibles que par votre compte tant
+                    que Pinterest n&apos;a pas accordé l&apos;accès « Standard ».
+                  </Notice>
+                ) : null}
                 {trend?.followers != null ? (
                   <div className="flex items-end justify-between gap-3">
                     <div>
@@ -232,10 +260,7 @@ export default async function SocialPage({
                         ) : null}
                       </td>
                       <td className="py-2 pr-3 whitespace-nowrap">
-                        {LABELS[post.platform]} ·{" "}
-                        {post.platform === "instagram" && post.format === "video"
-                          ? "Reel"
-                          : FORMAT_LABELS[post.format]}
+                        {LABELS[post.platform]} · {formatLabel(post.platform, post.format)}
                       </td>
                       <td className="py-2 pr-3 whitespace-nowrap">
                         {post.publishedAt ? dateTime(post.publishedAt) : "—"}
@@ -299,6 +324,20 @@ export default async function SocialPage({
                   commence en général par « sb »).
                 </span>
               ) : null}
+            </SetupItem>
+            <SetupItem ok={setup.pinterest}>
+              <code>PINTEREST_APP_ID</code> et <code>PINTEREST_APP_SECRET</code> (developers.pinterest.com ›
+              My apps › Culinova). Adresse de retour à déclarer : <code>{redirectUri("pinterest")}</code>
+              <span className="block text-muted">
+                Facultatif : <code>PINTEREST_API_URL</code> = <code>https://api-sandbox.pinterest.com</code>{" "}
+                tant que l&apos;application est en accès d&apos;essai.
+                {setup.hints.pinterestAppId ? (
+                  <>
+                    {" "}
+                    App ID utilisé : <code>{setup.hints.pinterestAppId}</code>.
+                  </>
+                ) : null}
+              </span>
             </SetupItem>
           </ul>
         </CardBody>

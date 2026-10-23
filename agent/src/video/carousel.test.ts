@@ -26,3 +26,10 @@ test("jamais plus de 10 images, même pour une longue recette", () => {
   const last = pages.filter((p) => p.kind === "steps").at(-1);
   assert.equal(last?.kind === "steps" && last.more, true);
 });
+
+test("ingrédients répartis à parts égales sur deux pages", () => {
+  const ingredients = Array.from({ length: 14 }, (_, i) => ({ label: `Ingrédient ${i}`, amount: "10 g" }));
+  const pages = carouselPages({ ingredients, steps: ["Mélanger."] });
+  const sizes = pages.flatMap((p) => (p.kind === "ingredients" ? [p.items.length] : []));
+  assert.deepEqual(sizes, [7, 7]);
+});

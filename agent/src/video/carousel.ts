@@ -60,7 +60,10 @@ function stepPages(steps: string[], budget: number, max: number) {
 }
 
 export function carouselPages(props: Pick<CarouselProps, "ingredients" | "steps">): CarouselPage[] {
-  const ingredientChunks = chunk(props.ingredients, INGREDIENTS_PER_PAGE).slice(0, MAX_INGREDIENT_PAGES);
+  // Pages d'ingrédients équilibrées (14 ingrédients : 7 + 7 plutôt que 11 + 3).
+  const ingredientPageCount = Math.max(1, Math.ceil(props.ingredients.length / INGREDIENTS_PER_PAGE));
+  const perPage = Math.ceil(props.ingredients.length / ingredientPageCount) || 1;
+  const ingredientChunks = chunk(props.ingredients, perPage).slice(0, MAX_INGREDIENT_PAGES);
   const room = MAX_SLIDES - 2 - ingredientChunks.length;
   const numbered = props.steps.map((text, index) => ({ number: index + 1, text }));
   // Le plus aéré possible : 2 étapes par page (photo en haut), sinon 3, sinon plus serré.

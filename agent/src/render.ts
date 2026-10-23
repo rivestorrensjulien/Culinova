@@ -195,7 +195,8 @@ async function main() {
   const apiKey = process.env.AGENT_API_KEY?.trim();
   if (!baseUrl || !apiKey) throw new Error("CULINOVA_URL et AGENT_API_KEY sont nécessaires.");
   const client = new CulinovaClient(baseUrl, apiKey);
-  const jobs = await client.jobs(arg("recette") || undefined);
+  // --carrousel : seulement le carrousel (la vidéo déjà faite n'est pas refaite).
+  const jobs = arg("carrousel") !== null ? [] : await client.jobs(arg("recette") || undefined);
   if (jobs.length === 0) console.log("Aucune vidéo à fabriquer.");
 
   let failures = await carousels(serveUrl, client, jacket, arg("recette") || undefined);

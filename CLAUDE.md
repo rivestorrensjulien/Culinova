@@ -93,7 +93,8 @@ packages/ui         Système de design (clair / sombre)
   - TikTok, règles de partage : déclaration de contenu commercial complète dans l'encart (« Déclarer un contenu commercial » → Votre marque / Contenu de marque, étiquettes « Contenu promotionnel » / « Partenariat rémunéré », contenu de marque jamais privé, politique du contenu de marque dans l'accord) — dossier d'audit TikTok et accès Standard Pinterest (document partagé) : https://claude.ai/artifact/6gs1LMbW5gvuEYQYzUUzvv ; autorisation `video.upload` retirée tant que les brouillons ne sont pas faits.
   - Statistiques relevées chaque jour (`social_account_stats`, `social_post_stats`) et analyse de l'IA (prompt `insights.analyze@1`, génération `kind = "social_analysis"`, gratuite, plafond de budget IA).
   - Prochaines étapes validées par Julien : calendrier et programmation automatique ; page « lien en bio » et source des inscrits ; TikTok en brouillon et Pinterest ; mot-clé en commentaire → message privé.
-  - Reste : relier les comptes en production, première publication réelle, vidéo de démonstration et dossier d'audit TikTok, musique libre de droits (`agent/public/musique.mp3`).
+  - Dossier d'audit TikTok envoyé le 23/10 (application de production, vidéo de démonstration enregistrée avec la Sandbox ; `disable_auto_auth=1` pour toujours afficher la page d'autorisation ; `video.upload` imposé par Content Posting API, déclaré non utilisé). En attente de la réponse : rester sur les clés Sandbox dans Vercel.
+  - Reste : après validation TikTok, clés de production dans Vercel, compte TikTok public et « Relier à nouveau » ; Pinterest (accès d'essai puis Standard).
 
 À la fin de chaque jalon : expliquer ce qui est fait, comment le lancer, ce qui reste ; cocher la case ci-dessus.
 

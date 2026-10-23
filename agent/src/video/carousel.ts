@@ -8,6 +8,8 @@ export const CAROUSEL_ID = "CarrouselInstagram";
 export const CAROUSEL_WIDTH = 1080;
 export const CAROUSEL_HEIGHT = 1350;
 export const MAX_SLIDES = 10;
+/** Chef Ju en 3D (fond transparent), dans public/. */
+export const MASCOT_3D = "mascotte-3d.png";
 const INGREDIENTS_PER_PAGE = 11;
 const MAX_INGREDIENT_PAGES = 2;
 
@@ -39,13 +41,13 @@ function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
-/** Étapes regroupées par page, sans dépasser `budget` caractères (3 étapes au plus par page). */
-function stepPages(steps: string[], budget: number) {
+/** Étapes regroupées par page, sans dépasser `budget` caractères (`max` étapes au plus par page). */
+function stepPages(steps: string[], budget: number, max: number) {
   const pages: Array<Array<{ number: number; text: string }>> = [];
   let current: Array<{ number: number; text: string }> = [];
   let length = 0;
   steps.forEach((text, index) => {
-    if (current.length > 0 && (length + text.length > budget || current.length >= 3)) {
+    if (current.length > 0 && (length + text.length > budget || current.length >= max)) {
       pages.push(current);
       current = [];
       length = 0;
@@ -61,8 +63,10 @@ export function carouselPages(props: Pick<CarouselProps, "ingredients" | "steps"
   const ingredientChunks = chunk(props.ingredients, INGREDIENTS_PER_PAGE).slice(0, MAX_INGREDIENT_PAGES);
   const room = MAX_SLIDES - 2 - ingredientChunks.length;
   const numbered = props.steps.map((text, index) => ({ number: index + 1, text }));
-  let steps = stepPages(props.steps, 420);
-  if (steps.length > room) steps = stepPages(props.steps, 700);
+  // Le plus aéré possible : 2 étapes par page (photo en haut), sinon 3, sinon plus serré.
+  let steps = stepPages(props.steps, 300, 2);
+  if (steps.length > room) steps = stepPages(props.steps, 420, 3);
+  if (steps.length > room) steps = stepPages(props.steps, 700, 3);
   // Toujours trop long : pages régulières, 5 étapes au plus (au-delà, « la suite sur culinova.fr »).
   if (steps.length > room) steps = chunk(numbered, Math.min(5, Math.ceil(numbered.length / room)));
   const more = steps.length > room;

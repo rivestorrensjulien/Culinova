@@ -6,7 +6,7 @@ test("couverture, ingrédients, étapes, fin", () => {
   const pages = carouselPages(EXAMPLE_CAROUSEL);
   assert.deepEqual(
     pages.map((p) => p.kind),
-    ["cover", "ingredients", "steps", "steps", "end"],
+    ["cover", "ingredients", "steps", "steps", "steps", "end"],
   );
   const steps = pages.filter((p) => p.kind === "steps");
   assert.deepEqual(

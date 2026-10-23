@@ -58,6 +58,8 @@ export function tiktokAuthorizeUrl(state: string, redirectUri: string, env: Env 
     scope: TIKTOK_SCOPES.join(","),
     redirect_uri: redirectUri,
     state,
+    // Toujours montrer la page d'autorisation (sinon TikTok relie sans rien demander si la session est valide).
+    disable_auto_auth: "1",
   });
   return `https://www.tiktok.com/v2/auth/authorize/?${params}`;
 }

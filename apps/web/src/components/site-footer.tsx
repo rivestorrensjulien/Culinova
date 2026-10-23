@@ -12,7 +12,7 @@ const LINKS = [
 const SOCIAL = [
   { label: "Instagram", href: "https://www.instagram.com/culinova.recette/" },
   { label: "TikTok", href: "https://www.tiktok.com/@culinova.recette" },
-  { label: "Pinterest", href: "https://fr.pinterest.com/rivestorrensjulien/" },
+  { label: "Pinterest", href: "https://fr.pinterest.com/CulinovaRecette/" },
 ] as const;
 
 export async function SiteFooter() {

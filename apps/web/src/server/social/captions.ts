@@ -1,6 +1,7 @@
 /**
- * Légendes des publications : texte du réseau (rédigé avec la recette), comptes mentionnés
- * (réglage de l'administration), hashtags et mention « visuel généré par IA ».
+ * Légendes des publications : texte du réseau (rédigé avec la recette), renvoi vers la recette
+ * complète, comptes mentionnés (réglage de l'administration), hashtags et mention « visuel
+ * généré par IA ».
  * L'administrateur peut encore modifier la légende avant chaque publication.
  */
 import type { Database } from "@culinova/db";
@@ -16,6 +17,11 @@ const MAX_HASHTAGS = { instagram: 15, tiktok: 8, pinterest: 3 } as const;
 const MAX_LENGTH = { instagram: MAX_CAPTION, tiktok: MAX_CAPTION, pinterest: 800 } as const;
 
 export const AI_NOTICE = "📸 Visuel généré par IA à partir de la recette.";
+/**
+ * Instagram et TikTok : les liens des légendes ne sont pas cliquables, on renvoie au lien de la
+ * bio (culinova.fr/recettes, la liste des recettes publiques). Pinterest a son propre lien.
+ */
+export const BIO_LINK_NOTICE = "🔗 La recette complète, pesée au gramme : lien dans la bio";
 
 export interface CaptionSettings {
   /** Comptes mentionnés dans chaque publication (sans « @ »). */
@@ -72,7 +78,8 @@ export function buildCaption(input: {
     .map((tag) => `#${tag}`)
     .join(" ");
   const notice = input.settings.aiNotice ? AI_NOTICE : "";
-  const tail = [mentions, hashtags, notice].filter(Boolean).join("\n\n");
+  const bioLink = input.platform === "pinterest" ? "" : BIO_LINK_NOTICE;
+  const tail = [bioLink, mentions, hashtags, notice].filter(Boolean).join("\n\n");
   // La fin (mentions, hashtags, mention IA) est toujours gardée : on raccourcit le texte si besoin.
   const room = MAX_LENGTH[input.platform] - (tail ? tail.length + 2 : 0);
   const text = input.text.trim().slice(0, Math.max(0, room));

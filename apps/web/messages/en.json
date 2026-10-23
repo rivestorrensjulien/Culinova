@@ -1380,7 +1380,11 @@
     },
     "caption": "{platform} caption",
     "captionHint": "{count} / {max} characters · mentions and AI notice set in Admin › Social",
-    "publishAgain": "Publish again"
+    "publishAgain": "Publish again",
+    "publicPage": "Public recipe page",
+    "publicPageHint": "The recipe from its name to the tips, without prices or margins, with an invitation to try Culinova. Created automatically on first publication; it also appears on culinova.fr/recettes (bio link).",
+    "publicPageCopy": "Copy link",
+    "publicPageCopied": "Link copied ✓"
   },
   "Install": {
     "title": "Install Culinova on this device",
@@ -1388,5 +1392,23 @@
     "ios": "In Safari, tap the Share button, then “Add to Home Screen”.",
     "install": "Install",
     "later": "Later"
+  },
+  "PublicRecipe": {
+    "metaTitle": "{name} · Culinova recipe",
+    "metaDescription": "A recipe weighed to the gram, created with Culinova.",
+    "by": "Recipe created with Culinova",
+    "for": "Serves",
+    "weighed": "Everything is weighed to the gram, with the kitchen measure in brackets.",
+    "homemade": "homemade",
+    "topCta": "Create my recipes",
+    "ctaTitle": "Want to generate your own recipes?",
+    "ctaText": "We're waiting for you on Culinova 👨‍🍳✨ Describe a craving: the AI writes your recipe, weighed to the gram, costed and illustrated in seconds.",
+    "ctaButton": "Request my invitation",
+    "moreRecipes": "See more recipes",
+    "mascotAlt": "Chef Ju, Culinova's mascot",
+    "listTitle": "Chef Ju's recipes",
+    "listIntro": "Every recipe shared on our social accounts, weighed to the gram. Pick one for the full recipe.",
+    "listEmpty": "The first recipes are coming very soon.",
+    "follow": "Follow Culinova"
   }
 }

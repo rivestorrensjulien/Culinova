@@ -22,6 +22,7 @@ import {
   instagramPublish,
   SocialApiError,
 } from "./instagram";
+import { ensurePublicPage, publicRecipeUrl } from "../public-recipes";
 import { getPinterestBoard } from "./pinterest-board";
 import { pinterestCreatePin } from "./pinterest";
 import { tiktokCreatorInfo, tiktokInitPost, tiktokPostStatus, type TiktokPostOptions } from "./tiktok";
@@ -98,6 +99,8 @@ export async function startPublication(
     .from(s.recipes)
     .where(eq(s.recipes.id, recipeId));
   if (!recipe?.versionId || owner?.ownerId !== adminId) return { ok: false, reason: "not_found" };
+  // Chaque recette publiée a sa page publique (lien de l'épingle, page « lien en bio »).
+  const slug = await ensurePublicPage(db, adminId, recipeId);
 
   // Ce qui sera publié : la vidéo, le carrousel ou la photo 4:5 de la version actuelle.
   let mediaId: string;
@@ -141,7 +144,7 @@ export async function startPublication(
           boardId: board.boardId,
           title,
           description: caption,
-          link: `${appUrl()}/?utm_source=pinterest&utm_medium=social&utm_campaign=recette`,
+          link: `${slug ? publicRecipeUrl(appUrl(), slug) : appUrl()}?utm_source=pinterest&utm_medium=social&utm_campaign=recette`,
           altText: title,
           imageUrl: signed(signedImagePath(mediaId, deps.now)),
         },

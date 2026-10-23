@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AI_NOTICE, buildCaption, MAX_CAPTION, parseMentions } from "./captions";
+import { AI_NOTICE, BIO_LINK_NOTICE, buildCaption, MAX_CAPTION, parseMentions } from "./captions";
 
 describe("légendes des réseaux", () => {
   it("nettoie la liste des comptes mentionnés", () => {
@@ -10,7 +10,7 @@ describe("légendes des réseaux", () => {
     ]);
   });
 
-  it("assemble texte, mentions, hashtags et mention IA", () => {
+  it("assemble texte, lien de la bio, mentions, hashtags et mention IA", () => {
     const caption = buildCaption({
       text: "Des crêpes mille trous moelleuses.",
       hashtags: ["baghrir", "#recette maison", "x", "y", "z", "a", "b", "c", "d"],
@@ -18,7 +18,7 @@ describe("légendes des réseaux", () => {
       settings: { mentions: ["maison.dupont"], aiNotice: true },
     });
     expect(caption).toBe(
-      `Des crêpes mille trous moelleuses.\n\n@maison.dupont\n\n#baghrir #recettemaison #x #y #z #a #b #c\n\n${AI_NOTICE}`,
+      `Des crêpes mille trous moelleuses.\n\n${BIO_LINK_NOTICE}\n\n@maison.dupont\n\n#baghrir #recettemaison #x #y #z #a #b #c\n\n${AI_NOTICE}`,
     );
   });
 
@@ -31,5 +31,16 @@ describe("légendes des réseaux", () => {
     });
     expect(caption.length).toBe(MAX_CAPTION);
     expect(caption.endsWith("#recette")).toBe(true);
+    expect(caption).toContain(BIO_LINK_NOTICE);
+  });
+
+  it("pas de renvoi vers la bio sur Pinterest (l'épingle a son propre lien)", () => {
+    const caption = buildCaption({
+      text: "Tostadas",
+      hashtags: [],
+      platform: "pinterest",
+      settings: { mentions: [], aiNotice: false },
+    });
+    expect(caption).toBe("Tostadas");
   });
 });

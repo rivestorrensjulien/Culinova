@@ -8,6 +8,7 @@ import {
   cancelPublicationAction,
   markPublishedAction,
   queuePublicationAction,
+  setPublicPageAction,
   setShowcaseAction,
 } from "@/server/actions/publishing";
 import { publishAction, refreshPublicationsAction, tiktokCreatorInfoAction } from "@/server/actions/social";
@@ -219,6 +220,8 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [showcase, setShowcase] = useState(recipe.publishing?.showcase ?? false);
+  const [publicUrl, setPublicUrl] = useState<string | null>(recipe.publishing?.publicUrl ?? null);
+  const [copied, setCopied] = useState(false);
   const [tiktokOpen, setTiktokOpen] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [captions, setCaptions] = useState<Record<Platform, string>>(
@@ -268,6 +271,22 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
     if (result === null) setError(true);
     else setShowcase(result);
     setBusy(false);
+  };
+
+  const togglePublic = async (shown: boolean) => {
+    setBusy(true);
+    setError(false);
+    const result = await setPublicPageAction(recipe.recipeId, shown).catch(() => undefined);
+    if (!result) setError(true);
+    else setPublicUrl(result.url);
+    setCopied(false);
+    setBusy(false);
+  };
+
+  const copyPublicUrl = async () => {
+    if (!publicUrl) return;
+    await navigator.clipboard?.writeText(publicUrl).catch(() => {});
+    setCopied(true);
   };
 
   const run = async (action: () => Promise<PublicationStatus[] | null>) => {
@@ -517,6 +536,38 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             </span>
           </span>
         </label>
+        <div className="flex flex-col gap-2 border-t border-border pt-4" data-testid="public-page">
+          <label className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 accent-primary"
+              checked={publicUrl !== null}
+              disabled={busy}
+              onChange={(e) => togglePublic(e.target.checked)}
+              data-testid="public-page-toggle"
+            />
+            <span>
+              <span className="font-medium">{t("publicPage")}</span>
+              <span className="block text-muted">{t("publicPageHint")}</span>
+            </span>
+          </label>
+          {publicUrl ? (
+            <div className="flex flex-wrap items-center gap-2 pl-7">
+              <a
+                href={publicUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="break-all text-primary hover:underline"
+                data-testid="public-page-url"
+              >
+                {publicUrl.replace(/^https?:\/\//, "")}
+              </a>
+              <Button variant="secondary" size="sm" onClick={copyPublicUrl}>
+                {copied ? t("publicPageCopied") : t("publicPageCopy")}
+              </Button>
+            </div>
+          ) : null}
+        </div>
       </CardBody>
     </Card>
   );

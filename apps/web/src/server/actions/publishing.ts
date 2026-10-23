@@ -13,6 +13,8 @@ import {
   reportPublication,
 } from "../publishing";
 import { requireUser } from "../session";
+import { ensurePublicPage, publicRecipeUrl, removePublicPage } from "../public-recipes";
+import { appUrl } from "../auth";
 import { setShowcase } from "../showcase";
 
 const uuid = z.uuid();
@@ -78,4 +80,20 @@ export async function setShowcaseAction(recipeId: string, shown: boolean): Promi
   const session = await admin();
   if (!session || !uuid.safeParse(recipeId).success) return null;
   return (await setShowcase(getDb(), session.user.id, recipeId, shown)) ? shown : null;
+}
+
+/**
+ * Crée (ou retire) la page publique de la recette : la recette sans prix ni marges, pour les
+ * liens des réseaux. Renvoie la nouvelle adresse (null = page retirée), ou undefined si refusé.
+ */
+export async function setPublicPageAction(
+  recipeId: string,
+  shown: boolean,
+): Promise<{ url: string | null } | undefined> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success) return undefined;
+  const db = getDb();
+  if (!shown) return (await removePublicPage(db, session.user.id, recipeId)) ? { url: null } : undefined;
+  const slug = await ensurePublicPage(db, session.user.id, recipeId);
+  return slug ? { url: publicRecipeUrl(appUrl(), slug) } : undefined;
 }

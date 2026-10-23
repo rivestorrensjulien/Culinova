@@ -3,6 +3,7 @@ import { looksStoreBought } from "@culinova/core";
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { appUrl } from "../auth";
 import { loadPricingContext, type PricingContext } from "../costing/pricing";
 import { computeRecipeCost, type RecipeCost } from "../costing/recipe-cost";
 import { computeRecipeNutrition, type NutritionView } from "../nutrition/recipe-nutrition";
@@ -132,6 +133,8 @@ export interface RecipeView {
     agentEnabled: boolean;
     statuses: PublicationStatus[];
     showcase: boolean;
+    /** Adresse de la page publique de la recette (sans prix ni marges), si elle existe. */
+    publicUrl: string | null;
     video: RecipeVideoView | null;
     carousel: RecipeCarouselView | null;
     /** Légendes proposées (modifiables avant publication). */
@@ -251,6 +254,7 @@ export async function loadRecipeView(
           agentEnabled: agentEnabled(),
           statuses: await publicationStatuses(db, recipe.id),
           showcase: await isInShowcase(db, recipe.id),
+          publicUrl: await publicUrlOf(db, recipe.id),
           video: await latestVideo(db, recipe.id),
           carousel: await latestCarousel(db, recipe.id),
           captions: {
@@ -574,4 +578,12 @@ export async function listBases(db: Database, userId: string) {
     yieldDisplayQuantity: base.yieldDisplayQuantity === null ? null : Number(base.yieldDisplayQuantity),
     usedIn: uses.filter((u) => u.baseId === base.baseId).map((u) => ({ recipeId: u.recipeId, name: u.name })),
   }));
+}
+
+async function publicUrlOf(db: Database, recipeId: string): Promise<string | null> {
+  const [page] = await db
+    .select({ slug: s.recipePublicPages.slug })
+    .from(s.recipePublicPages)
+    .where(eq(s.recipePublicPages.recipeId, recipeId));
+  return page ? `${appUrl()}/recette/${page.slug}` : null;
 }

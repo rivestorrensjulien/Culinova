@@ -1380,7 +1380,11 @@
     },
     "caption": "Légende {platform}",
     "captionHint": "{count} / {max, number} caractères · comptes mentionnés et mention IA réglés dans Administration › Réseaux",
-    "publishAgain": "Publier à nouveau"
+    "publishAgain": "Publier à nouveau",
+    "publicPage": "Page publique de la recette",
+    "publicPageHint": "La recette du nom aux conseils, sans prix ni marges, avec une invitation à essayer Culinova. Créée automatiquement à la première publication ; elle apparaît aussi sur culinova.fr/recettes (lien de la bio).",
+    "publicPageCopy": "Copier le lien",
+    "publicPageCopied": "Lien copié ✓"
   },
   "Install": {
     "title": "Installer Culinova sur cet appareil",
@@ -1388,5 +1392,23 @@
     "ios": "Dans Safari, touchez le bouton Partager puis « Sur l'écran d'accueil ».",
     "install": "Installer",
     "later": "Plus tard"
+  },
+  "PublicRecipe": {
+    "metaTitle": "{name} · recette Culinova",
+    "metaDescription": "Une recette pesée au gramme, créée avec Culinova.",
+    "by": "Recette créée avec Culinova",
+    "for": "Pour",
+    "weighed": "Tout est pesé au gramme, avec la mesure de cuisine entre parenthèses.",
+    "homemade": "fait maison",
+    "topCta": "Créer mes recettes",
+    "ctaTitle": "Tu veux générer tes propres recettes ?",
+    "ctaText": "On t'attend sur Culinova 👨‍🍳✨ Décris une envie : l'IA rédige ta recette pesée au gramme, chiffrée et illustrée en quelques secondes.",
+    "ctaButton": "Demander mon invitation",
+    "moreRecipes": "Voir d'autres recettes",
+    "mascotAlt": "Chef Ju, la mascotte de Culinova",
+    "listTitle": "Les recettes de Chef Ju",
+    "listIntro": "Toutes les recettes partagées sur nos réseaux, pesées au gramme. Choisis-en une pour la recette complète.",
+    "listEmpty": "Les premières recettes arrivent très vite.",
+    "follow": "Suivre Culinova"
   }
 }

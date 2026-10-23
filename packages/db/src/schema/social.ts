@@ -115,3 +115,22 @@ export const socialAccountStats = pgTable(
   },
   (t) => [index("social_account_stats_platform_idx").on(t.platform, t.collectedAt)],
 );
+
+/**
+ * Page publique d'une recette d'administrateur (culinova.fr/recette/<slug>) : la recette du nom
+ * aux conseils, sans prix ni marges, pour les liens des réseaux sociaux. Supprimer la ligne
+ * retire la page.
+ */
+export const recipePublicPages = pgTable(
+  "recipe_public_pages",
+  {
+    recipeId: uuid("recipe_id")
+      .primaryKey()
+      .references(() => recipes.id, { onDelete: "cascade" }),
+    /** Adresse lisible et non devinable : nom de la recette + 4 caractères au hasard. */
+    slug: text("slug").notNull(),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("recipe_public_pages_slug_unique").on(t.slug)],
+);

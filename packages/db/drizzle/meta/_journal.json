@@ -85,6 +85,13 @@
       "when": 1792500000000,
       "tag": "0011_formats_carrousels",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1792778199225,
+      "tag": "0012_page_publique",
+      "breakpoints": true
     }
   ]
 }

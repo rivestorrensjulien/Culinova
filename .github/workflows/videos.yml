@@ -113,3 +113,15 @@ jobs:
           if [ -n "$RECETTE" ] && [ "$CARROUSEL" = "true" ]; then npm run rendre -- --recette="$RECETTE" --carrousel
           elif [ -n "$RECETTE" ]; then npm run auto -- --recette="$RECETTE" --format="$FORMAT"
           else npm run auto; fi
+
+      - name: Vidéo courte (téléchargeable, pour vérification)
+        if: always() && steps.file.outputs.a_faire == 'oui' && github.event_name != 'push' && !inputs.exemple
+        uses: actions/upload-artifact@v4
+        with:
+          name: video-courte
+          path: |
+            agent/sortie/comparatif/D-format-eclate.mp4
+            agent/sortie/comparatif/*.jpg
+            agent/sortie/comparatif/format.txt
+          if-no-files-found: ignore
+          retention-days: 7

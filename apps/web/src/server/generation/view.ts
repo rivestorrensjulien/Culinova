@@ -251,6 +251,17 @@ export async function loadRecipeView(
   ]);
   const favorite = await isFavorite(db, userId, recipe.id);
   const [owner] = await db.select({ role: s.users.role }).from(s.users).where(eq(s.users.id, userId));
+  if (owner?.role === "admin" && recipe.kind === "dish") {
+    // Recette déjà dans le circuit de publication (à publier, proposée ou programmée) :
+    // sa page publique existe, pour que le lien figure dans les légendes.
+    const inFlow =
+      (await publicationStatuses(db, recipe.id)).some((p) => p.status === "queued") ||
+      (await recipeSchedule(db, recipe.id)).some((p) => p.status === "proposed" || p.status === "scheduled");
+    if (inFlow && !(await publicUrlOf(db, recipe.id))) {
+      const { ensurePublicPage } = await import("../public-recipes");
+      await ensurePublicPage(db, userId, recipe.id);
+    }
+  }
   const publishing =
     owner?.role === "admin" && recipe.kind === "dish"
       ? {

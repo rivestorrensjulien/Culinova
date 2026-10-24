@@ -40,6 +40,8 @@ export interface ExplodedProps extends VideoProps {
   explodeClip: string | null;
   /** Le clip principal garde son son (coupe et geste : grésillement, coulure). */
   clipSound?: boolean;
+  /** Coupe : second plan, enchaîné après le premier (la part soulevée). */
+  secondClip?: string | null;
   /** Vues du dessus : 0 = contenant vide, puis une image par couche posée. */
   topViews: string[];
   layerNames: string[];
@@ -49,8 +51,10 @@ export interface ExplodedProps extends VideoProps {
 
 export const PHOTO_FRAMES = 66;
 export const EXPLODE_FRAMES = 120;
-/** Coupe et geste : le clip de 5 s joué à vitesse normale. */
+/** Geste : le clip de 5 s joué à vitesse normale. */
 export const CLIP_FRAMES = 150;
+/** Coupe : deux plans de 5 s enchaînés, un peu accélérés (2 × 105 images à 30 i/s). */
+export const CUT_FRAMES = 210;
 export const EMPTY_FRAMES = 24;
 export const LAYER_FRAMES = 27;
 export const FINAL_FRAMES = 48;
@@ -84,7 +88,9 @@ export function explodedTimeline(props: Pick<ExplodedProps, "layerNames" | "form
       ? [["explode", EXPLODE_FRAMES], assemble]
       : format === "dessus"
         ? [assemble]
-        : [["explode", CLIP_FRAMES]];
+        : format === "coupe"
+          ? [["explode", CUT_FRAMES]]
+          : [["explode", CLIP_FRAMES]];
   const frames: Array<[ExplodedKind, number]> = [
     ["photo", PHOTO_FRAMES],
     ...middle,
@@ -167,32 +173,68 @@ export const VOILA_MOTION =
   "his mouth clearly visible. " +
   "The character keeps exactly the same appearance, blue-grey eyes and outfit.";
 
-/** Coupe, image de départ (image 1 = photo du plat) : le plat entier, intact. */
+/**
+ * Coupe en deux plans enchaînés, toujours autour de la MÊME part (l'angle avant droit) :
+ * 1. plat entier intact → le couteau découpe la part, qui reste en place ;
+ * 2. la spatule soulève cette part ; le vide qu'elle laisse reste exactement à sa place.
+ * Chaque image est fabriquée à partir de la précédente (même plat, même cadrage).
+ */
+export const CUT_PORTION =
+  "the front-right corner portion of the dish (the corner closest to the camera, on the right)";
+
+/** Image 1 = photo du plat. Le plat entier, intact : AUCUNE part retirée. */
 export function cutStartPrompt(script: LayerScript): string {
   const cut = script.cut!;
   return [
     "The exact same dish as image 1 (same recipe, same colours, same garnish, same surface and warm light),",
-    `but whole and untouched, before the first portion is served: ${cut.vessel}.`,
-    `${cut.start}`,
-    "Vertical 9:16 three-quarter view, close enough to fill the frame. Real home kitchen table.",
+    `but whole and completely untouched, straight from the oven, before serving: ${cut.vessel}.`,
+    "Nothing has been cut or removed yet: the top surface is complete and unbroken from edge to edge,",
+    "no missing portion, no slice on a plate, no gap, no knife mark.",
+    "A clean knife and a metal spatula rest on the table beside the dish.",
+    "Vertical 9:16 three-quarter view from slightly above, the whole dish fully visible in the frame.",
     NO_TEXT,
   ].join(" ");
 }
 
-/** Coupe, image d'arrivée (image 1 = départ, image 2 = photo du plat) : la part soulevée. */
+/** Image 1 = plat entier, image 2 = photo du plat. La part est découpée mais toujours en place. */
+export function cutMidPrompt(): string {
+  return [
+    "Exactly the same shot as image 1: same dish, same framing, same light, same surface, nothing moved.",
+    `The only change: two clean knife cuts now outline ${CUT_PORTION}.`,
+    "The cut portion is still fully in place inside the dish, nothing removed, no gap yet;",
+    "only the thin cut lines are visible, with a little sauce at the cut.",
+    "The tip of the metal spatula is slid just under that cut portion, ready to lift it.",
+    NO_TEXT,
+  ].join(" ");
+}
+
+/** Image 1 = part découpée, image 2 = photo du plat. La même part, soulevée. */
 export function cutEndPrompt(script: LayerScript): string {
   const cut = script.cut!;
   return [
     "Exactly the same shot as image 1: same dish, same framing, same light, same surface.",
-    `Now a clean portion has been cut and is lifted on a spatula just above the dish: ${cut.end}`,
-    `The cut side faces the camera and shows, from bottom to top: ${cut.strata.join(", ")}.`,
+    `The cut portion (${CUT_PORTION}) is now lifted straight up on the spatula, just above the exact spot`,
+    "it came from. Where it was, there is now an empty space of exactly the same size and shape,",
+    "showing the clean cut walls of the remaining dish. The rest of the dish is unchanged.",
+    `The lifted portion's cut side faces the camera and shows, from bottom to top: ${cut.strata.join(", ")}.`,
+    `${cut.end}`,
     "Gentle steam rises. The food looks exactly like the finished dish in image 2.",
     NO_TEXT,
   ].join(" ");
 }
 
+/** Plan 1 : le couteau découpe la part, sans rien soulever. */
+export const CUT_KNIFE_MOTION =
+  `A hand holding a knife slices cleanly down through the dish along two lines, marking out ${CUT_PORTION}. ` +
+  "The portion stays in place, nothing is lifted. Static camera, realistic food textures.";
+
+/** Plan 2 : la spatule soulève la part déjà découpée. */
 export function cutMotion(script: LayerScript): string {
-  return `${script.cut!.motion} Slow motion, static camera, steam rising, realistic food textures.`;
+  return (
+    "The spatula already under the cut portion lifts it straight up in slow motion, revealing its layers; " +
+    "the empty space it leaves stays exactly where the portion was, the rest of the dish does not move. " +
+    `${script.cut!.motion} Static camera, steam rising, realistic food textures.`
+  );
 }
 
 /** Geste, image de départ (image 1 = photo du plat). */

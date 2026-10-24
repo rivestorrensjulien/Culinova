@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   CLIP_FRAMES,
+  CUT_FRAMES,
+  CUT_KNIFE_MOTION,
   cutEndPrompt,
+  cutMidPrompt,
   cutMotion,
   cutStartPrompt,
   EMPTY_FRAMES,
@@ -62,8 +65,9 @@ test("coupe, vue du dessus et geste : même début et même fin, cœur adapté a
   assert.deepEqual(kinds("coupe"), ["photo", "explode", "final", "voila", "end"]);
   assert.deepEqual(kinds("geste"), ["photo", "explode", "final", "voila", "end"]);
   assert.deepEqual(kinds("dessus"), ["photo", "assemble", "final", "voila", "end"]);
-  // Le clip de la coupe est joué à vitesse normale (5 s).
-  assert.equal(explodedTimeline({ layerNames: names, format: "coupe" })[1]!.frames, CLIP_FRAMES);
+  // Coupe : deux plans enchaînés ; geste : un plan de 5 s.
+  assert.equal(explodedTimeline({ layerNames: names, format: "coupe" })[1]!.frames, CUT_FRAMES);
+  assert.equal(explodedTimeline({ layerNames: names, format: "geste" })[1]!.frames, CLIP_FRAMES);
   assert.ok(isShortFormat("coupe") && !isShortFormat("animee"));
 });
 
@@ -84,10 +88,17 @@ test("consignes de la coupe et du geste", () => {
       motion: "Pours the sauce slowly over the dish.",
     },
   };
-  assert.match(cutStartPrompt(moussaka), /whole and untouched/);
+  // Retour de Julien (24/10) : plat entier au départ, puis la même part découpée, puis soulevée.
+  assert.match(cutStartPrompt(moussaka), /whole and completely untouched/);
+  assert.match(cutStartPrompt(moussaka), /no missing portion/);
   assert.match(cutStartPrompt(moussaka), /terracotta baking dish/);
+  assert.match(cutMidPrompt(), /still fully in place/);
+  assert.match(cutMidPrompt(), /front-right corner portion/);
+  assert.match(cutEndPrompt(moussaka), /front-right corner portion/);
+  assert.match(cutEndPrompt(moussaka), /exact spot/);
   assert.match(cutEndPrompt(moussaka), /Aubergines, Viande, Béchamel/);
-  assert.match(cutMotion(moussaka), /Slow motion/);
+  assert.match(CUT_KNIFE_MOTION, /nothing is lifted/);
+  assert.match(cutMotion(moussaka), /already under the cut portion/);
   assert.match(gestureStartPrompt(moussaka), /never a face/);
   assert.match(gestureEndPrompt(moussaka), /sauce glossy/);
 });

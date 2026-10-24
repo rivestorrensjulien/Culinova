@@ -32,7 +32,9 @@ import {
   type VideoResult,
 } from "./outils.ts";
 import {
+  CUT_KNIFE_MOTION,
   cutEndPrompt,
+  cutMidPrompt,
   cutMotion,
   cutStartPrompt,
   EXPLODE_MOTION,
@@ -135,6 +137,7 @@ async function main() {
   };
 
   let explodeClip: string | null;
+  let secondClip: string | null = null;
   let voilaClip: string;
   let synced = false;
   const topViews: string[] = [];
@@ -168,9 +171,17 @@ async function main() {
           })()
         : format === "coupe"
           ? (async () => {
-              const start = await edit(cutStartPrompt(layers), [dish], "coupe-01-plat-entier.jpg");
-              const end = await edit(cutEndPrompt(layers), [start, dish], "coupe-02-part.jpg");
-              return animate(start, end, cutMotion(layers), "eclate.mp4");
+              // Deux plans autour de la même part : chaque image part de la précédente.
+              const whole = await edit(cutStartPrompt(layers), [dish], "coupe-01-plat-entier.jpg");
+              const sliced = await edit(cutMidPrompt(), [whole, dish], "coupe-02-part-decoupee.jpg");
+              const lifted = await edit(cutEndPrompt(layers), [sliced, dish], "coupe-03-part-soulevee.jpg");
+              const [knife] = await Promise.all([
+                animate(whole, sliced, CUT_KNIFE_MOTION, "eclate.mp4"),
+                animate(sliced, lifted, cutMotion(layers), "coupe-part.mp4").then((clip) => {
+                  secondClip = clip;
+                }),
+              ]);
+              return knife;
             })()
           : format === "geste"
             ? (async () => {
@@ -255,6 +266,7 @@ async function main() {
     ...finishing(root),
     format,
     explodeClip: explodeClip || null,
+    secondClip,
     // Kling ne fait pas le son avec une image d'arrivée : clip muet, la musique l'accompagne.
     clipSound: false,
     topViews,

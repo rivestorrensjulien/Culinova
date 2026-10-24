@@ -93,25 +93,47 @@ function ExplodeScene({ props, frames }: { props: ExplodedProps; frames: number 
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const clip = src(props.explodeClip);
+  const second = src(props.secondClip);
+  // Coupe : deux plans enchaînés (le couteau, puis la part soulevée) ; les couches s'affichent
+  // pendant le second, quand la tranche est visible.
+  const half = second ? Math.round(frames / 2) : frames;
   const names = props.layerNames;
-  const step = (frames - 30) / Math.max(1, names.length);
+  const labelsFrom = second ? half : 0;
+  const step = (frames - labelsFrom - 30) / Math.max(1, names.length);
+  const videoStyle = { width: "100%", height: "100%", objectFit: "cover" } as const;
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
       {clip ? (
-        <OffthreadVideo
-          src={clip}
-          muted={!props.clipSound}
-          playbackRate={(5 * fps) / frames}
-          style={{ width: "100%", height: "100%", objectFit: "cover" }}
-        />
+        <Sequence durationInFrames={half} layout="none">
+          <OffthreadVideo
+            src={clip}
+            muted={!props.clipSound}
+            playbackRate={(5 * fps) / half}
+            style={videoStyle}
+          />
+        </Sequence>
       ) : (
         <Cover path={props.photoUrl} />
       )}
+      {second ? (
+        <Sequence from={half} durationInFrames={frames - half} layout="none">
+          <OffthreadVideo
+            src={second}
+            muted={!props.clipSound}
+            playbackRate={(5 * fps) / (frames - half)}
+            style={videoStyle}
+          />
+        </Sequence>
+      ) : null}
       <AbsoluteFill style={{ background: "linear-gradient(0deg, #000b 0%, #0000 36%)" }} />
       <div style={{ position: "absolute", left: 80, right: 80, bottom: 170 }}>
         {[...names].reverse().map((name, i) => {
           const index = names.length - 1 - i;
-          const shown = spring({ frame: frame - 12 - index * step, fps, config: { damping: 15 } });
+          const shown = spring({
+            frame: frame - labelsFrom - 12 - index * step,
+            fps,
+            config: { damping: 15 },
+          });
           return (
             <div
               key={name}

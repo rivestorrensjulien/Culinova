@@ -69,7 +69,7 @@ export interface ExplodedSegment {
 /**
  * Déroulé selon le format : la photo, puis
  * - eclate : les couches s'écartent, puis se reposent une à une (vue du dessus) ;
- * - coupe et geste : le clip (part soulevée ou geste, avec le son) ;
+ * - coupe et geste : le clip (part soulevée ou geste) ;
  * - dessus : vue du dessus, la base puis chaque garniture ;
  * puis la photo finale, « Et voilà ! » et la carte de fin.
  */

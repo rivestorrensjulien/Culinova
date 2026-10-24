@@ -10,6 +10,7 @@ import { loadRecipeView } from "../generation/view";
 import { adminRecipe, signedImagePath } from "../publishing";
 import { amountText, stepPlainText } from "../recipe-text";
 import { createVideoStorage, type UploadInstructions, type VideoStorage } from "./video-storage";
+import { parseVideoScript } from "./script";
 import { currentPhoto } from "./videos";
 
 const MAX_FAILURES = 3;
@@ -25,6 +26,8 @@ export interface CarouselJob {
   totalMinutes: number;
   ingredients: Array<{ label: string; amount: string }>;
   steps: string[];
+  /** Étapes résumées en lignes courtes (script TikTok, sans quantités) pour la page « La recette en bref ». */
+  summary: string[];
   /** Photo 4:5 de la recette (celle de sa page). */
   imageId: string;
   photoUrl: string;
@@ -47,6 +50,12 @@ async function jobFor(
     .where(eq(s.recipes.id, recipeId));
   const view = owner ? await loadRecipeView(db, recipeId, owner.ownerId) : null;
   if (!view || view.steps.length === 0) return null;
+  const [tiktok] = await db
+    .select({ caption: s.socialContents.caption })
+    .from(s.socialContents)
+    .where(
+      and(eq(s.socialContents.recipeVersionId, recipe.versionId), eq(s.socialContents.platform, "tiktok")),
+    );
   return {
     recipeId,
     versionId: recipe.versionId,
@@ -55,6 +64,7 @@ async function jobFor(
     totalMinutes: Math.round((view.prepS + view.cookS + view.restS) / 60),
     ingredients: view.ingredients.map((i) => ({ label: i.label, amount: amountText(i) })),
     steps: view.steps.map((step) => stepPlainText(view, step.action)),
+    summary: parseVideoScript(tiktok?.caption)?.shots ?? [],
     imageId,
     photoUrl: `${baseUrl}${path}`,
   };

@@ -1,17 +1,23 @@
 /**
- * Mise en pages du carrousel Instagram d'une recette (10 images au plus, 1080 × 1350) :
- * photo de couverture → ingrédients pesés → étapes → carte de fin. Logique pure, testée.
+ * Mise en pages du carrousel Instagram d'une recette : 4 images au plus (1080 × 1350),
+ * pour donner envie sans tout dévoiler : photo de couverture → ingrédients pesés → la recette
+ * en bref (étapes résumées, sans quantités) → carte de fin qui renvoie au lien de la bio
+ * (page publique de la recette, avec le pas à pas complet). Logique pure, testée.
  */
+import { ingredientsIntro } from "./actions.ts";
 import type { Jacket } from "./Mascot.tsx";
 
 export const CAROUSEL_ID = "CarrouselInstagram";
 export const CAROUSEL_WIDTH = 1080;
 export const CAROUSEL_HEIGHT = 1350;
-export const MAX_SLIDES = 10;
+export const MAX_SLIDES = 4;
 /** Chef Ju en 3D (fond transparent), dans public/. */
 export const MASCOT_3D = "mascotte-3d.png";
-const INGREDIENTS_PER_PAGE = 11;
-const MAX_INGREDIENT_PAGES = 2;
+/** Ingrédients montrés sur une seule image (deux colonnes) ; au-delà, « + N autres ». */
+export const MAX_INGREDIENTS = 16;
+/** Lignes de « la recette en bref ». */
+export const MAX_SUMMARY = 8;
+const SUMMARY_LENGTH = 90;
 
 export interface CarouselProps {
   name: string;
@@ -19,6 +25,8 @@ export interface CarouselProps {
   totalMinutes: number;
   ingredients: Array<{ label: string; amount: string }>;
   steps: string[];
+  /** Étapes résumées (lignes courtes du script TikTok) ; sinon, tirées des étapes. */
+  summary?: string[];
   /** Photo 4:5 de la recette (lien temporaire, ou « static:fichier »). */
   photoUrl: string;
   handle: string;
@@ -31,57 +39,43 @@ export interface CarouselProps {
 
 export type CarouselPage =
   | { kind: "cover" }
-  | { kind: "ingredients"; items: CarouselProps["ingredients"]; part: number; parts: number }
-  | { kind: "steps"; items: Array<{ number: number; text: string }>; more: boolean }
+  | { kind: "ingredients"; items: CarouselProps["ingredients"]; more: number }
+  | { kind: "summary"; items: string[]; total: number }
   | { kind: "end" };
 
-function chunk<T>(items: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
-  return out;
+/** Première phrase d'une étape, raccourcie (sans les quantités entre parenthèses). */
+function shortStep(text: string): string {
+  const plain = text
+    .replace(/\s*\([^)]*\)/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const first = plain.split(/(?<=[.!?])\s/)[0] ?? plain;
+  if (first.length <= SUMMARY_LENGTH) return first.replace(/[.\s]+$/, "");
+  const cut = first.slice(0, SUMMARY_LENGTH);
+  return `${cut.slice(0, cut.lastIndexOf(" ")).replace(/[,;:\s]+$/, "")}…`;
 }
 
-/** Étapes regroupées par page, sans dépasser `budget` caractères (`max` étapes au plus par page). */
-function stepPages(steps: string[], budget: number, max: number) {
-  const pages: Array<Array<{ number: number; text: string }>> = [];
-  let current: Array<{ number: number; text: string }> = [];
-  let length = 0;
-  steps.forEach((text, index) => {
-    if (current.length > 0 && (length + text.length > budget || current.length >= max)) {
-      pages.push(current);
-      current = [];
-      length = 0;
-    }
-    current.push({ number: index + 1, text });
-    length += text.length;
-  });
-  if (current.length > 0) pages.push(current);
-  return pages;
+/** Lignes de « la recette en bref » : le script (sans la ligne des ingrédients), sinon les étapes. */
+export function summaryLines(props: Pick<CarouselProps, "steps" | "summary">): string[] {
+  const script = (props.summary ?? [])
+    .map((line) => line.trim())
+    .filter((line) => line && !ingredientsIntro(line));
+  const lines = script.length >= 3 ? script : props.steps.map(shortStep);
+  return lines.map((line) => line.replace(/[.\s]+$/, ""));
 }
 
-export function carouselPages(props: Pick<CarouselProps, "ingredients" | "steps">): CarouselPage[] {
-  // Pages d'ingrédients équilibrées (14 ingrédients : 7 + 7 plutôt que 11 + 3).
-  const ingredientPageCount = Math.max(1, Math.ceil(props.ingredients.length / INGREDIENTS_PER_PAGE));
-  const perPage = Math.ceil(props.ingredients.length / ingredientPageCount) || 1;
-  const ingredientChunks = chunk(props.ingredients, perPage).slice(0, MAX_INGREDIENT_PAGES);
-  const room = MAX_SLIDES - 2 - ingredientChunks.length;
-  const numbered = props.steps.map((text, index) => ({ number: index + 1, text }));
-  // Le plus aéré possible : 2 étapes par page (photo en haut), sinon 3, sinon plus serré.
-  let steps = stepPages(props.steps, 300, 2);
-  if (steps.length > room) steps = stepPages(props.steps, 420, 3);
-  if (steps.length > room) steps = stepPages(props.steps, 700, 3);
-  // Toujours trop long : pages régulières, 5 étapes au plus (au-delà, « la suite sur culinova.fr »).
-  if (steps.length > room) steps = chunk(numbered, Math.min(5, Math.ceil(numbered.length / room)));
-  const more = steps.length > room;
-  const kept = steps.slice(0, room);
-  const parts = ingredientChunks.length;
-  const ingredientPages: CarouselPage[] = ingredientChunks.map((items, part) => {
-    return { kind: "ingredients", items, part, parts };
-  });
-  const stepPagesKept: CarouselPage[] = kept.map((items, index) => {
-    return { kind: "steps", items, more: more && index === kept.length - 1 };
-  });
-  return [{ kind: "cover" }, ...ingredientPages, ...stepPagesKept, { kind: "end" }];
+export function carouselPages(
+  props: Pick<CarouselProps, "ingredients" | "steps" | "summary">,
+): CarouselPage[] {
+  const tooMany = props.ingredients.length > MAX_INGREDIENTS;
+  const shown = tooMany ? props.ingredients.slice(0, MAX_INGREDIENTS - 1) : props.ingredients;
+  const lines = summaryLines(props);
+  return [
+    { kind: "cover" },
+    { kind: "ingredients", items: shown, more: props.ingredients.length - shown.length },
+    { kind: "summary", items: lines.slice(0, MAX_SUMMARY), total: lines.length },
+    { kind: "end" },
+  ];
 }
 
 export const EXAMPLE_CAROUSEL: CarouselProps = {

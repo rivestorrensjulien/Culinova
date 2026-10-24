@@ -24,6 +24,8 @@ export interface CarouselJob {
   totalMinutes: number;
   ingredients: Array<{ label: string; amount: string }>;
   steps: string[];
+  /** Étapes résumées (script TikTok), pour « la recette en bref ». */
+  summary?: string[];
   /** Photo 4:5 de la recette (celle de sa page). */
   imageId: string;
   photoUrl: string;

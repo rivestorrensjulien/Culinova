@@ -131,6 +131,7 @@ async function carousels(
           totalMinutes: job.totalMinutes,
           ingredients: job.ingredients,
           steps: job.steps,
+          summary: job.summary ?? [],
           photoUrl: job.photoUrl,
           handle: "@culinova.recette",
           site: "culinova.fr",

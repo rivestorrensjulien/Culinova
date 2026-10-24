@@ -275,12 +275,13 @@ export function CarouselSlide(props: CarouselProps) {
 
   if (page.kind === "ingredients") {
     const two = page.items.length > 6;
+    const dense = page.items.length > 10;
     const rows = two ? Math.ceil(page.items.length / 2) : page.items.length;
     return (
       <AbsoluteFill>
         <Backdrop props={props} />
         <Column>
-          <div style={{ position: "relative", flex: 1, minHeight: 300, marginBottom: 70 }}>
+          <div style={{ position: "relative", flex: 1, minHeight: 240, marginBottom: 70 }}>
             <Photo
               props={props}
               zoom={1.25}
@@ -297,9 +298,7 @@ export function CarouselSlide(props: CarouselProps) {
                 boxShadow: SHADOW,
               }}
             >
-              <Overline>
-                Pour {props.servings} personnes{page.parts > 1 ? ` · ${page.part + 1}/${page.parts}` : ""}
-              </Overline>
+              <Overline>Pour {props.servings} personnes</Overline>
               <div style={{ fontFamily: serif, fontSize: 72, lineHeight: 1.05, color: INK, marginTop: 6 }}>
                 Ingrédients
               </div>
@@ -311,8 +310,8 @@ export function CarouselSlide(props: CarouselProps) {
               gridTemplateColumns: two ? "1fr 1fr" : "1fr",
               gridTemplateRows: `repeat(${rows}, auto)`,
               gridAutoFlow: "column",
-              columnGap: 22,
-              rowGap: 16,
+              columnGap: 20,
+              rowGap: dense ? 10 : 16,
               padding: "0 20px",
             }}
           >
@@ -320,36 +319,52 @@ export function CarouselSlide(props: CarouselProps) {
               <div
                 key={item.label}
                 style={{
-                  padding: two ? "16px 22px" : "18px 28px",
-                  borderRadius: 22,
+                  padding: dense ? "11px 20px" : two ? "16px 22px" : "18px 28px",
+                  borderRadius: 20,
                   background: "#ffffffb3",
                   display: "flex",
                   flexDirection: two ? "column" : "row",
                   justifyContent: "space-between",
                   alignItems: two ? "flex-start" : "baseline",
-                  gap: two ? 2 : 16,
+                  gap: two ? 0 : 16,
                 }}
               >
-                <span style={{ fontFamily: sans, fontSize: two ? 29 : 36, color: INK, lineHeight: 1.2 }}>
+                <span
+                  style={{
+                    fontFamily: sans,
+                    fontSize: dense ? 26 : two ? 29 : 36,
+                    color: INK,
+                    lineHeight: 1.2,
+                  }}
+                >
                   {item.label}
                 </span>
-                <span style={{ fontFamily: sans, fontSize: two ? 27 : 34, fontWeight: 700, color: COPPER }}>
+                <span
+                  style={{
+                    fontFamily: sans,
+                    fontSize: dense ? 24 : two ? 27 : 34,
+                    fontWeight: 700,
+                    color: COPPER,
+                  }}
+                >
                   {item.amount}
                 </span>
               </div>
             ))}
           </div>
+          {page.more > 0 ? (
+            <div style={{ fontFamily: sans, fontSize: 28, color: MUTED, padding: "0 24px" }}>
+              + {page.more} autre{page.more > 1 ? "s" : ""} : la liste complète via le lien en bio
+            </div>
+          ) : null}
         </Column>
         {footer}
       </AbsoluteFill>
     );
   }
 
-  if (page.kind === "steps") {
-    const stepIndex = pages.slice(0, index).filter((p) => p.kind === "steps").length;
-    const many = page.items.length >= 3;
-    const long = page.items.reduce((n, i) => n + i.text.length, 0) > 320;
-    const fontSize = many || long ? 33 : 38;
+  if (page.kind === "summary") {
+    const dense = page.items.length > 6;
     return (
       <AbsoluteFill>
         <Backdrop props={props} />
@@ -357,48 +372,50 @@ export function CarouselSlide(props: CarouselProps) {
           <Photo
             props={props}
             zoom={1.6}
-            focus={FOCUS[stepIndex % FOCUS.length]}
-            style={{ flex: 1, minHeight: many ? 260 : 340, borderRadius: 40, boxShadow: SHADOW }}
+            focus={FOCUS[1]}
+            style={{ flex: 1, minHeight: 220, borderRadius: 40, boxShadow: SHADOW }}
           />
-          <div style={{ display: "flex", flexDirection: "column", gap: many ? 18 : 24, padding: "0 20px" }}>
-            <Overline>Étapes</Overline>
-            {page.items.map((item) => (
-              <div
-                key={item.number}
-                style={{
-                  display: "flex",
-                  gap: 26,
-                  alignItems: "flex-start",
-                  padding: many ? "22px 28px" : "28px 32px",
-                  borderRadius: 28,
-                  background: "#ffffffbf",
-                }}
-              >
+          <div style={{ display: "flex", flexDirection: "column", gap: dense ? 12 : 16, padding: "0 20px" }}>
+            <Overline>La recette en bref</Overline>
+            {page.items.map((line, i) => (
+              <div key={i} style={{ display: "flex", gap: 22, alignItems: "center" }}>
                 <div
                   style={{
                     flexShrink: 0,
-                    width: 76,
-                    height: 76,
-                    borderRadius: 38,
+                    width: dense ? 54 : 62,
+                    height: dense ? 54 : 62,
+                    borderRadius: 31,
                     background: COPPER,
                     color: "#fff",
                     fontFamily: serif,
-                    fontSize: 40,
+                    fontSize: dense ? 28 : 32,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                   }}
                 >
-                  {item.number}
+                  {i + 1}
                 </div>
-                <div style={{ fontFamily: sans, fontSize, lineHeight: 1.36, color: INK }}>{item.text}</div>
+                <div style={{ fontFamily: sans, fontSize: dense ? 30 : 34, lineHeight: 1.25, color: INK }}>
+                  {line}
+                </div>
               </div>
             ))}
-            {page.more ? (
-              <div style={{ fontFamily: sans, fontSize: 34, fontWeight: 500, color: COPPER }}>
-                La suite sur {props.site} →
-              </div>
-            ) : null}
+            <div
+              style={{
+                marginTop: 8,
+                padding: "18px 26px",
+                borderRadius: 24,
+                background: "#ffffffcc",
+                fontFamily: sans,
+                fontSize: 30,
+                fontWeight: 500,
+                color: COPPER,
+              }}
+            >
+              {page.total > page.items.length ? "La suite, les quantités" : "Les quantités"} et le pas à pas
+              détaillé : lien dans la bio 🔗
+            </div>
           </div>
         </Column>
         {footer}
@@ -406,7 +423,7 @@ export function CarouselSlide(props: CarouselProps) {
     );
   }
 
-  // Fin : Chef Ju en 3D, invitation à enregistrer et à retrouver la recette complète.
+  // Fin : Chef Ju en 3D, renvoi vers la recette complète (lien de la bio).
   return (
     <AbsoluteFill style={{ backgroundColor: CREAM }}>
       <Backdrop props={props} />
@@ -447,15 +464,20 @@ export function CarouselSlide(props: CarouselProps) {
           textAlign: "center",
         }}
       >
-        <div style={{ fontFamily: serif, fontSize: 70, color: INK, lineHeight: 1.1 }}>
-          Enregistre la recette 📌
-        </div>
-        <div style={{ fontFamily: sans, fontSize: 34, color: MUTED, marginTop: 22, lineHeight: 1.35 }}>
-          Et partage-la à qui tu veux régaler.
+        <div style={{ fontFamily: serif, fontSize: 64, color: INK, lineHeight: 1.1 }}>
+          La recette complète
           <br />
-          La recette complète, pesée et chiffrée :
+          dans la bio 🔗
         </div>
-        <div style={{ fontFamily: serif, fontSize: 84, color: COPPER, marginTop: 14 }}>{props.site}</div>
+        <div style={{ fontFamily: sans, fontSize: 32, color: MUTED, marginTop: 20, lineHeight: 1.35 }}>
+          Pesée au gramme, pas à pas détaillé et conseils du chef, sur
+        </div>
+        <div style={{ fontFamily: serif, fontSize: 64, color: COPPER, marginTop: 10 }}>
+          {props.site}/recettes
+        </div>
+        <div style={{ fontFamily: sans, fontSize: 30, color: INK, marginTop: 18 }}>
+          Enregistre-la 📌 et partage-la à qui tu veux régaler
+        </div>
       </div>
       {footer}
     </AbsoluteFill>

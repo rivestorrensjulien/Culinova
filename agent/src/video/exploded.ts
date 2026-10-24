@@ -12,16 +12,34 @@ export const VOICE_TRACK_ID = "VoixCalee";
 /** Synchronisation des lèvres de Chef Ju sur la voix de Julien (≈ 0,07 € par clip de 5 s). */
 export const LIPSYNC_MODEL = "fal-ai/kling-video/lipsync/audio-to-video";
 
-/** Couches renvoyées par Culinova (GET /api/agent/couches). */
+/** Formats courts (même début, même fin « Et voilà ! »), choisis par Culinova d'après le plat. */
+export const SHORT_FORMATS = ["eclate", "coupe", "dessus", "geste"] as const;
+export type ShortFormat = (typeof SHORT_FORMATS)[number];
+
+export function isShortFormat(value: unknown): value is ShortFormat {
+  return typeof value === "string" && (SHORT_FORMATS as readonly string[]).includes(value);
+}
+
+/** Analyse du plat renvoyée par Culinova (GET /api/agent/couches). */
 export interface LayerScript {
+  /** Format conseillé (absent avec une ancienne analyse : vue éclatée). */
+  format?: ShortFormat;
   container: string;
   layered: boolean;
   layers: Array<{ name: string; look: string }>;
+  /** Coupe : plat entier, puis part soulevée qui montre ses couches (strata, de bas en haut). */
+  cut?: { vessel: string; start: string; end: string; motion: string; strata: string[] };
+  /** Geste : gros plan avant et après le geste (nappage, coulure…), et ce qui se passe entre les deux. */
+  gesture?: { action: string; start: string; end: string; motion: string };
 }
 
 export interface ExplodedProps extends VideoProps {
-  /** Clip : la photo du plat dont les couches s'écartent. */
+  /** Format court (vue éclatée par défaut). */
+  format?: ShortFormat;
+  /** Clip principal : les couches s'écartent (éclatée), la part se soulève (coupe) ou le geste. */
   explodeClip: string | null;
+  /** Le clip principal garde son son (coupe et geste : grésillement, coulure). */
+  clipSound?: boolean;
   /** Vues du dessus : 0 = contenant vide, puis une image par couche posée. */
   topViews: string[];
   layerNames: string[];
@@ -31,6 +49,8 @@ export interface ExplodedProps extends VideoProps {
 
 export const PHOTO_FRAMES = 66;
 export const EXPLODE_FRAMES = 120;
+/** Coupe et geste : le clip de 5 s joué à vitesse normale (son compris). */
+export const CLIP_FRAMES = 150;
 export const EMPTY_FRAMES = 24;
 export const LAYER_FRAMES = 27;
 export const FINAL_FRAMES = 48;
@@ -46,11 +66,28 @@ export interface ExplodedSegment {
   frames: number;
 }
 
-export function explodedTimeline(props: Pick<ExplodedProps, "layerNames">): ExplodedSegment[] {
+/**
+ * Déroulé selon le format : la photo, puis
+ * - eclate : les couches s'écartent, puis se reposent une à une (vue du dessus) ;
+ * - coupe et geste : le clip (part soulevée ou geste, avec le son) ;
+ * - dessus : vue du dessus, la base puis chaque garniture ;
+ * puis la photo finale, « Et voilà ! » et la carte de fin.
+ */
+export function explodedTimeline(props: Pick<ExplodedProps, "layerNames" | "format">): ExplodedSegment[] {
+  const format = props.format ?? "eclate";
+  const assemble: [ExplodedKind, number] = [
+    "assemble",
+    EMPTY_FRAMES + props.layerNames.length * LAYER_FRAMES,
+  ];
+  const middle: Array<[ExplodedKind, number]> =
+    format === "eclate"
+      ? [["explode", EXPLODE_FRAMES], assemble]
+      : format === "dessus"
+        ? [assemble]
+        : [["explode", CLIP_FRAMES]];
   const frames: Array<[ExplodedKind, number]> = [
     ["photo", PHOTO_FRAMES],
-    ["explode", EXPLODE_FRAMES],
-    ["assemble", EMPTY_FRAMES + props.layerNames.length * LAYER_FRAMES],
+    ...middle,
     ["final", FINAL_FRAMES],
     ["voila", VOILA_FRAMES],
     ["end", EXPLODED_END_FRAMES],
@@ -63,7 +100,7 @@ export function explodedTimeline(props: Pick<ExplodedProps, "layerNames">): Expl
   });
 }
 
-export function explodedFrames(props: Pick<ExplodedProps, "layerNames">): number {
+export function explodedFrames(props: Pick<ExplodedProps, "layerNames" | "format">): number {
   return explodedTimeline(props).reduce((sum, s) => sum + s.frames, 0);
 }
 
@@ -129,3 +166,58 @@ export const VOILA_MOTION =
   "chef's kiss, eyes closed, then smiles at the camera and speaks a short cheerful sentence, " +
   "his mouth clearly visible. " +
   "The character keeps exactly the same appearance, blue-grey eyes and outfit.";
+
+/** Coupe, image de départ (image 1 = photo du plat) : le plat entier, intact. */
+export function cutStartPrompt(script: LayerScript): string {
+  const cut = script.cut!;
+  return [
+    "The exact same dish as image 1 (same recipe, same colours, same garnish, same surface and warm light),",
+    `but whole and untouched, before the first portion is served: ${cut.vessel}.`,
+    `${cut.start}`,
+    "Vertical 9:16 three-quarter view, close enough to fill the frame. Real home kitchen table.",
+    NO_TEXT,
+  ].join(" ");
+}
+
+/** Coupe, image d'arrivée (image 1 = départ, image 2 = photo du plat) : la part soulevée. */
+export function cutEndPrompt(script: LayerScript): string {
+  const cut = script.cut!;
+  return [
+    "Exactly the same shot as image 1: same dish, same framing, same light, same surface.",
+    `Now a clean portion has been cut and is lifted on a spatula just above the dish: ${cut.end}`,
+    `The cut side faces the camera and shows, from bottom to top: ${cut.strata.join(", ")}.`,
+    "Gentle steam rises. The food looks exactly like the finished dish in image 2.",
+    NO_TEXT,
+  ].join(" ");
+}
+
+export function cutMotion(script: LayerScript): string {
+  return (
+    `${script.cut!.motion} Slow motion, static camera, steam rising, realistic food textures, ` +
+    "natural sound of the knife and the bubbling dish."
+  );
+}
+
+/** Geste, image de départ (image 1 = photo du plat). */
+export function gestureStartPrompt(script: LayerScript): string {
+  return [
+    "The exact same dish as image 1 (same container, same presentation, same surface and warm light),",
+    `in a vertical 9:16 close-up, just before the finishing touch: ${script.gesture!.start}`,
+    "Only hands and utensils, never a face.",
+    NO_TEXT,
+  ].join(" ");
+}
+
+/** Geste, image d'arrivée (image 1 = départ, image 2 = photo du plat). */
+export function gestureEndPrompt(script: LayerScript): string {
+  return [
+    "Exactly the same close-up as image 1: same dish, same framing, same light.",
+    `Right after the finishing touch: ${script.gesture!.end}`,
+    "The dish now looks exactly like the finished dish in image 2.",
+    NO_TEXT,
+  ].join(" ");
+}
+
+export function gestureMotion(script: LayerScript): string {
+  return `${script.gesture!.motion} Slow motion close-up, static camera, glossy realistic textures, natural sound.`;
+}

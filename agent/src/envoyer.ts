@@ -25,11 +25,16 @@ async function main() {
   const job = await pickJob(client, arg("recette"));
   const file = join(output, arg("fichier") || "D-format-eclate.mp4");
   const meta = await getVideoMetadata(file);
+  // Format écrit par eclate.ts (vue éclatée, coupe, vue du dessus ou geste).
+  const format = await readFile(join(output, "format.txt"), "utf8")
+    .then((text) => text.trim() || null)
+    .catch(() => null);
   const { size } = await stat(file);
   const target = await client.register({
     recipeId: job.recipeId,
     versionId: job.versionId,
     imageId: job.imageId,
+    format,
     durationS: meta.durationInSeconds ?? 0,
     width: meta.width ?? 1080,
     height: meta.height ?? 1920,

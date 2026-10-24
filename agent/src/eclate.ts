@@ -1,7 +1,10 @@
 /**
- * Format court « vue éclatée » d'une recette (rien n'est envoyé à Culinova ni publié) :
- * photo → les couches s'écartent (clip IA) → vue du dessus, couche par couche (images IA)
- * → photo finale → Chef Ju fait le baiser du chef et dit « Et voilà ! » (clip IA avec le son).
+ * Format court d'une recette (rien n'est envoyé à Culinova ni publié), choisi par Culinova
+ * d'après le plat ou demandé par l'administrateur (--format=eclate|coupe|dessus|geste) :
+ * photo → cœur de la vidéo → photo finale → Chef Ju fait le baiser du chef et dit « Et voilà ! ».
+ * Cœur : vue éclatée (les couches s'écartent puis se reposent vues du dessus), coupe (le couteau
+ * tranche, la part se soulève et montre ses couches), vue du dessus (la base puis chaque garniture)
+ * ou geste (gros plan filmé sur le nappage, la coulure, le glaçage…).
  *
  *   npm run eclate -- --recette=<identifiant ou morceau du nom> [--nouveau=1]
  *   [--reprendre=1] : réutilise les clips et images de la fabrication précédente (sortie/comparatif),
@@ -29,10 +32,18 @@ import {
   type VideoResult,
 } from "./outils.ts";
 import {
+  cutEndPrompt,
+  cutMotion,
+  cutStartPrompt,
   EXPLODE_MOTION,
   EXPLODED_ID,
   type ExplodedProps,
   explodedImagePrompt,
+  gestureEndPrompt,
+  gestureMotion,
+  gestureStartPrompt,
+  isShortFormat,
+  type ShortFormat,
   LIPSYNC_MODEL,
   VOICE_TRACK_ID,
   topAddPrompt,
@@ -41,6 +52,13 @@ import {
   voilaImagePrompt,
 } from "./video/exploded.ts";
 import { IMAGE_MODEL, NEGATIVE_PROMPT, REFERENCE_ID, VIDEO_MODEL } from "./video/realistic.ts";
+
+const FORMAT_NAMES: Record<ShortFormat, string> = {
+  eclate: "vue éclatée",
+  coupe: "coupe",
+  dessus: "vue du dessus",
+  geste: "geste",
+};
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = join(root, "sortie", "comparatif");
@@ -57,10 +75,17 @@ async function main() {
   const fal = new FalClient(falKey);
   const job = await pickJob(client, arg("recette"));
   const layers = await client.layers(job.recipeId, arg("nouveau") === "1");
-  notice(
-    `Vue éclatée de « ${job.name} » : ${layers.layers.map((l) => l.name).join(" · ")}` +
-      (layers.layered ? "" : " (plat peu adapté à la vue éclatée)"),
-  );
+  // Format : demandé (option ou administrateur), sinon conseillé par l'analyse du plat.
+  const wanted = [arg("format"), job.format, layers.format].find(isShortFormat) ?? "eclate";
+  const format: ShortFormat =
+    (wanted === "coupe" && !layers.cut) || (wanted === "geste" && !layers.gesture) ? "eclate" : wanted;
+  const labels =
+    format === "coupe"
+      ? layers.cut!.strata
+      : format === "geste"
+        ? [layers.gesture!.action]
+        : layers.layers.map((l) => l.name);
+  notice(`Format « ${FORMAT_NAMES[format]} » pour « ${job.name} » : ${labels.join(" · ")}`);
   await rm(assets, { recursive: true, force: true });
   await mkdir(assets, { recursive: true });
   await mkdir(output, { recursive: true });
@@ -109,7 +134,7 @@ async function main() {
     return `realiste/${file}`;
   };
 
-  let explodeClip: string;
+  let explodeClip: string | null;
   let voilaClip: string;
   let synced = false;
   const topViews: string[] = [];
@@ -132,9 +157,28 @@ async function main() {
     }
     notice("Clips et vues du dessus repris de la fabrication précédente");
   } else {
-    // 1. Vue éclatée (image), puis le clip où les couches s'écartent depuis la photo (lien signé 1 h).
-    const exploded = await edit(explodedImagePrompt(layers), [dish], "eclate-01-vue-eclatee.jpg");
-    const explodeTask = animate(job.photoUrl, exploded, EXPLODE_MOTION, "eclate.mp4");
+    // 1. Clip principal (en parallèle des vues du dessus) :
+    //    éclatée = les couches s'écartent depuis la photo (lien signé 1 h) ;
+    //    coupe = le plat entier, puis la part soulevée ; geste = juste avant, puis juste après.
+    const explodeTask: Promise<string | null> =
+      format === "eclate"
+        ? (async () => {
+            const exploded = await edit(explodedImagePrompt(layers), [dish], "eclate-01-vue-eclatee.jpg");
+            return animate(job.photoUrl, exploded, EXPLODE_MOTION, "eclate.mp4");
+          })()
+        : format === "coupe"
+          ? (async () => {
+              const start = await edit(cutStartPrompt(layers), [dish], "coupe-01-plat-entier.jpg");
+              const end = await edit(cutEndPrompt(layers), [start, dish], "coupe-02-part.jpg");
+              return animate(start, end, cutMotion(layers), "eclate.mp4", true);
+            })()
+          : format === "geste"
+            ? (async () => {
+                const start = await edit(gestureStartPrompt(layers), [dish], "geste-01-avant.jpg");
+                const end = await edit(gestureEndPrompt(layers), [start, dish], "geste-02-apres.jpg");
+                return animate(start, end, gestureMotion(layers), "eclate.mp4", true);
+              })()
+            : Promise.resolve(null);
 
     // 2. Chef Ju et le baiser du chef (en parallèle des vues du dessus).
     const voilaTask = (async () => {
@@ -142,16 +186,20 @@ async function main() {
       return animate(start, null, VOILA_MOTION, "et-voila.mp4");
     })();
 
-    // 3. Vues du dessus : contenant vide, puis une couche de plus à chaque image.
-    let previous = await edit(topEmptyPrompt(layers), [dish], "dessus-00.jpg", true);
-    topViews.push("realiste/dessus-00.jpg");
-    for (const [i, layer] of layers.layers.entries()) {
-      const file = `dessus-${String(i + 1).padStart(2, "0")}.jpg`;
-      previous = await edit(topAddPrompt(layer), [previous, dish], file, true);
-      topViews.push(`realiste/${file}`);
+    // 3. Vues du dessus (éclatée et dessus) : contenant vide, puis une couche de plus à chaque image.
+    if (format === "eclate" || format === "dessus") {
+      let previous = await edit(topEmptyPrompt(layers), [dish], "dessus-00.jpg", true);
+      topViews.push("realiste/dessus-00.jpg");
+      for (const [i, layer] of layers.layers.entries()) {
+        const file = `dessus-${String(i + 1).padStart(2, "0")}.jpg`;
+        previous = await edit(topAddPrompt(layer), [previous, dish], file, true);
+        topViews.push(`realiste/${file}`);
+      }
+      notice("Vues du dessus prêtes");
     }
-    notice("Vues du dessus prêtes");
-    [explodeClip, voilaClip] = await Promise.all([explodeTask, voilaTask]);
+    let mainClip: string | null;
+    [mainClip, voilaClip] = await Promise.all([explodeTask, voilaTask]);
+    explodeClip = mainClip ?? "";
     notice("Clips prêts");
   }
 
@@ -205,9 +253,11 @@ async function main() {
     site: "culinova.fr",
     jacket: process.env.VESTE === "noire" ? "noire" : "blanche",
     ...finishing(root),
-    explodeClip,
+    format,
+    explodeClip: explodeClip || null,
+    clipSound: format === "coupe" || format === "geste",
     topViews,
-    layerNames: layers.layers.map((l) => l.name),
+    layerNames: labels,
     voilaClip,
   };
   const composition = await selectComposition({ serveUrl, id: EXPLODED_ID, inputProps: props });
@@ -223,7 +273,9 @@ async function main() {
     timeoutInMilliseconds: 120_000,
   });
   await keepClips(assets, output);
-  notice("Format « vue éclatée » fabriqué");
+  // Lu par envoyer.ts : format enregistré avec la vidéo dans Culinova.
+  await writeFile(join(output, "format.txt"), format);
+  notice(`Format « ${FORMAT_NAMES[format]} » fabriqué`);
 }
 
 main().catch((error) => {

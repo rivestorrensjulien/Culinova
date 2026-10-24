@@ -20,7 +20,6 @@ import {
 } from "remotion";
 import {
   EMPTY_FRAMES,
-  EXPLODE_FRAMES,
   explodedTimeline,
   type ExplodedProps,
   LAYER_FRAMES,
@@ -86,20 +85,23 @@ function PhotoScene({ props, frames }: { props: ExplodedProps; frames: number })
   );
 }
 
-/** Les couches s'écartent ; leurs noms apparaissent un à un. */
-function ExplodeScene({ props }: { props: ExplodedProps }) {
+/**
+ * Clip principal : les couches s'écartent (vue éclatée), la part se soulève (coupe) ou le geste ;
+ * les noms (couches, couches de la tranche ou geste) apparaissent un à un.
+ */
+function ExplodeScene({ props, frames }: { props: ExplodedProps; frames: number }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const clip = src(props.explodeClip);
   const names = props.layerNames;
-  const step = (EXPLODE_FRAMES - 30) / Math.max(1, names.length);
+  const step = (frames - 30) / Math.max(1, names.length);
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
       {clip ? (
         <OffthreadVideo
           src={clip}
-          muted
-          playbackRate={(5 * fps) / EXPLODE_FRAMES}
+          muted={!props.clipSound}
+          playbackRate={(5 * fps) / frames}
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       ) : (
@@ -295,7 +297,7 @@ export function ExplodedVideo(props: ExplodedProps) {
       {segments.map((segment) => (
         <Sequence key={segment.kind} from={segment.from} durationInFrames={segment.frames}>
           {segment.kind === "photo" ? <PhotoScene props={props} frames={segment.frames} /> : null}
-          {segment.kind === "explode" ? <ExplodeScene props={props} /> : null}
+          {segment.kind === "explode" ? <ExplodeScene props={props} frames={segment.frames} /> : null}
           {segment.kind === "assemble" ? <AssembleScene props={props} /> : null}
           {segment.kind === "final" ? <FinalScene props={props} frames={segment.frames} /> : null}
           {segment.kind === "voila" ? <VoilaScene props={props} /> : null}

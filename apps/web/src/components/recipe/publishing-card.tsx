@@ -16,6 +16,7 @@ import {
   cancelScheduleAction,
   dismissProposalAction,
   rejectRecipeAction,
+  requestVideoAction,
   publishAction,
   refreshPublicationsAction,
   schedulePublicationAction,
@@ -294,6 +295,11 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [suggested, setSuggested] = useState<string | null | undefined>(undefined);
   /** Proposition de la planification automatique en cours de validation. */
   const [approving, setApproving] = useState<string | null>(null);
+  /** Format demandé pour refaire la vidéo (vide = automatique) et demande en attente. */
+  const [videoFormat, setVideoFormat] = useState("");
+  const [videoRequested, setVideoRequested] = useState<string | null>(
+    recipe.publishing?.video?.pendingRequest ?? null,
+  );
   const [publishError, setPublishError] = useState<string | null>(null);
   const [captions, setCaptions] = useState<Record<Platform, string>>(
     recipe.publishing?.captions ?? { instagram: "", tiktok: "", pinterest: "" },
@@ -451,6 +457,15 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
       timeZone: "Europe/Paris",
     });
 
+  const redoVideo = async () => {
+    setBusy(true);
+    setError(false);
+    const ok = await requestVideoAction(recipe.recipeId, videoFormat).catch(() => false);
+    if (ok) setVideoRequested(videoFormat || "auto");
+    else setError(true);
+    setBusy(false);
+  };
+
   const proposedFirst = schedule.find((item) => item.status === "proposed");
   const scheduleDay = (iso: string) =>
     format.dateTime(new Date(iso), {
@@ -553,8 +568,40 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     seconds: Math.round(video.durationS),
                   })}
                 </p>
+                {video.format ? (
+                  <p>
+                    {t("videoFormat.current", {
+                      format: t(`videoFormat.names.${video.format}` as "videoFormat.names.eclate"),
+                    })}
+                  </p>
+                ) : null}
                 {video.current ? null : <Notice tone="warning">{t("video.outdated")}</Notice>}
                 <p className="text-muted">{t("video.check")}</p>
+                {videoRequested ? (
+                  <Notice tone="info">
+                    {t("videoFormat.requested", {
+                      format: t(`videoFormat.names.${videoRequested}` as "videoFormat.names.eclate"),
+                    })}
+                  </Notice>
+                ) : (
+                  <div className="flex flex-wrap items-center gap-2" data-testid="video-redo">
+                    <Select
+                      value={videoFormat}
+                      onChange={(e) => setVideoFormat(e.target.value)}
+                      className="w-48"
+                      aria-label={t("videoFormat.label")}
+                    >
+                      {["", "eclate", "coupe", "dessus", "geste"].map((value) => (
+                        <option key={value} value={value}>
+                          {t(`videoFormat.names.${value || "auto"}` as "videoFormat.names.eclate")}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button size="sm" variant="secondary" disabled={busy} onClick={redoVideo}>
+                      {t("videoFormat.redo")}
+                    </Button>
+                  </div>
+                )}
                 <a href={`/api/videos/${video.id}?telecharger=1`} className="text-primary hover:underline">
                   {t("video.download")}
                 </a>

@@ -1,6 +1,6 @@
 /**
  * Préparation des vidéos de l'agent par Claude, demandée par l'agent : découpage en scènes de la
- * vidéo réaliste (prompt video.scenes@1) et couches de la vue éclatée (video.layers@1).
+ * vidéo réaliste (prompt video.scenes@1) et format court et couches (video.layers@2 : vue éclatée, coupe, vue du dessus ou geste).
  * Gratuit, borné par le plafond de budget IA, mis en cache par version de recette.
  */
 import { isWithinBudget } from "@culinova/core";

@@ -30,10 +30,25 @@ export const recipeVideos = pgTable(
     height: integer("height").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     note: text("note"),
+    /** Format de la vidéo : eclate, coupe, dessus, geste (format court) ou animee (ancienne vidéo animée). */
+    format: text("format"),
     ...timestamps,
   },
   (t) => [index("recipe_videos_recipe_idx").on(t.recipeId, t.createdAt)],
 );
+
+/**
+ * Vidéo demandée par l'administrateur depuis l'encart : refaire la vidéo, dans un format choisi
+ * (null = format choisi par l'analyse du plat). L'agent la refait au passage suivant.
+ */
+export const recipeVideoRequests = pgTable("recipe_video_requests", {
+  recipeId: uuid("recipe_id")
+    .primaryKey()
+    .references(() => recipes.id, { onDelete: "cascade" }),
+  format: text("format"),
+  requestedAt: tz("requested_at").notNull().defaultNow(),
+  requestedBy: uuid("requested_by").references(() => users.id, { onDelete: "set null" }),
+});
 
 /**
  * Carrousel Instagram d'une version de recette, fabriqué par l'agent : photo, ingrédients,

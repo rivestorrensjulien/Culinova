@@ -10,7 +10,7 @@ import { appUrl } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { refuseAgent } from "@/server/social/agent-route";
 import { VIDEO_MAX_BYTES } from "@/server/social/video-storage";
-import { registerVideo, videoJobs } from "@/server/social/videos";
+import { registerVideo, VIDEO_FILE_FORMATS, videoJobs } from "@/server/social/videos";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +29,7 @@ const registrationSchema = z.object({
   recipeId: z.uuid(),
   versionId: z.uuid(),
   imageId: z.uuid().nullish(),
+  format: z.enum(VIDEO_FILE_FORMATS).nullish(),
   durationS: z.number().positive().max(600),
   width: z.int().positive().max(4096),
   height: z.int().positive().max(4096),

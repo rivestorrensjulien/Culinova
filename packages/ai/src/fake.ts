@@ -445,8 +445,22 @@ const defaultResponder: Responder = (request) => {
   if (request.promptId.startsWith("insights.")) return fakeInsights();
   if (request.promptId.startsWith("video.layers")) {
     return {
+      format: "eclate",
       container: "A light oak serving board on a linen tablecloth.",
       layered: true,
+      cut: {
+        vessel: "A whole dish on a light oak board.",
+        start: "The whole dish, untouched, a knife and a spatula beside it.",
+        end: "A clean slice lifted on a spatula above the dish, its layers visible.",
+        motion: "Slices through the dish and lifts a portion in slow motion.",
+        strata: ["Pain grillé", "Garniture"],
+      },
+      gesture: {
+        action: "Napper de sauce",
+        start: "Close-up of the finished dish just before the sauce, a spoon ready.",
+        end: "The sauce glossy on top of the dish.",
+        motion: "Pours the sauce slowly over the dish, it spreads and drips down the sides.",
+      },
       layers: [
         { name: "Pain grillé", look: "Two slices of toasted country bread side by side." },
         { name: "Garniture", look: "A generous layer of topping spread evenly." },

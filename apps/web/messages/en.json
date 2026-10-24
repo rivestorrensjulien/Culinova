@@ -1419,6 +1419,20 @@
       "waitingCarousel": "Waiting for the carousel: the agent is making it.",
       "waitingPhoto": "Waiting for the photo: it is being generated.",
       "expired": "Proposal for {date} was not approved in time: nothing was posted."
+    },
+    "videoFormat": {
+      "label": "Video format",
+      "current": "Format: {format}",
+      "redo": "Redo the video",
+      "requested": "New video requested ({format}): the agent makes it within half an hour (about €1.20). It will replace this one; wait for it before approving.",
+      "names": {
+        "auto": "Automatic (by dish)",
+        "eclate": "Exploded view",
+        "coupe": "Cut",
+        "dessus": "Top-down",
+        "geste": "Gesture",
+        "animee": "Animated (old format)"
+      }
     }
   },
   "Install": {

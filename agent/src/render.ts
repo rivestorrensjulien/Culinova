@@ -223,6 +223,7 @@ async function main() {
         recipeId: job.recipeId,
         versionId: job.versionId,
         imageId: job.imageId,
+        format: "animee",
         sizeBytes: size,
         ...meta,
       });

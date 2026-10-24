@@ -1419,6 +1419,20 @@
       "waitingCarousel": "En attente du carrousel : l’agent le fabrique.",
       "waitingPhoto": "En attente de la photo : elle est en cours de génération.",
       "expired": "Proposition du {date} non validée à temps : rien n’a été publié."
+    },
+    "videoFormat": {
+      "label": "Format de la vidéo",
+      "current": "Format : {format}",
+      "redo": "Refaire la vidéo",
+      "requested": "Nouvelle vidéo demandée ({format}) : l’agent la fabrique dans la demi-heure (environ 1,20 €). Elle remplacera celle-ci ; attendez-la avant de valider.",
+      "names": {
+        "auto": "Automatique (selon le plat)",
+        "eclate": "Vue éclatée",
+        "coupe": "Coupe",
+        "dessus": "Vue du dessus",
+        "geste": "Geste",
+        "animee": "Animée (ancien format)"
+      }
     }
   },
   "Install": {

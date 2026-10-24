@@ -13,6 +13,9 @@ on:
         description: "Fabriquer seulement la vidéo d'exemple"
         type: boolean
         default: false
+      format:
+        description: "Avec une recette : format de la vidéo (eclate, coupe, dessus, geste ; vide = selon le plat)"
+        required: false
       carrousel:
         description: "Avec une recette : refaire seulement son carrousel Instagram (pas la vidéo)"
         type: boolean
@@ -104,8 +107,9 @@ jobs:
         env:
           RECETTE: ${{ inputs.recette }}
           CARROUSEL: ${{ inputs.carrousel }}
+          FORMAT: ${{ inputs.format }}
         run: |
           if [ -z "$AGENT_API_KEY" ]; then echo "::error::Secret AGENT_API_KEY manquant (Settings → Secrets and variables → Actions)."; exit 1; fi
           if [ -n "$RECETTE" ] && [ "$CARROUSEL" = "true" ]; then npm run rendre -- --recette="$RECETTE" --carrousel
-          elif [ -n "$RECETTE" ]; then npm run auto -- --recette="$RECETTE"
+          elif [ -n "$RECETTE" ]; then npm run auto -- --recette="$RECETTE" --format="$FORMAT"
           else npm run auto; fi

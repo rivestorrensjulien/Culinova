@@ -1,14 +1,15 @@
 /**
  * Agent automatique (tâche GitHub « Vidéos des recettes ») : fabrique ce qui manque aux recettes
- * « à publier », dans le format validé par Julien sur les Tostadas (24/10) :
+ * « à publier » (formats courts validés par Julien le 24/10) :
  *   1. les carrousels Instagram manquants (gratuits) ;
- *   2. la vidéo « vue éclatée » d'UNE recette par passage (≈ 1,20 € chez fal.ai) : photo → les
- *      couches s'écartent → vue du dessus couche par couche → photo finale → Chef Ju, baiser du chef
- *      et « Et voilà ! » avec la voix de Julien. La recette suivante part au passage suivant (30 min).
+ *   2. la vidéo courte d'UNE recette par passage (≈ 1,20 € chez fal.ai), dans le format choisi
+ *      d'après le plat ou demandé par l'administrateur (vue éclatée, coupe, vue du dessus, geste) :
+ *      photo → cœur de la vidéo → photo finale → Chef Ju, baiser du chef et « Et voilà ! » avec la
+ *      voix de Julien. La recette suivante part au passage suivant (30 min).
  * Un échec est signalé à Culinova (la recette n'est plus retentée après trois échecs : pas de
  * dépenses en boucle). Sans FAL_KEY, repli sur la vidéo animée (gratuite), signalé dans le résumé.
  *
- *   npm run auto [-- --recette=<identifiant ou morceau du nom>]
+ *   npm run auto [-- --recette=<identifiant ou morceau du nom> [--format=eclate|coupe|dessus|geste]]
  */
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -55,21 +56,23 @@ async function main() {
     return;
   }
   if (!process.env.FAL_KEY?.trim()) {
-    annotate("Vue éclatée", "FAL_KEY absente : vidéo animée fabriquée à la place (format provisoire).");
+    annotate("Vidéo courte", "FAL_KEY absente : vidéo animée fabriquée à la place (format provisoire).");
     if (!run("render.ts", [`--recette=${job.recipeId}`])) process.exitCode = 1;
     return;
   }
-  notice(`Vue éclatée de « ${job.name} »…`);
+  notice(`Vidéo courte de « ${job.name} »…`);
   const ok =
-    run("eclate.ts", [`--recette=${job.recipeId}`]) &&
-    run("envoyer.ts", [`--recette=${job.recipeId}`, "--fichier=D-format-eclate.mp4"]);
+    run("eclate.ts", [
+      `--recette=${job.recipeId}`,
+      ...(arg("format") ? [`--format=${arg("format")}`] : []),
+    ]) && run("envoyer.ts", [`--recette=${job.recipeId}`, "--fichier=D-format-eclate.mp4"]);
   if (ok) {
-    notice(`Vidéo « vue éclatée » de « ${job.name} » envoyée à Culinova (à valider)`);
+    notice(`Vidéo de « ${job.name} » envoyée à Culinova (à valider)`);
     if (failed) process.exitCode = 1;
     return;
   }
   // Échec signalé à Culinova : compte dans la limite de trois essais par recette.
-  const note = "Fabrication de la vue éclatée impossible (voir la tâche GitHub « Vidéos des recettes »).";
+  const note = "Fabrication de la vidéo impossible (voir la tâche GitHub « Vidéos des recettes »).";
   try {
     const target = await client.register({
       recipeId: job.recipeId,

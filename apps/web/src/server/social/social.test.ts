@@ -25,7 +25,7 @@ import {
 import { analyzeStats, collectStats, engagementRate, statsOverview } from "./stats";
 import { createVideoStorage, parseRange } from "./video-storage";
 import { loadRecipeView } from "../generation/view";
-import { completeVideo, latestVideo, registerVideo, videoJobs } from "./videos";
+import { completeVideo, latestVideo, registerVideo, requestVideo, videoJobs } from "./videos";
 
 const state: WizardState = {
   ...emptyWizardState("fr"),
@@ -218,6 +218,34 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const read = await createVideoStorage().read(row!.storageKey, "bytes=1-2");
     expect(read?.status).toBe(206);
     expect(new Uint8Array(await read!.arrayBuffer())).toEqual(new Uint8Array([2, 3]));
+  });
+
+  it("refaire la vidéo dans un autre format (coupe, vue du dessus…), à la demande de l'administrateur", async () => {
+    const db = testDb();
+    const cook = await createTestUser();
+    expect(await requestVideo(db, cook.id, recipeId, "coupe")).toBe(false);
+    expect(await requestVideo(db, admin.id, recipeId, "coupe")).toBe(true);
+    // La recette repasse dans la file de l'agent, avec le format demandé.
+    const job = (await videoJobs(db, "https://culinova.fr")).find((j) => j.recipeId === recipeId);
+    expect(job?.format).toBe("coupe");
+    expect((await latestVideo(db, recipeId))?.pendingRequest).toBe("coupe");
+    const registered = await registerVideo(db, {
+      recipeId,
+      versionId: job!.versionId,
+      imageId: job!.imageId,
+      format: "coupe",
+      durationS: 20,
+      width: 1080,
+      height: 1920,
+      sizeBytes: 4,
+    });
+    if (!registered.ok) throw new Error(registered.reason);
+    const [row] = await db.select().from(s.recipeVideos).where(eq(s.recipeVideos.id, registered.videoId));
+    await createVideoStorage().put(row!.storageKey, new Uint8Array([1, 2, 3, 4]));
+    expect(await completeVideo(db, registered.videoId, { status: "ready" })).toEqual({ ok: true });
+    // Nouvelle vidéo au bon format, demande satisfaite : plus rien à refaire.
+    expect(await latestVideo(db, recipeId)).toMatchObject({ format: "coupe", pendingRequest: null });
+    expect((await videoJobs(db, "https://culinova.fr")).some((j) => j.recipeId === recipeId)).toBe(false);
   });
 
   it("garde les jetons chiffrés et publie un Reel après validation", async () => {

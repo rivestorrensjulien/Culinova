@@ -3,6 +3,7 @@ import { FakeLlmAdapter } from "../fake";
 import {
   buildVideoLayersPrompt,
   buildVideoScenesPrompt,
+  VIDEO_FORMATS,
   VIDEO_LAYERS_PROMPT_VERSION,
   videoLayersSchema,
   VIDEO_SCENES_PROMPT_VERSION,
@@ -51,5 +52,15 @@ describe("vue éclatée", () => {
       schema: videoLayersSchema,
     });
     expect(result.data.layers.length).toBeGreaterThanOrEqual(2);
+    expect(VIDEO_FORMATS).toContain(result.data.format);
+    expect(result.data.cut.strata.length).toBeGreaterThan(0);
+    expect(result.data.gesture.action).toBeTruthy();
+  });
+
+  it("choisit le format d'après le plat (vue éclatée, coupe, vue du dessus ou geste)", () => {
+    const { system } = buildVideoLayersPrompt(input);
+    expect(system).toMatch(/coupe pour .*moussaka/);
+    expect(system).toMatch(/dessus pour .*currys/);
+    expect(system).toMatch(/geste pour .*nappés/);
   });
 });

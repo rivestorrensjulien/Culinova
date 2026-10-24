@@ -26,6 +26,57 @@ export interface VideoJob {
   imageId: string;
   /** Lien signé (1 h) vers cette photo. */
   photoUrl: string;
+  /** Format demandé par l'administrateur (null : celui choisi par l'analyse du plat). */
+  format: string | null;
+}
+
+/** Formats des vidéos : formats courts et ancienne vidéo animée. */
+export const VIDEO_FILE_FORMATS = ["eclate", "coupe", "dessus", "geste", "animee"] as const;
+export type VideoFileFormat = (typeof VIDEO_FILE_FORMATS)[number];
+/** Formats que l'administrateur peut demander (null = automatique). */
+export const REQUESTABLE_FORMATS = ["eclate", "coupe", "dessus", "geste"] as const;
+export type RequestableFormat = (typeof REQUESTABLE_FORMATS)[number];
+
+async function videoRequest(db: Database, recipeId: string) {
+  const [row] = await db
+    .select()
+    .from(s.recipeVideoRequests)
+    .where(eq(s.recipeVideoRequests.recipeId, recipeId));
+  return row ?? null;
+}
+
+/**
+ * L'administrateur demande de refaire la vidéo d'une recette, dans un format (null = automatique) :
+ * l'agent la refait à son prochain passage (toutes les 30 minutes).
+ */
+export async function requestVideo(
+  db: Database,
+  adminId: string,
+  recipeId: string,
+  format: RequestableFormat | null,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const recipe = await adminRecipe(db, recipeId);
+  const [owner] = await db
+    .select({ ownerId: s.recipes.ownerId })
+    .from(s.recipes)
+    .where(eq(s.recipes.id, recipeId));
+  if (!recipe || owner?.ownerId !== adminId) return false;
+  await db
+    .insert(s.recipeVideoRequests)
+    .values({ recipeId, format, requestedAt: now, requestedBy: adminId })
+    .onConflictDoUpdate({
+      target: s.recipeVideoRequests.recipeId,
+      set: { format, requestedAt: now, requestedBy: adminId },
+    });
+  await audit(db, {
+    actorId: adminId,
+    action: "video.request",
+    entity: "recipe",
+    entityId: recipeId,
+    after: { format },
+  });
+  return true;
 }
 
 /**
@@ -95,6 +146,7 @@ async function jobFor(db: Database, recipeId: string, baseUrl: string, now: Date
   const imageId = await currentVerticalPhoto(db, recipe.versionId);
   const path = imageId ? signedImagePath(imageId, now) : null;
   if (!version || !script || !imageId || !path) return null;
+  const request = await videoRequest(db, recipeId);
   return {
     recipeId,
     versionId: recipe.versionId,
@@ -103,6 +155,7 @@ async function jobFor(db: Database, recipeId: string, baseUrl: string, now: Date
     shots: script.shots,
     imageId,
     photoUrl: `${baseUrl}${path}`,
+    format: request?.format ?? null,
   };
 }
 
@@ -125,14 +178,25 @@ export async function videoJobs(
     .selectDistinct({ recipeId: s.recipePublications.recipeId })
     .from(s.recipePublications)
     .where(eq(s.recipePublications.status, "queued"));
+  // Vidéos à refaire demandées par l'administrateur (même hors file « à publier »).
+  const requested = await db.select({ recipeId: s.recipeVideoRequests.recipeId }).from(s.recipeVideoRequests);
+  const recipeIds = [...new Set([...queued, ...requested].map((r) => r.recipeId))];
   const jobs: VideoJob[] = [];
-  for (const { recipeId } of queued) {
+  for (const recipeId of recipeIds) {
     const job = await jobFor(db, recipeId, baseUrl, now);
     if (!job) continue;
+    const request = await videoRequest(db, recipeId);
+    const since = request?.requestedAt ?? new Date(0);
     const videos = await db
       .select({ status: s.recipeVideos.status, createdAt: s.recipeVideos.createdAt })
       .from(s.recipeVideos)
-      .where(and(eq(s.recipeVideos.recipeVersionId, job.versionId), eq(s.recipeVideos.imageId, job.imageId)));
+      .where(
+        and(
+          eq(s.recipeVideos.recipeVersionId, job.versionId),
+          eq(s.recipeVideos.imageId, job.imageId),
+          gte(s.recipeVideos.createdAt, since),
+        ),
+      );
     const done = videos.some(
       (v) =>
         v.status === "ready" ||
@@ -149,6 +213,8 @@ export interface VideoRegistration {
   versionId: string;
   /** Photo 9:16 montrée dans la vidéo. */
   imageId?: string | null;
+  /** Format de la vidéo (null : inconnu, ancien agent). */
+  format?: VideoFileFormat | null;
   durationS: number;
   width: number;
   height: number;
@@ -177,6 +243,7 @@ export async function registerVideo(
       recipeId: input.recipeId,
       recipeVersionId: input.versionId,
       imageId: input.imageId ?? null,
+      format: input.format ?? null,
       storageKey: "",
       durationMs: Math.round(input.durationS * 1000),
       width: input.width,
@@ -257,6 +324,10 @@ export interface RecipeVideoView {
   createdAt: string;
   /** La vidéo a été fabriquée pour la version active et la photo actuelle de la recette. */
   current: boolean;
+  /** Format de la vidéo (null : inconnu, vidéos plus anciennes). */
+  format: string | null;
+  /** Vidéo à refaire demandée et pas encore fabriquée : format demandé (« auto » = automatique). */
+  pendingRequest: string | null;
 }
 
 /** Dernière vidéo prête d'une recette (pour l'encart de publication). */
@@ -268,6 +339,7 @@ export async function latestVideo(db: Database, recipeId: string): Promise<Recip
       createdAt: s.recipeVideos.createdAt,
       versionId: s.recipeVideos.recipeVersionId,
       imageId: s.recipeVideos.imageId,
+      format: s.recipeVideos.format,
       currentVersionId: s.recipes.currentVersionId,
     })
     .from(s.recipeVideos)
@@ -277,11 +349,14 @@ export async function latestVideo(db: Database, recipeId: string): Promise<Recip
     .limit(1);
   if (!row) return null;
   const photo = row.currentVersionId ? await currentVerticalPhoto(db, row.currentVersionId) : null;
+  const request = await videoRequest(db, recipeId);
   return {
     id: row.id,
     durationS: row.durationMs / 1000,
     createdAt: row.createdAt.toISOString(),
     current: row.versionId === row.currentVersionId && (!row.imageId || row.imageId === photo),
+    format: row.format,
+    pendingRequest: request && request.requestedAt > row.createdAt ? (request.format ?? "auto") : null,
   };
 }
 

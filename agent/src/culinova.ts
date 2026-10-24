@@ -14,6 +14,8 @@ export interface VideoJob {
   /** Photo 9:16 de la recette (celle de sa page) : la vidéo la montre du début à la fin. */
   imageId: string;
   photoUrl: string;
+  /** Format demandé par l'administrateur (null : celui choisi par l'analyse du plat). */
+  format?: string | null;
 }
 
 export interface CarouselJob {
@@ -94,6 +96,8 @@ export class CulinovaClient {
     recipeId: string;
     versionId: string;
     imageId: string;
+    /** eclate, coupe, dessus, geste ou animee. */
+    format?: string | null;
     durationS: number;
     width: number;
     height: number;

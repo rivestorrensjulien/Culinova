@@ -35,6 +35,7 @@ import {
 } from "../social/schedule";
 import { fromParisInput, toParisInput } from "../social/slots";
 import { type CreatorInfo, tiktokCreatorInfo } from "../social/tiktok";
+import { REQUESTABLE_FORMATS, type RequestableFormat, requestVideo } from "../social/videos";
 
 const uuid = z.uuid();
 
@@ -306,4 +307,14 @@ export async function saveAutoplanAction(enabled: boolean): Promise<boolean> {
   await saveAutoplan(db, session.user.id, { enabled: Boolean(enabled) });
   if (enabled) after(() => runAutoplan(getDb()).then(() => undefined));
   return true;
+}
+
+/** « Refaire la vidéo » dans un format (vide = automatique) : l'agent la refait dans la demi-heure. */
+export async function requestVideoAction(recipeId: string, format: string): Promise<boolean> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success) return false;
+  const chosen = (REQUESTABLE_FORMATS as readonly string[]).includes(format)
+    ? (format as RequestableFormat)
+    : null;
+  return requestVideo(getDb(), session.user.id, recipeId, chosen);
 }

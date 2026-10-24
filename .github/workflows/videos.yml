@@ -1,7 +1,8 @@
 name: Vidéos des recettes
 
-# Agent de publication (dossier agent/) : fabrique la vidéo verticale des recettes
-# « à publier » et l'envoie à Culinova, où l'administrateur la regarde avant de publier.
+# Agent de publication (dossier agent/) : fabrique les carrousels et la vidéo « vue éclatée »
+# (format validé sur les Tostadas, une recette par passage) des recettes « à publier », et les
+# envoie à Culinova, où l'administrateur les regarde avant de publier.
 on:
   workflow_dispatch:
     inputs:
@@ -34,13 +35,14 @@ jobs:
   videos:
     name: Fabriquer les vidéos
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: agent
     env:
       CULINOVA_URL: ${{ vars.CULINOVA_URL || 'https://culinova.fr' }}
       AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+      FAL_KEY: ${{ secrets.FAL_KEY }}
       VESTE: ${{ vars.MASCOTTE_VESTE || 'blanche' }}
     steps:
       - uses: actions/checkout@v4
@@ -105,5 +107,5 @@ jobs:
         run: |
           if [ -z "$AGENT_API_KEY" ]; then echo "::error::Secret AGENT_API_KEY manquant (Settings → Secrets and variables → Actions)."; exit 1; fi
           if [ -n "$RECETTE" ] && [ "$CARROUSEL" = "true" ]; then npm run rendre -- --recette="$RECETTE" --carrousel
-          elif [ -n "$RECETTE" ]; then npm run rendre -- --recette="$RECETTE"
-          else npm run rendre; fi
+          elif [ -n "$RECETTE" ]; then npm run auto -- --recette="$RECETTE"
+          else npm run auto; fi

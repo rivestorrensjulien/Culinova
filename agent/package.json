@@ -10,6 +10,7 @@
     "studio": "remotion studio src/video/index.ts",
     "exemple": "tsx src/render.ts --exemple --images",
     "rendre": "tsx src/render.ts",
+    "auto": "tsx src/auto.ts",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test src/video/timeline.test.ts src/video/carousel.test.ts src/video/actions.test.ts src/video/realistic.test.ts src/video/exploded.test.ts",
     "comparatif": "tsx src/comparatif.ts",

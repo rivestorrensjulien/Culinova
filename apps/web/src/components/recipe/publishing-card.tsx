@@ -2,7 +2,7 @@
 
 import { Badge, Button, Card, CardBody, Input, Notice, Select, Textarea } from "@culinova/ui";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import {
   cancelPublicationAction,
@@ -11,14 +11,70 @@ import {
   setPublicPageAction,
   setShowcaseAction,
 } from "@/server/actions/publishing";
-import { publishAction, refreshPublicationsAction, tiktokCreatorInfoAction } from "@/server/actions/social";
+import {
+  cancelScheduleAction,
+  publishAction,
+  refreshPublicationsAction,
+  schedulePublicationAction,
+  suggestSlotAction,
+  tiktokCreatorInfoAction,
+} from "@/server/actions/social";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 import type { Platform, PublicationStatus } from "@/server/publishing";
 import type { TiktokChoices } from "@/server/social/publish";
+import type { ScheduledView } from "@/server/social/schedule";
+import { fromParisInput, toParisInput } from "@/server/social/slots";
 import type { CreatorInfo } from "@/server/social/tiktok";
 
 const MUSIC_CONFIRMATION = "https://www.tiktok.com/legal/page/global/music-usage-confirmation/en";
 const BRANDED_CONTENT_POLICY = "https://www.tiktok.com/legal/page/global/bc-policy/en";
+
+/** Champ « date et heure » de la programmation, prérempli avec le prochain créneau conseillé. */
+function ScheduleField({
+  when,
+  suggested,
+  onChange,
+}: {
+  when: string;
+  suggested: string | null | undefined;
+  onChange: (value: string) => void;
+}) {
+  const t = useTranslations("Publishing.schedule");
+  const format = useFormatter();
+  const suggestedDate = suggested ? fromParisInput(suggested) : null;
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="flex flex-col gap-1">
+        <span className="font-medium">{t("when")}</span>
+        <Input
+          type="datetime-local"
+          className="w-64"
+          value={when}
+          min={toParisInput(new Date())}
+          onChange={(e) => onChange(e.target.value)}
+          data-testid="schedule-when"
+        />
+      </label>
+      <span className="text-xs text-muted">
+        {suggested === undefined
+          ? "…"
+          : suggestedDate
+            ? t("suggested", {
+                date: format.dateTime(suggestedDate, {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "Europe/Paris",
+                }),
+              })
+            : t("noSuggestion")}
+      </span>
+      <span className="text-xs text-muted">{t("hint")}</span>
+    </div>
+  );
+}
 
 /**
  * Choix exigés par TikTok avant chaque publication (règles de partage de contenu) : compte,
@@ -29,11 +85,15 @@ function TiktokPublishPanel({
   busy,
   onPublish,
   onCancel,
+  scheduleField,
 }: {
   busy: boolean;
   onPublish: (choices: TiktokChoices) => void;
   onCancel: () => void;
+  /** Mode « Programmer » : champ de date affiché avant le bouton. */
+  scheduleField?: ReactNode;
 }) {
+  const tSchedule = useTranslations("Publishing.schedule");
   const t = useTranslations("Publishing.tiktok");
   const [creator, setCreator] = useState<CreatorInfo | null | undefined>(undefined);
   const [privacy, setPrivacy] = useState("");
@@ -172,6 +232,7 @@ function TiktokPublishPanel({
         })}
       </p>
       <p className="text-muted">{t("processing")}</p>
+      {scheduleField}
       <div className="flex flex-wrap gap-2">
         <Button
           size="sm"
@@ -187,7 +248,7 @@ function TiktokPublishPanel({
             })
           }
         >
-          {t("publish")}
+          {scheduleField ? tSchedule("tiktokConfirm") : t("publish")}
         </Button>
         <Button size="sm" variant="ghost" onClick={onCancel}>
           {t("cancel")}
@@ -223,6 +284,11 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [publicUrl, setPublicUrl] = useState<string | null>(recipe.publishing?.publicUrl ?? null);
   const [copied, setCopied] = useState(false);
   const [tiktokOpen, setTiktokOpen] = useState(false);
+  const [schedule, setSchedule] = useState<ScheduledView[]>(recipe.publishing?.schedule ?? []);
+  /** Ligne en cours de programmation (« instagram-photo »…), date choisie et créneau conseillé. */
+  const [scheduling, setScheduling] = useState<string | null>(null);
+  const [when, setWhen] = useState("");
+  const [suggested, setSuggested] = useState<string | null | undefined>(undefined);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [captions, setCaptions] = useState<Record<Platform, string>>(
     recipe.publishing?.captions ?? { instagram: "", tiktok: "", pinterest: "" },
@@ -263,6 +329,62 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
     }
     setBusy(false);
   };
+
+  const openSchedule = async (platform: Platform, kind: Format) => {
+    setScheduling(`${platform}-${kind}`);
+    setTiktokOpen(platform === "tiktok");
+    setPublishError(null);
+    setSuggested(undefined);
+    setWhen("");
+    const slot = await suggestSlotAction(platform).catch(() => null);
+    setSuggested(slot);
+    if (slot) setWhen(slot);
+  };
+
+  const closePanels = () => {
+    setScheduling(null);
+    setTiktokOpen(false);
+  };
+
+  const scheduleIt = async (platform: Platform, kind: Format, choices: TiktokChoices | null) => {
+    setBusy(true);
+    setError(false);
+    setPublishError(null);
+    const outcome = await schedulePublicationAction({
+      recipeId: recipe.recipeId,
+      platform,
+      format: kind,
+      at: when,
+      caption: captions[platform],
+      tiktok: choices,
+    }).catch(() => null);
+    if (!outcome) setError(true);
+    else if (!outcome.ok) setPublishError(t(`schedule.errors.${outcome.reason}`));
+    else {
+      setSchedule(outcome.schedule);
+      closePanels();
+    }
+    setBusy(false);
+  };
+
+  const unschedule = async (scheduleId: string) => {
+    setBusy(true);
+    setError(false);
+    const next = await cancelScheduleAction(recipe.recipeId, scheduleId).catch(() => null);
+    if (next) setSchedule(next);
+    else setError(true);
+    setBusy(false);
+  };
+
+  const scheduleDate = (iso: string) =>
+    format.dateTime(new Date(iso), {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Paris",
+    });
 
   const toggleShowcase = async (shown: boolean) => {
     setBusy(true);
@@ -404,6 +526,8 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
           {ROWS.map(({ platform, format: kind }) => {
             const status = statusOf(platform, kind);
             const key = `${platform}-${kind}`;
+            const planned = schedule.filter((p) => p.platform === platform && p.format === kind);
+            const schedulingThis = scheduling === key;
             return (
               <li key={key} className="flex flex-col gap-2 py-2" data-testid={`publishing-${key}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -440,28 +564,92 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     {t("link")}
                   </a>
                 ) : null}
+                {planned.map((item) =>
+                  item.status === "scheduled" ? (
+                    <div
+                      key={item.id}
+                      className="flex flex-wrap items-center gap-2"
+                      data-testid={`scheduled-${key}`}
+                    >
+                      <Badge tone="accent">
+                        {t("schedule.scheduled", { date: scheduleDate(item.scheduledAt) })}
+                      </Badge>
+                      <Button size="sm" variant="ghost" disabled={busy} onClick={() => unschedule(item.id)}>
+                        {t("schedule.unschedule")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <Notice key={item.id} tone="danger">
+                      {t("schedule.failedRun", {
+                        date: scheduleDate(item.scheduledAt),
+                        note: item.note ?? "",
+                      })}
+                    </Notice>
+                  ),
+                )}
                 {ready(kind) && status?.status !== "processing" ? (
                   connected(platform) ? (
                     platform === "tiktok" && tiktokOpen ? (
                       <TiktokPublishPanel
-                        busy={busy}
-                        onPublish={(choices) => publish("tiktok", "video", choices)}
-                        onCancel={() => setTiktokOpen(false)}
+                        busy={busy || (schedulingThis && !when)}
+                        onPublish={(choices) =>
+                          schedulingThis
+                            ? scheduleIt("tiktok", "video", choices)
+                            : publish("tiktok", "video", choices)
+                        }
+                        onCancel={closePanels}
+                        scheduleField={
+                          schedulingThis ? (
+                            <ScheduleField when={when} suggested={suggested} onChange={setWhen} />
+                          ) : undefined
+                        }
                       />
+                    ) : schedulingThis ? (
+                      <div
+                        className="flex flex-col gap-3 rounded-xl border border-border p-3"
+                        data-testid="schedule-panel"
+                      >
+                        <p className="font-medium">{t("schedule.title")}</p>
+                        <ScheduleField when={when} suggested={suggested} onChange={setWhen} />
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            size="sm"
+                            disabled={busy || !when}
+                            data-testid={`schedule-confirm-${key}`}
+                            onClick={() => scheduleIt(platform, kind, null)}
+                          >
+                            {t("schedule.confirm")}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={closePanels}>
+                            {t("schedule.cancel")}
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
-                      <div>
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           variant={status?.status === "published" ? "secondary" : "primary"}
                           disabled={busy}
                           data-testid={`publish-${key}`}
-                          onClick={() =>
-                            platform === "tiktok" ? setTiktokOpen(true) : publish(platform, kind, null)
-                          }
+                          onClick={() => {
+                            setScheduling(null);
+                            if (platform === "tiktok") setTiktokOpen(true);
+                            else void publish(platform, kind, null);
+                          }}
                         >
                           {status?.status === "published"
                             ? t("publishAgain")
                             : t("publishOn", { platform: t(`platforms.${platform}`) })}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          disabled={busy}
+                          data-testid={`schedule-${key}`}
+                          onClick={() => openSchedule(platform, kind)}
+                        >
+                          {t("schedule.button")}
                         </Button>
                       </div>
                     )

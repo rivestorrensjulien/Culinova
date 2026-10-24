@@ -1,4 +1,5 @@
 /** Données d'affichage d'une recette (version active, ou une version précédente), prêtes pour l'interface. */
+import { recipeSchedule, type ScheduledView } from "../social/schedule";
 import { looksStoreBought } from "@culinova/core";
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
@@ -132,6 +133,8 @@ export interface RecipeView {
   publishing: {
     agentEnabled: boolean;
     statuses: PublicationStatus[];
+    /** Publications programmées à venir (et échecs récents). */
+    schedule: ScheduledView[];
     showcase: boolean;
     /** Adresse de la page publique de la recette (sans prix ni marges), si elle existe. */
     publicUrl: string | null;
@@ -253,6 +256,7 @@ export async function loadRecipeView(
       ? {
           agentEnabled: agentEnabled(),
           statuses: await publicationStatuses(db, recipe.id),
+          schedule: await recipeSchedule(db, recipe.id),
           showcase: await isInShowcase(db, recipe.id),
           publicUrl: await publicUrlOf(db, recipe.id),
           video: await latestVideo(db, recipe.id),

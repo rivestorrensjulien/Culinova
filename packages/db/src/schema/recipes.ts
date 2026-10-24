@@ -365,3 +365,47 @@ export const recipePublications = pgTable(
   },
   (t) => [uniqueIndex("recipe_publications_unique").on(t.recipeId, t.platform, t.format)],
 );
+
+/** « scheduled » : en attente ; « started » : envoyée au réseau ; « cancelled » ; « failed ». */
+export type ScheduledPublicationStatus = "scheduled" | "started" | "cancelled" | "failed";
+
+/** Choix TikTok enregistrés à la validation (confidentialité, interactions, déclaration commerciale). */
+export interface ScheduledTiktokChoices {
+  privacy: string;
+  allowComments: boolean;
+  allowDuet: boolean;
+  allowStitch: boolean;
+  promoteOwnBrand: boolean;
+  brandedContent: boolean;
+}
+
+/**
+ * Publication programmée (demande de Julien du 24/10) : validée par l'administrateur avec sa
+ * légende et ses choix, puis lancée automatiquement à l'heure prévue (`scheduled_at`).
+ */
+export const scheduledPublications = pgTable(
+  "scheduled_publications",
+  {
+    id: id(),
+    recipeId: uuid("recipe_id")
+      .notNull()
+      .references(() => recipes.id, { onDelete: "cascade" }),
+    platform: text("platform").$type<PublicationPlatform>().notNull(),
+    format: text("format").$type<PublicationFormat>().notNull(),
+    scheduledAt: tz("scheduled_at").notNull(),
+    /** Légende validée (sinon la légende proposée au moment de la publication). */
+    caption: text("caption"),
+    tiktok: jsonb("tiktok").$type<ScheduledTiktokChoices>(),
+    status: text("status").$type<ScheduledPublicationStatus>().notNull().default("scheduled"),
+    createdBy: uuid("created_by")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    startedAt: tz("started_at"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [
+    index("scheduled_publications_due_idx").on(t.status, t.scheduledAt),
+    index("scheduled_publications_recipe_idx").on(t.recipeId),
+  ],
+);

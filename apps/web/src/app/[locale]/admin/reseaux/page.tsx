@@ -9,6 +9,8 @@ import { getCaptionSettings } from "@/server/social/captions";
 import { redirectUri } from "@/server/social/oauth";
 import { type AccountTrend, statsOverview } from "@/server/social/stats";
 import { getPinterestBoard } from "@/server/social/pinterest-board";
+import { upcomingSchedule } from "@/server/social/schedule";
+import { RECOMMENDED_SLOTS } from "@/server/social/slots";
 import {
   AnalysisView,
   AnalyzeButton,
@@ -35,6 +37,9 @@ const ERRORS: Record<string, string> = {
   echange: "Le réseau a refusé la connexion.",
 };
 
+/** « 11:30 » → « 11 h 30 », « 10:00 » → « 10 h ». */
+const hm = (time: string) => (time.endsWith(":00") ? `${time.slice(0, 2)} h` : time.replace(":", " h "));
+const DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 const number = new Intl.NumberFormat("fr-FR");
 const fmt = (value: number | null | undefined) => (value == null ? "—" : number.format(value));
 const dateTime = (iso: string) =>
@@ -87,11 +92,12 @@ export default async function SocialPage({
   const query = await searchParams;
   const db = getDb();
   const setup = socialSetup();
-  const [accounts, overview, captions, pinterestBoard] = await Promise.all([
+  const [accounts, overview, captions, pinterestBoard, calendar] = await Promise.all([
     listAccounts(db),
     statsOverview(db),
     getCaptionSettings(db),
     getPinterestBoard(db),
+    upcomingSchedule(db),
   ]);
   const agent = agentEnabled();
 
@@ -197,6 +203,52 @@ export default async function SocialPage({
           );
         })}
       </div>
+
+      <Card data-testid="calendar">
+        <CardBody className="flex flex-col gap-4 text-sm">
+          <div>
+            <CardTitle>Calendrier des publications</CardTitle>
+            <CardDescription>
+              Publications programmées depuis l&apos;encart de chaque recette (bouton « Programmer »). Elles
+              partent toutes seules à l&apos;heure prévue, dans les 10 minutes, avec la légende validée.
+            </CardDescription>
+          </div>
+          {calendar.length === 0 ? (
+            <p className="text-muted">Aucune publication programmée pour le moment.</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border">
+              {calendar.map((entry) => (
+                <li key={entry.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                  <span className="font-medium">{dateTime(entry.scheduledAt)}</span>
+                  <span>
+                    {LABELS[entry.platform]} · {formatLabel(entry.platform, entry.format)}
+                  </span>
+                  <Link href={`/app/recettes/${entry.recipeId}`} className="text-primary hover:underline">
+                    {entry.recipeName}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="rounded-xl bg-background p-3 text-muted">
+            <p className="font-medium text-foreground">
+              Créneaux conseillés (proposés au moment de programmer)
+            </p>
+            <ul className="mt-1 flex flex-col gap-0.5">
+              {(["instagram", "tiktok", "pinterest"] as const).map((platform) => (
+                <li key={platform}>
+                  {LABELS[platform]} :{" "}
+                  {platform === "pinterest"
+                    ? `tous les jours à ${hm(RECOMMENDED_SLOTS.pinterest[0]!.time)}`
+                    : RECOMMENDED_SLOTS[platform]
+                        .map((slot) => `${DAYS[slot.weekday]} ${hm(slot.time)}`)
+                        .join(", ")}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardBody>
+      </Card>
 
       <Card>
         <CardBody className="flex flex-col gap-4">

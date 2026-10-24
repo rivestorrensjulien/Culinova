@@ -21,6 +21,15 @@ import {
 import { analyzeStats, type AnalyzeResult, collectStats } from "../social/stats";
 import { type PinterestBoard, pinterestBoards, pinterestCreateBoard } from "../social/pinterest";
 import { getPinterestBoard, type PinterestBoardSetting, savePinterestBoard } from "../social/pinterest-board";
+import {
+  cancelScheduled,
+  recipeSchedule,
+  type ScheduledView,
+  type ScheduleRefusal,
+  schedulePublication,
+  suggestSlot,
+} from "../social/schedule";
+import { fromParisInput, toParisInput } from "../social/slots";
 import { type CreatorInfo, tiktokCreatorInfo } from "../social/tiktok";
 
 const uuid = z.uuid();
@@ -178,4 +187,59 @@ export async function createPinterestBoardAction(): Promise<PinterestBoard | nul
   if (!board) return null;
   await savePinterestBoard(db, session.user.id, { boardId: board.id, boardName: board.name });
   return board;
+}
+
+const scheduleSchema = z.object({
+  recipeId: z.uuid(),
+  platform: z.enum(PLATFORMS),
+  format: z.enum(PUBLICATION_FORMATS),
+  /** Heure de Paris « AAAA-MM-JJTHH:MM ». */
+  at: z.string().max(20),
+  caption: z.string().max(2200),
+  tiktok: choicesSchema.nullable(),
+});
+
+export type ScheduleActionResult =
+  { ok: true; schedule: ScheduledView[] } | { ok: false; reason: ScheduleRefusal | "invalid" };
+
+/** « Programmer » : la publication validée partira automatiquement à l'heure choisie. */
+export async function schedulePublicationAction(
+  input: z.input<typeof scheduleSchema>,
+): Promise<ScheduleActionResult> {
+  const session = await admin();
+  const parsed = scheduleSchema.safeParse(input);
+  if (!session || !parsed.success) return { ok: false, reason: "invalid" };
+  const at = fromParisInput(parsed.data.at);
+  if (!at) return { ok: false, reason: "invalid_date" };
+  const db = getDb();
+  const result = await schedulePublication(db, session.user.id, {
+    recipeId: parsed.data.recipeId,
+    platform: parsed.data.platform,
+    format: parsed.data.format,
+    at,
+    caption: parsed.data.caption,
+    tiktok: parsed.data.tiktok,
+  });
+  if (!result.ok) return result;
+  return { ok: true, schedule: await recipeSchedule(db, parsed.data.recipeId) };
+}
+
+/** Annule une programmation ; renvoie les programmations restantes de la recette. */
+export async function cancelScheduleAction(
+  recipeId: string,
+  scheduleId: string,
+): Promise<ScheduledView[] | null> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success || !uuid.safeParse(scheduleId).success) return null;
+  const db = getDb();
+  await cancelScheduled(db, session.user.id, scheduleId);
+  return recipeSchedule(db, recipeId);
+}
+
+/** Prochain créneau conseillé encore libre (heure de Paris, pour le champ « date et heure »). */
+export async function suggestSlotAction(platform: string): Promise<string | null> {
+  const session = await admin();
+  if (!session || !isPlatform(platform)) return null;
+  const slot = await suggestSlot(getDb(), platform);
+  return slot ? toParisInput(slot) : null;
 }

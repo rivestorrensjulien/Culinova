@@ -1,0 +1,32 @@
+name: Programmation des publications
+
+# Lance les publications programmées depuis l'encart des recettes (bouton « Programmer »)
+# quand leur heure est arrivée, puis fait avancer celles en cours chez Instagram et TikTok.
+# Simple appel à Culinova : aucune fabrication ici.
+on:
+  workflow_dispatch:
+  schedule:
+    # Toutes les 10 minutes (GitHub peut retarder un passage de quelques minutes).
+    - cron: "*/10 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: programmation
+  cancel-in-progress: false
+
+jobs:
+  programmation:
+    name: Lancer les publications à l'heure
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CULINOVA_URL: ${{ vars.CULINOVA_URL || 'https://culinova.fr' }}
+      AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+    steps:
+      - name: Publications arrivées à l'heure
+        run: |
+          if [ -z "$AGENT_API_KEY" ]; then echo "AGENT_API_KEY absente : rien à faire."; exit 0; fi
+          curl -fsS --max-time 150 -X POST -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/programmation"
+          echo

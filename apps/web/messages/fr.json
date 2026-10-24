@@ -1384,7 +1384,30 @@
     "publicPage": "Page publique de la recette",
     "publicPageHint": "La recette du nom aux conseils, sans prix ni marges, avec une invitation à essayer Culinova. Créée automatiquement à la première publication ; elle apparaît aussi sur culinova.fr/recettes (lien de la bio).",
     "publicPageCopy": "Copier le lien",
-    "publicPageCopied": "Lien copié ✓"
+    "publicPageCopied": "Lien copié ✓",
+    "schedule": {
+      "button": "Programmer",
+      "title": "Programmer la publication",
+      "when": "Date et heure (heure de Paris)",
+      "suggested": "Créneau conseillé encore libre : {date}.",
+      "noSuggestion": "Choisissez la date et l’heure.",
+      "confirm": "Programmer",
+      "tiktokConfirm": "Programmer sur TikTok",
+      "cancel": "Annuler",
+      "scheduled": "Programmée : {date}",
+      "unschedule": "Annuler la programmation",
+      "failedRun": "La publication programmée du {date} n’est pas partie : {note}",
+      "hint": "La publication part toute seule à l’heure prévue (dans les 10 minutes), avec la légende et les choix validés maintenant.",
+      "errors": {
+        "invalid": "Programmation impossible : vérifiez les champs.",
+        "invalid_date": "Choisissez une date à venir, dans les deux prochains mois.",
+        "invalid_privacy": "Choisissez qui peut voir la vidéo.",
+        "invalid_format": "Format non disponible sur ce réseau.",
+        "not_found": "Recette introuvable.",
+        "not_ready": "Le visuel à publier n’est pas encore prêt.",
+        "outdated": "Ce visuel ne correspond plus à la recette ou à sa photo : attendez la nouvelle version."
+      }
+    }
   },
   "Install": {
     "title": "Installer Culinova sur cet appareil",

@@ -5,6 +5,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { getDb } from "@/server/db";
 import { advanceProcessing } from "@/server/social/publish";
+import { runDueSchedules } from "@/server/social/schedule";
 import { collectStats } from "@/server/social/stats";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,8 @@ export async function GET(request: Request) {
     return new Response("Non autorisé", { status: 401 });
   }
   const db = getDb();
+  const scheduled = await runDueSchedules(db);
   const publications = await advanceProcessing(db);
   const stats = await collectStats(db);
-  return Response.json({ publications, stats });
+  return Response.json({ scheduled, publications, stats });
 }

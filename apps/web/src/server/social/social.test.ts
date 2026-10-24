@@ -15,6 +15,13 @@ import { accountToken, listAccounts, saveAccount } from "./accounts";
 import { savePinterestBoard } from "./pinterest-board";
 import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slideKey } from "./carousels";
 import { advancePublication, captionFor, startPublication } from "./publish";
+import {
+  cancelScheduled,
+  recipeSchedule,
+  runDueSchedules,
+  schedulePublication,
+  suggestSlot,
+} from "./schedule";
 import { analyzeStats, collectStats, engagementRate, statsOverview } from "./stats";
 import { createVideoStorage, parseRange } from "./video-storage";
 import { loadRecipeView } from "../generation/view";
@@ -588,6 +595,98 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const analysis = await analyzeStats(db, new FakeLlmAdapter(), admin.id);
     expect(analysis.ok).toBe(true);
     expect((await statsOverview(db)).lastAnalysis?.analysis.suggestions.length).toBeGreaterThan(0);
+  });
+
+  it("programmation : la publication validée part toute seule à l'heure prévue, une seule fois", async () => {
+    const db = testDb();
+    const network = fakeNetwork([[/\/v5\/pins$/, { id: "555000111" }]]);
+    const now = new Date();
+    const at = new Date(now.getTime() + 2 * 3600 * 1000);
+    // Date passée ou trop lointaine, format absent du réseau, recette d'un autre compte : refusés.
+    expect(
+      await schedulePublication(
+        db,
+        admin.id,
+        { recipeId, platform: "pinterest", format: "photo", at: now },
+        now,
+      ),
+    ).toEqual({ ok: false, reason: "invalid_date" });
+    expect(
+      await schedulePublication(
+        db,
+        admin.id,
+        { recipeId, platform: "pinterest", format: "photo", at: new Date(now.getTime() + 90 * 86400_000) },
+        now,
+      ),
+    ).toEqual({ ok: false, reason: "invalid_date" });
+    expect(
+      await schedulePublication(db, admin.id, { recipeId, platform: "pinterest", format: "video", at }, now),
+    ).toEqual({ ok: false, reason: "invalid_format" });
+    const cook = await createTestUser();
+    expect(
+      await schedulePublication(db, cook.id, { recipeId, platform: "pinterest", format: "photo", at }, now),
+    ).toEqual({ ok: false, reason: "not_found" });
+    // TikTok : la confidentialité est choisie à la validation, pas au moment du départ.
+    expect(
+      await schedulePublication(db, admin.id, { recipeId, platform: "tiktok", format: "video", at }, now),
+    ).toEqual({ ok: false, reason: "invalid_privacy" });
+
+    const scheduled = await schedulePublication(
+      db,
+      admin.id,
+      { recipeId, platform: "pinterest", format: "photo", at, caption: "Ma légende validée" },
+      now,
+    );
+    expect(scheduled.ok).toBe(true);
+    expect((await recipeSchedule(db, recipeId, now)).map((p) => p.status)).toContain("scheduled");
+    expect((await loadRecipeView(db, recipeId, admin.id))?.publishing?.schedule.length).toBeGreaterThan(0);
+    // Le créneau conseillé suivant saute celui qui vient d'être pris.
+    const next = await suggestSlot(db, "pinterest", now);
+    expect(next && Math.abs(next.getTime() - at.getTime())).toBeGreaterThanOrEqual(3600 * 1000);
+
+    // Avant l'heure : rien ne part.
+    expect(await runDueSchedules(db, { fetchImpl: network.impl, now })).toEqual([]);
+    expect(network.calls).toHaveLength(0);
+    // À l'heure : l'épingle part avec la légende validée, puis plus jamais.
+    const later = new Date(at.getTime() + 5 * 60 * 1000);
+    expect(await runDueSchedules(db, { fetchImpl: network.impl, now: later })).toContain("started");
+    expect(await runDueSchedules(db, { fetchImpl: network.impl, now: later })).toEqual([]);
+    const pins = network.calls.filter((c) => /\/v5\/pins$/.test(c.url));
+    expect(pins).toHaveLength(1);
+    expect(JSON.parse(pins[0]!.body!).description).toContain("Ma légende validée");
+    const [row] = await db
+      .select()
+      .from(s.scheduledPublications)
+      .where(eq(s.scheduledPublications.id, scheduled.ok ? scheduled.id : ""));
+    expect(row).toMatchObject({ status: "started" });
+
+    // Annulation : seulement par l'administrateur qui l'a programmée.
+    const toCancel = await schedulePublication(
+      db,
+      admin.id,
+      { recipeId, platform: "pinterest", format: "photo", at },
+      now,
+    );
+    if (!toCancel.ok) throw new Error(toCancel.reason);
+    expect(await cancelScheduled(db, cook.id, toCancel.id)).toBe(false);
+    expect(await cancelScheduled(db, admin.id, toCancel.id)).toBe(true);
+    expect(await runDueSchedules(db, { fetchImpl: network.impl, now: later })).toEqual([]);
+
+    // Service arrêté plus de 6 h : le créneau est manqué, rien ne part en pleine nuit.
+    const missed = await schedulePublication(
+      db,
+      admin.id,
+      { recipeId, platform: "pinterest", format: "photo", at },
+      now,
+    );
+    if (!missed.ok) throw new Error(missed.reason);
+    expect(
+      await runDueSchedules(db, { fetchImpl: network.impl, now: new Date(at.getTime() + 7 * 3600 * 1000) }),
+    ).toEqual(["missed"]);
+    const failed = (await recipeSchedule(db, recipeId)).find((p) => p.id === missed.id);
+    expect(failed).toMatchObject({ status: "failed" });
+    expect(failed?.note).toMatch(/reprogrammez/);
+    expect(network.calls.filter((c) => /\/v5\/pins$/.test(c.url))).toHaveLength(1);
   });
 
   it("réservé à l'administrateur : aucune automatisation pour les autres comptes", async () => {

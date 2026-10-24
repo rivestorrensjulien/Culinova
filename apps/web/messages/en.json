@@ -1384,7 +1384,30 @@
     "publicPage": "Public recipe page",
     "publicPageHint": "The recipe from its name to the tips, without prices or margins, with an invitation to try Culinova. Created automatically on first publication; it also appears on culinova.fr/recettes (bio link).",
     "publicPageCopy": "Copy link",
-    "publicPageCopied": "Link copied ✓"
+    "publicPageCopied": "Link copied ✓",
+    "schedule": {
+      "button": "Schedule",
+      "title": "Schedule the post",
+      "when": "Date and time (Paris time)",
+      "suggested": "Next free recommended slot: {date}.",
+      "noSuggestion": "Pick the date and time.",
+      "confirm": "Schedule",
+      "tiktokConfirm": "Schedule on TikTok",
+      "cancel": "Cancel",
+      "scheduled": "Scheduled: {date}",
+      "unschedule": "Cancel scheduling",
+      "failedRun": "The post scheduled for {date} did not go out: {note}",
+      "hint": "The post goes out on its own at the planned time (within 10 minutes), with the caption and choices approved now.",
+      "errors": {
+        "invalid": "Cannot schedule: check the fields.",
+        "invalid_date": "Pick a future date within the next two months.",
+        "invalid_privacy": "Choose who can see the video.",
+        "invalid_format": "Format not available on this network.",
+        "not_found": "Recipe not found.",
+        "not_ready": "The visual to publish is not ready yet.",
+        "outdated": "This visual no longer matches the recipe or its photo: wait for the new version."
+      }
+    }
   },
   "Install": {
     "title": "Install Culinova on this device",

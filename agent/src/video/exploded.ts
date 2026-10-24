@@ -49,7 +49,7 @@ export interface ExplodedProps extends VideoProps {
 
 export const PHOTO_FRAMES = 66;
 export const EXPLODE_FRAMES = 120;
-/** Coupe et geste : le clip de 5 s joué à vitesse normale (son compris). */
+/** Coupe et geste : le clip de 5 s joué à vitesse normale. */
 export const CLIP_FRAMES = 150;
 export const EMPTY_FRAMES = 24;
 export const LAYER_FRAMES = 27;
@@ -192,10 +192,7 @@ export function cutEndPrompt(script: LayerScript): string {
 }
 
 export function cutMotion(script: LayerScript): string {
-  return (
-    `${script.cut!.motion} Slow motion, static camera, steam rising, realistic food textures, ` +
-    "natural sound of the knife and the bubbling dish."
-  );
+  return `${script.cut!.motion} Slow motion, static camera, steam rising, realistic food textures.`;
 }
 
 /** Geste, image de départ (image 1 = photo du plat). */
@@ -219,5 +216,5 @@ export function gestureEndPrompt(script: LayerScript): string {
 }
 
 export function gestureMotion(script: LayerScript): string {
-  return `${script.gesture!.motion} Slow motion close-up, static camera, glossy realistic textures, natural sound.`;
+  return `${script.gesture!.motion} Slow motion close-up, static camera, glossy realistic textures.`;
 }

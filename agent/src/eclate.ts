@@ -170,13 +170,13 @@ async function main() {
           ? (async () => {
               const start = await edit(cutStartPrompt(layers), [dish], "coupe-01-plat-entier.jpg");
               const end = await edit(cutEndPrompt(layers), [start, dish], "coupe-02-part.jpg");
-              return animate(start, end, cutMotion(layers), "eclate.mp4", true);
+              return animate(start, end, cutMotion(layers), "eclate.mp4");
             })()
           : format === "geste"
             ? (async () => {
                 const start = await edit(gestureStartPrompt(layers), [dish], "geste-01-avant.jpg");
                 const end = await edit(gestureEndPrompt(layers), [start, dish], "geste-02-apres.jpg");
-                return animate(start, end, gestureMotion(layers), "eclate.mp4", true);
+                return animate(start, end, gestureMotion(layers), "eclate.mp4");
               })()
             : Promise.resolve(null);
 
@@ -255,7 +255,8 @@ async function main() {
     ...finishing(root),
     format,
     explodeClip: explodeClip || null,
-    clipSound: format === "coupe" || format === "geste",
+    // Kling ne fait pas le son avec une image d'arrivée : clip muet, la musique l'accompagne.
+    clipSound: false,
     topViews,
     layerNames: labels,
     voilaClip,

@@ -62,7 +62,7 @@ test("coupe, vue du dessus et geste : même début et même fin, cœur adapté a
   assert.deepEqual(kinds("coupe"), ["photo", "explode", "final", "voila", "end"]);
   assert.deepEqual(kinds("geste"), ["photo", "explode", "final", "voila", "end"]);
   assert.deepEqual(kinds("dessus"), ["photo", "assemble", "final", "voila", "end"]);
-  // Le clip de la coupe est joué à vitesse normale (5 s), avec son son.
+  // Le clip de la coupe est joué à vitesse normale (5 s).
   assert.equal(explodedTimeline({ layerNames: names, format: "coupe" })[1]!.frames, CLIP_FRAMES);
   assert.ok(isShortFormat("coupe") && !isShortFormat("animee"));
 });
@@ -87,7 +87,7 @@ test("consignes de la coupe et du geste", () => {
   assert.match(cutStartPrompt(moussaka), /whole and untouched/);
   assert.match(cutStartPrompt(moussaka), /terracotta baking dish/);
   assert.match(cutEndPrompt(moussaka), /Aubergines, Viande, Béchamel/);
-  assert.match(cutMotion(moussaka), /natural sound/);
+  assert.match(cutMotion(moussaka), /Slow motion/);
   assert.match(gestureStartPrompt(moussaka), /never a face/);
   assert.match(gestureEndPrompt(moussaka), /sauce glossy/);
 });

@@ -114,6 +114,21 @@ jobs:
           elif [ -n "$RECETTE" ]; then npm run auto -- --recette="$RECETTE" --format="$FORMAT"
           else npm run auto; fi
 
+      - name: Vidéo courte sur la branche comparatif-video (vérification, reprise des clips)
+        if: always() && steps.file.outputs.a_faire == 'oui' && github.event_name != 'push' && !inputs.exemple
+        run: |
+          [ -f sortie/comparatif/D-format-eclate.mp4 ] || exit 0
+          url="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          if ! git clone -q --depth 1 -b comparatif-video "$url" /tmp/comparatif 2>/dev/null; then
+            mkdir -p /tmp/comparatif && git -C /tmp/comparatif init -q -b comparatif-video
+          fi
+          cp -r sortie/comparatif/. /tmp/comparatif/
+          cd /tmp/comparatif
+          git config user.name "Agent Culinova"
+          git config user.email "agent@culinova.fr"
+          git add -A && git commit -qm "Vidéo courte (${GITHUB_SHA::7})" || echo "Rien de nouveau"
+          git push -q "$url" HEAD:comparatif-video
+
       - name: Vidéo courte (téléchargeable, pour vérification)
         if: always() && steps.file.outputs.a_faire == 'oui' && github.event_name != 'push' && !inputs.exemple
         uses: actions/upload-artifact@v4

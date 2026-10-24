@@ -1407,6 +1407,18 @@
         "not_ready": "The visual to publish is not ready yet.",
         "outdated": "This visual no longer matches the recipe or its photo: wait for the new version."
       }
+    },
+    "autoplan": {
+      "title": "Chef Ju picked this recipe for {date}",
+      "intro": "Approve each proposed post below (the video and carousel arrive within the hour), or set the recipe aside: another one will be picked for that day. Nothing goes out without your approval.",
+      "reject": "Set this recipe aside",
+      "proposed": "Proposed by the agent: {date}",
+      "approve": "Approve",
+      "dismiss": "Don’t post here",
+      "waitingVideo": "Waiting for the video: the agent is making it, you can watch it before approving.",
+      "waitingCarousel": "Waiting for the carousel: the agent is making it.",
+      "waitingPhoto": "Waiting for the photo: it is being generated.",
+      "expired": "Proposal for {date} was not approved in time: nothing was posted."
     }
   },
   "Install": {

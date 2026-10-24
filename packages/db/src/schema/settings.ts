@@ -14,6 +14,8 @@ export const SETTING_KEYS = {
   socialCaptions: "social.captions",
   /** Pinterest : tableau où sont épinglées les recettes. */
   socialPinterest: "social.pinterest",
+  /** Planification automatique des publications (recettes choisies par l'agent, à valider). */
+  socialAutoplan: "social.autoplan",
 } as const;
 
 /** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */

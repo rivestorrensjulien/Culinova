@@ -366,8 +366,14 @@ export const recipePublications = pgTable(
   (t) => [uniqueIndex("recipe_publications_unique").on(t.recipeId, t.platform, t.format)],
 );
 
-/** « scheduled » : en attente ; « started » : envoyée au réseau ; « cancelled » ; « failed ». */
-export type ScheduledPublicationStatus = "scheduled" | "started" | "cancelled" | "failed";
+/**
+ * « proposed » : proposée par la planification automatique, à valider par l'administrateur ;
+ * « scheduled » : validée, en attente de l'heure ; « started » : envoyée au réseau ;
+ * « cancelled » ; « rejected » : recette écartée par l'administrateur ;
+ * « expired » : proposition non validée à temps (rien n'est publié) ; « failed ».
+ */
+export type ScheduledPublicationStatus =
+  "proposed" | "scheduled" | "started" | "cancelled" | "rejected" | "expired" | "failed";
 
 /** Choix TikTok enregistrés à la validation (confidentialité, interactions, déclaration commerciale). */
 export interface ScheduledTiktokChoices {

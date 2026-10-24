@@ -130,3 +130,19 @@ export function nextSlots(platform: SlotPlatform, now: Date, taken: readonly Dat
   }
   return found;
 }
+
+/** Même jour de Paris ? */
+export function sameParisDay(a: Date, b: Date): boolean {
+  const pa = parisParts(a);
+  const pb = parisParts(b);
+  return pa.year === pb.year && pa.month === pb.month && pa.day === pb.day;
+}
+
+/** Créneau conseillé d'un réseau le même jour de Paris que `day` (null si ce jour n'en a pas). */
+export function slotOnDay(platform: SlotPlatform, day: Date): Date | null {
+  const p = parisParts(day);
+  const slot = RECOMMENDED_SLOTS[platform].find((s) => s.weekday === p.weekday);
+  if (!slot) return null;
+  const [h, m] = slot.time.split(":").map(Number) as [number, number];
+  return parisTime(p.year, p.month, p.day, h, m);
+}

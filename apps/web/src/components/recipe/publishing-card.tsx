@@ -12,7 +12,10 @@ import {
   setShowcaseAction,
 } from "@/server/actions/publishing";
 import {
+  approveProposalAction,
   cancelScheduleAction,
+  dismissProposalAction,
+  rejectRecipeAction,
   publishAction,
   refreshPublicationsAction,
   schedulePublicationAction,
@@ -289,6 +292,8 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [scheduling, setScheduling] = useState<string | null>(null);
   const [when, setWhen] = useState("");
   const [suggested, setSuggested] = useState<string | null | undefined>(undefined);
+  /** Proposition de la planification automatique en cours de validation. */
+  const [approving, setApproving] = useState<string | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [captions, setCaptions] = useState<Record<Platform, string>>(
     recipe.publishing?.captions ?? { instagram: "", tiktok: "", pinterest: "" },
@@ -344,9 +349,69 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const closePanels = () => {
     setScheduling(null);
     setTiktokOpen(false);
+    setApproving(null);
+  };
+
+  /** « Valider » une proposition : directement, ou après les choix TikTok. */
+  const startApproval = (item: ScheduledView) => {
+    const at = toParisInput(new Date(item.scheduledAt));
+    setPublishError(null);
+    if (item.platform === "tiktok") {
+      setScheduling(`${item.platform}-${item.format}`);
+      setApproving(item.id);
+      setWhen(at);
+      setSuggested(at);
+      setTiktokOpen(true);
+      return;
+    }
+    void submitApproval(item.id, item.platform, at, null);
+  };
+
+  const submitApproval = async (
+    proposalId: string,
+    platform: Platform,
+    at: string,
+    choices: TiktokChoices | null,
+  ) => {
+    setBusy(true);
+    setError(false);
+    setPublishError(null);
+    const outcome = await approveProposalAction({
+      recipeId: recipe.recipeId,
+      proposalId,
+      at,
+      caption: captions[platform],
+      tiktok: choices,
+    }).catch(() => null);
+    if (!outcome) setError(true);
+    else if (!outcome.ok) setPublishError(t(`schedule.errors.${outcome.reason}`));
+    else {
+      setSchedule(outcome.schedule);
+      closePanels();
+    }
+    setBusy(false);
+  };
+
+  const dismiss = async (proposalId: string) => {
+    setBusy(true);
+    setError(false);
+    const next = await dismissProposalAction(recipe.recipeId, proposalId).catch(() => null);
+    if (next) setSchedule(next);
+    else setError(true);
+    setBusy(false);
+  };
+
+  const rejectRecipe = async () => {
+    setBusy(true);
+    setError(false);
+    const next = await rejectRecipeAction(recipe.recipeId).catch(() => null);
+    if (next) setSchedule(next);
+    else setError(true);
+    setBusy(false);
   };
 
   const scheduleIt = async (platform: Platform, kind: Format, choices: TiktokChoices | null) => {
+    if (approving) return submitApproval(approving, platform, when, choices);
     setBusy(true);
     setError(false);
     setPublishError(null);
@@ -383,6 +448,15 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
       month: "short",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Europe/Paris",
+    });
+
+  const proposedFirst = schedule.find((item) => item.status === "proposed");
+  const scheduleDay = (iso: string) =>
+    format.dateTime(new Date(iso), {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
       timeZone: "Europe/Paris",
     });
 
@@ -442,6 +516,22 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
         {hasPhoto ? null : <Notice tone="warning">{t("needPhoto")}</Notice>}
         {error ? <Notice tone="danger">{t("error")}</Notice> : null}
         {publishError ? <Notice tone="danger">{publishError}</Notice> : null}
+        {proposedFirst ? (
+          <div
+            className="flex flex-col gap-2 rounded-xl border border-border p-3"
+            data-testid="autoplan-notice"
+          >
+            <p className="font-medium">
+              {t("autoplan.title", { date: scheduleDay(proposedFirst.scheduledAt) })}
+            </p>
+            <p className="text-muted">{t("autoplan.intro")}</p>
+            <div>
+              <Button size="sm" variant="secondary" disabled={busy} onClick={rejectRecipe}>
+                {t("autoplan.reject")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start" data-testid="publishing-video">
           {video ? (
             <>
@@ -528,6 +618,8 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             const key = `${platform}-${kind}`;
             const planned = schedule.filter((p) => p.platform === platform && p.format === kind);
             const schedulingThis = scheduling === key;
+            // Proposition en attente : ses boutons remplacent « Valider et publier » et « Programmer ».
+            const hasProposal = planned.some((p) => p.status === "proposed");
             return (
               <li key={key} className="flex flex-col gap-2 py-2" data-testid={`publishing-${key}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -565,7 +657,63 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                   </a>
                 ) : null}
                 {planned.map((item) =>
-                  item.status === "scheduled" ? (
+                  item.status === "proposed" ? (
+                    <div
+                      key={item.id}
+                      className="flex flex-col gap-2 rounded-xl bg-background p-3"
+                      data-testid={`proposed-${key}`}
+                    >
+                      <div>
+                        <Badge tone="warning">
+                          {t("autoplan.proposed", { date: scheduleDate(item.scheduledAt) })}
+                        </Badge>
+                      </div>
+                      {!connected(platform) ? (
+                        <p className="text-muted">
+                          {t.rich("notConnected", {
+                            link: (chunks) => (
+                              <Link href="/admin/reseaux" className="text-primary hover:underline">
+                                {chunks}
+                              </Link>
+                            ),
+                          })}
+                        </p>
+                      ) : ready(kind) ? (
+                        approving === item.id ? null : (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              disabled={busy || !connected(platform)}
+                              data-testid={`approve-${key}`}
+                              onClick={() => startApproval(item)}
+                            >
+                              {t("autoplan.approve")}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              disabled={busy}
+                              onClick={() => dismiss(item.id)}
+                            >
+                              {t("autoplan.dismiss")}
+                            </Button>
+                          </div>
+                        )
+                      ) : (
+                        <p className="text-muted">
+                          {kind === "video"
+                            ? t("autoplan.waitingVideo")
+                            : kind === "carousel"
+                              ? t("autoplan.waitingCarousel")
+                              : t("autoplan.waitingPhoto")}
+                        </p>
+                      )}
+                    </div>
+                  ) : item.status === "expired" ? (
+                    <p key={item.id} className="text-muted">
+                      {t("autoplan.expired", { date: scheduleDate(item.scheduledAt) })}
+                    </p>
+                  ) : item.status === "scheduled" ? (
                     <div
                       key={item.id}
                       className="flex flex-wrap items-center gap-2"
@@ -587,7 +735,9 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                     </Notice>
                   ),
                 )}
-                {ready(kind) && status?.status !== "processing" ? (
+                {ready(kind) &&
+                status?.status !== "processing" &&
+                !(hasProposal && !(platform === "tiktok" && tiktokOpen)) ? (
                   connected(platform) ? (
                     platform === "tiktok" && tiktokOpen ? (
                       <TiktokPublishPanel

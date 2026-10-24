@@ -9,11 +9,13 @@ import { getCaptionSettings } from "@/server/social/captions";
 import { redirectUri } from "@/server/social/oauth";
 import { type AccountTrend, statsOverview } from "@/server/social/stats";
 import { getPinterestBoard } from "@/server/social/pinterest-board";
+import { getAutoplan } from "@/server/social/autoplan";
 import { upcomingSchedule } from "@/server/social/schedule";
 import { RECOMMENDED_SLOTS } from "@/server/social/slots";
 import {
   AnalysisView,
   AnalyzeButton,
+  AutoplanToggle,
   CaptionSettingsForm,
   CollectButton,
   DisconnectButton,
@@ -99,6 +101,7 @@ export default async function SocialPage({
     getPinterestBoard(db),
     upcomingSchedule(db),
   ]);
+  const autoplan = await getAutoplan(db);
   const agent = agentEnabled();
 
   return (
@@ -204,17 +207,22 @@ export default async function SocialPage({
         })}
       </div>
 
-      <Card data-testid="calendar">
+      <Card data-testid="calendar" id="calendrier">
         <CardBody className="flex flex-col gap-4 text-sm">
           <div>
             <CardTitle>Calendrier des publications</CardTitle>
             <CardDescription>
-              Publications programmées depuis l&apos;encart de chaque recette (bouton « Programmer »). Elles
-              partent toutes seules à l&apos;heure prévue, dans les 10 minutes, avec la légende validée.
+              Publications proposées par l&apos;agent (à valider sur la page de la recette) et publications
+              programmées. Une publication validée part toute seule à l&apos;heure prévue, dans les 10
+              minutes, avec la légende validée.
             </CardDescription>
           </div>
+          <AutoplanToggle enabled={autoplan.enabled} />
           {calendar.length === 0 ? (
-            <p className="text-muted">Aucune publication programmée pour le moment.</p>
+            <p className="text-muted">
+              Aucune publication prévue pour le moment
+              {autoplan.enabled ? " : l'agent planifie les prochains jours dans les 10 minutes." : "."}
+            </p>
           ) : (
             <ul className="flex flex-col divide-y divide-border">
               {calendar.map((entry) => (
@@ -223,6 +231,11 @@ export default async function SocialPage({
                   <span>
                     {LABELS[entry.platform]} · {formatLabel(entry.platform, entry.format)}
                   </span>
+                  {entry.status === "proposed" ? (
+                    <Badge tone="warning">À valider</Badge>
+                  ) : (
+                    <Badge tone="success">Validée</Badge>
+                  )}
                   <Link href={`/app/recettes/${entry.recipeId}`} className="text-primary hover:underline">
                     {entry.recipeName}
                   </Link>

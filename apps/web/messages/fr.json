@@ -1407,6 +1407,18 @@
         "not_ready": "Le visuel à publier n’est pas encore prêt.",
         "outdated": "Ce visuel ne correspond plus à la recette ou à sa photo : attendez la nouvelle version."
       }
+    },
+    "autoplan": {
+      "title": "Chef Ju a choisi cette recette pour {date}",
+      "intro": "Validez chaque publication proposée ci-dessous (la vidéo et le carrousel arrivent dans l’heure), ou écartez la recette : une autre sera choisie pour ce jour-là. Rien ne part sans votre validation.",
+      "reject": "Écarter cette recette",
+      "proposed": "Proposée par l’agent : {date}",
+      "approve": "Valider",
+      "dismiss": "Ne pas publier ici",
+      "waitingVideo": "En attente de la vidéo : l’agent la fabrique, vous pourrez la regarder avant de valider.",
+      "waitingCarousel": "En attente du carrousel : l’agent le fabrique.",
+      "waitingPhoto": "En attente de la photo : elle est en cours de génération.",
+      "expired": "Proposition du {date} non validée à temps : rien n’a été publié."
     }
   },
   "Install": {

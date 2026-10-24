@@ -687,6 +687,29 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     expect(failed).toMatchObject({ status: "failed" });
     expect(failed?.note).toMatch(/reprogrammez/);
     expect(network.calls.filter((c) => /\/v5\/pins$/.test(c.url))).toHaveLength(1);
+
+    // Proposition de la planification automatique non validée à l'heure : elle expire, rien ne part.
+    const proposedAt = new Date(now.getTime() + 3 * 3600 * 1000);
+    const [proposal] = await db
+      .insert(s.scheduledPublications)
+      .values({
+        recipeId,
+        platform: "pinterest",
+        format: "photo",
+        scheduledAt: proposedAt,
+        status: "proposed",
+        createdBy: admin.id,
+      })
+      .returning();
+    expect(
+      await runDueSchedules(db, { fetchImpl: network.impl, now: new Date(proposedAt.getTime() + 60_000) }),
+    ).toContain("expired");
+    const [expiredRow] = await db
+      .select()
+      .from(s.scheduledPublications)
+      .where(eq(s.scheduledPublications.id, proposal!.id));
+    expect(expiredRow).toMatchObject({ status: "expired" });
+    expect(network.calls.filter((c) => /\/v5\/pins$/.test(c.url))).toHaveLength(1);
   });
 
   it("réservé à l'administrateur : aucune automatisation pour les autres comptes", async () => {

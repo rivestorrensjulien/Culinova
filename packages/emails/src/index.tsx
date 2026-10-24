@@ -9,6 +9,11 @@ import {
   invitationRequestReceivedSubject,
 } from "./templates/invitation-request";
 import { MagicLinkEmail, type MagicLinkEmailProps, magicLinkSubject } from "./templates/magic-link";
+import {
+  PublicationsToApproveEmail,
+  type PublicationsToApproveEmailProps,
+  publicationsToApproveSubject,
+} from "./templates/publications";
 
 export { InvitationEmail, type InvitationEmailProps, MagicLinkEmail, type MagicLinkEmailProps };
 export { sendEmail, type OutgoingEmail } from "./send";
@@ -54,6 +59,17 @@ export async function renderInvitationRequestAlertEmail(
   const element = <InvitationRequestAlertEmail {...props} />;
   return {
     subject: invitationRequestAlertSubject(props.name),
+    html: await render(element),
+    text: await render(element, { plainText: true }),
+  };
+}
+
+export async function renderPublicationsToApproveEmail(
+  props: PublicationsToApproveEmailProps,
+): Promise<RenderedEmail> {
+  const element = <PublicationsToApproveEmail {...props} />;
+  return {
+    subject: publicationsToApproveSubject(props.items.length),
     html: await render(element),
     text: await render(element, { plainText: true }),
   };

@@ -10,6 +10,7 @@ import {
   createPinterestBoardAction,
   disconnectAccountAction,
   pinterestBoardsAction,
+  saveAutoplanAction,
   saveCaptionSettingsAction,
   savePinterestBoardAction,
 } from "@/server/actions/social";
@@ -284,5 +285,39 @@ export function PinterestBoardPicker({ selected }: { selected: PinterestBoardSet
         {saved ? <Badge tone="success">Enregistré</Badge> : null}
       </div>
     </div>
+  );
+}
+
+/** Planification automatique : l'agent choisit les recettes et propose les publications à valider. */
+export function AutoplanToggle({ enabled }: { enabled: boolean }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <label className="flex items-start gap-3">
+      <input
+        type="checkbox"
+        className="mt-0.5 size-4 accent-primary"
+        checked={enabled}
+        disabled={pending}
+        data-testid="autoplan-toggle"
+        onChange={(e) => {
+          const next = e.target.checked;
+          start(async () => {
+            await saveAutoplanAction(next);
+            router.refresh();
+          });
+        }}
+      />
+      <span>
+        <span className="font-medium">Planification automatique (semi-automatique)</span>
+        <span className="block text-muted">
+          Chaque jour de publication des 7 prochains jours (mardi, jeudi, dimanche), l&apos;agent choisit au
+          hasard une recette jamais publiée en variant les moments du repas, génère la photo si elle manque,
+          fait fabriquer la vidéo et le carrousel, et propose le Reel Instagram, la vidéo TikTok et
+          l&apos;épingle Pinterest aux créneaux conseillés. Vous recevez un e-mail ; rien ne part sans votre
+          validation, et une proposition non validée à l&apos;heure prévue ne part pas.
+        </span>
+      </span>
+    </label>
   );
 }

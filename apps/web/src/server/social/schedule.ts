@@ -6,7 +6,7 @@
  */
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
-import { and, asc, eq, gte, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lte, or } from "drizzle-orm";
 import { audit } from "../audit";
 import { adminRecipe } from "../publishing";
 import type { SocialPlatform } from "./accounts";
@@ -66,39 +66,51 @@ async function mediaReady(
   return (await currentPhoto(db, versionId, "4:5")) ? "ok" : "not_ready";
 }
 
-/** Programme une publication validée par l'administrateur. */
-export async function schedulePublication(
+interface ScheduleInput {
+  recipeId: string;
+  platform: SocialPlatform;
+  format: PublicationFormat;
+  at: Date;
+  caption?: string | null;
+  tiktok?: TiktokChoices | null;
+}
+
+/** Vérifie qu'une publication peut être programmée (date, choix TikTok, recette, visuel prêt). */
+async function checkSchedule(
   db: Database,
   adminId: string,
-  input: {
-    recipeId: string;
-    platform: SocialPlatform;
-    format: PublicationFormat;
-    at: Date;
-    caption?: string | null;
-    tiktok?: TiktokChoices | null;
-  },
-  now: Date = new Date(),
-): Promise<ScheduleResult> {
+  input: ScheduleInput,
+  now: Date,
+): Promise<ScheduleRefusal | null> {
   const { recipeId, platform, format, at } = input;
-  if (!FORMATS_BY_PLATFORM[platform].includes(format)) return { ok: false, reason: "invalid_format" };
+  if (!FORMATS_BY_PLATFORM[platform].includes(format)) return "invalid_format";
   if (
     Number.isNaN(at.getTime()) ||
     at.getTime() < now.getTime() + 60_000 ||
     at.getTime() > now.getTime() + MAX_AHEAD_MS
   )
-    return { ok: false, reason: "invalid_date" };
+    return "invalid_date";
   if (platform === "tiktok") {
     const choices = input.tiktok;
-    if (!choices?.privacy) return { ok: false, reason: "invalid_privacy" };
-    if (choices.brandedContent && choices.privacy === "SELF_ONLY")
-      return { ok: false, reason: "invalid_privacy" };
+    if (!choices?.privacy) return "invalid_privacy";
+    if (choices.brandedContent && choices.privacy === "SELF_ONLY") return "invalid_privacy";
   }
   const recipe = await ownedAdminRecipe(db, adminId, recipeId);
-  if (!recipe?.versionId) return { ok: false, reason: "not_found" };
+  if (!recipe?.versionId) return "not_found";
   const ready = await mediaReady(db, recipeId, recipe.versionId, format);
-  if (ready !== "ok") return { ok: false, reason: ready };
+  return ready === "ok" ? null : ready;
+}
 
+/** Programme une publication validée par l'administrateur. */
+export async function schedulePublication(
+  db: Database,
+  adminId: string,
+  input: ScheduleInput,
+  now: Date = new Date(),
+): Promise<ScheduleResult> {
+  const refusal = await checkSchedule(db, adminId, input, now);
+  if (refusal) return { ok: false, reason: refusal };
+  const { recipeId, platform, format, at } = input;
   const caption = input.caption?.trim() || null;
   const [row] = await db
     .insert(s.scheduledPublications)
@@ -146,6 +158,81 @@ export async function cancelScheduled(db: Database, adminId: string, scheduleId:
   return true;
 }
 
+/**
+ * Validation d'une publication proposée par la planification automatique : elle devient une
+ * publication programmée (heure éventuellement changée, légende et choix TikTok validés).
+ */
+export async function approveProposal(
+  db: Database,
+  adminId: string,
+  proposalId: string,
+  input: { at: Date; caption?: string | null; tiktok?: TiktokChoices | null },
+  now: Date = new Date(),
+): Promise<ScheduleResult> {
+  const [row] = await db
+    .select()
+    .from(s.scheduledPublications)
+    .where(
+      and(
+        eq(s.scheduledPublications.id, proposalId),
+        eq(s.scheduledPublications.createdBy, adminId),
+        eq(s.scheduledPublications.status, "proposed"),
+      ),
+    );
+  if (!row) return { ok: false, reason: "not_found" };
+  const refusal = await checkSchedule(
+    db,
+    adminId,
+    { recipeId: row.recipeId, platform: row.platform, format: row.format, ...input },
+    now,
+  );
+  if (refusal) return { ok: false, reason: refusal };
+  const [updated] = await db
+    .update(s.scheduledPublications)
+    .set({
+      status: "scheduled",
+      scheduledAt: input.at,
+      caption: input.caption?.trim() || null,
+      tiktok: row.platform === "tiktok" ? (input.tiktok ?? null) : null,
+      updatedAt: now,
+    })
+    .where(and(eq(s.scheduledPublications.id, row.id), eq(s.scheduledPublications.status, "proposed")))
+    .returning({ id: s.scheduledPublications.id });
+  if (!updated) return { ok: false, reason: "not_found" };
+  await audit(db, {
+    actorId: adminId,
+    action: "publication.proposal.approve",
+    entity: "recipe",
+    entityId: row.recipeId,
+    after: { platform: row.platform, format: row.format, at: input.at.toISOString() },
+  });
+  return { ok: true, id: row.id };
+}
+
+/** Écarte une seule publication proposée (les autres réseaux de la recette restent proposés). */
+export async function dismissProposal(db: Database, adminId: string, proposalId: string): Promise<boolean> {
+  const [row] = await db
+    .update(s.scheduledPublications)
+    .set({ status: "cancelled", note: "Écartée par l'administrateur.", updatedAt: new Date() })
+    .where(
+      and(
+        eq(s.scheduledPublications.id, proposalId),
+        eq(s.scheduledPublications.createdBy, adminId),
+        eq(s.scheduledPublications.status, "proposed"),
+      ),
+    )
+    .returning({ recipeId: s.scheduledPublications.recipeId });
+  if (!row) return false;
+  await audit(db, {
+    actorId: adminId,
+    action: "publication.proposal.dismiss",
+    entity: "recipe",
+    entityId: row.recipeId,
+    after: { proposalId },
+  });
+  return true;
+}
+
 const toView = (row: typeof s.scheduledPublications.$inferSelect): ScheduledView => ({
   id: row.id,
   platform: row.platform,
@@ -155,7 +242,7 @@ const toView = (row: typeof s.scheduledPublications.$inferSelect): ScheduledView
   note: row.note,
 });
 
-/** Programmations d'une recette : celles à venir et les échecs des 7 derniers jours. */
+/** Programmations d'une recette : propositions, celles à venir et les échecs des 7 derniers jours. */
 export async function recipeSchedule(
   db: Database,
   recipeId: string,
@@ -168,9 +255,9 @@ export async function recipeSchedule(
       and(
         eq(s.scheduledPublications.recipeId, recipeId),
         or(
-          eq(s.scheduledPublications.status, "scheduled"),
+          inArray(s.scheduledPublications.status, ["proposed", "scheduled"]),
           and(
-            eq(s.scheduledPublications.status, "failed"),
+            inArray(s.scheduledPublications.status, ["failed", "expired"]),
             gte(s.scheduledPublications.updatedAt, new Date(now.getTime() - 7 * 24 * 3600 * 1000)),
           ),
         ),
@@ -185,14 +272,14 @@ export interface CalendarEntry extends ScheduledView {
   recipeName: string;
 }
 
-/** Calendrier de l'administration : programmations à venir, toutes recettes confondues. */
+/** Calendrier de l'administration : propositions et programmations à venir, toutes recettes confondues. */
 export async function upcomingSchedule(db: Database, limit = 50): Promise<CalendarEntry[]> {
   const rows = await db
     .select({ row: s.scheduledPublications, name: s.recipeVersions.name })
     .from(s.scheduledPublications)
     .innerJoin(s.recipes, eq(s.recipes.id, s.scheduledPublications.recipeId))
     .leftJoin(s.recipeVersions, eq(s.recipeVersions.id, s.recipes.currentVersionId))
-    .where(eq(s.scheduledPublications.status, "scheduled"))
+    .where(inArray(s.scheduledPublications.status, ["proposed", "scheduled"]))
     .orderBy(asc(s.scheduledPublications.scheduledAt))
     .limit(limit);
   return rows.map(({ row, name }) => ({
@@ -214,7 +301,7 @@ export async function suggestSlot(
     .where(
       and(
         eq(s.scheduledPublications.platform, platform),
-        eq(s.scheduledPublications.status, "scheduled"),
+        inArray(s.scheduledPublications.status, ["proposed", "scheduled"]),
         gte(s.scheduledPublications.scheduledAt, now),
       ),
     );
@@ -227,11 +314,18 @@ export async function suggestSlot(
   );
 }
 
-export type DueOutcome = "started" | "failed" | "missed";
+export type DueOutcome = "started" | "failed" | "missed" | "expired";
 
 /** Lance les publications programmées arrivées à échéance. Chacune n'est lancée qu'une fois. */
 export async function runDueSchedules(db: Database, deps: PublishDeps = {}): Promise<DueOutcome[]> {
   const now = deps.now ?? new Date();
+  // Propositions non validées à l'heure prévue : rien n'est publié.
+  const expired = await db
+    .update(s.scheduledPublications)
+    .set({ status: "expired", note: "Non validée à temps : rien n'a été publié.", updatedAt: now })
+    .where(and(eq(s.scheduledPublications.status, "proposed"), lte(s.scheduledPublications.scheduledAt, now)))
+    .returning({ id: s.scheduledPublications.id });
+  const outcomes: DueOutcome[] = expired.map(() => "expired" as const);
   const due = await db
     .select({ id: s.scheduledPublications.id })
     .from(s.scheduledPublications)
@@ -239,7 +333,6 @@ export async function runDueSchedules(db: Database, deps: PublishDeps = {}): Pro
       and(eq(s.scheduledPublications.status, "scheduled"), lte(s.scheduledPublications.scheduledAt, now)),
     )
     .orderBy(asc(s.scheduledPublications.scheduledAt));
-  const outcomes: DueOutcome[] = [];
   for (const { id } of due) {
     // Réservation : une seule exécution peut passer « scheduled » → « started ».
     const [row] = await db

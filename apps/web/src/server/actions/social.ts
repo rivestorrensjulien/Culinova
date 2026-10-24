@@ -21,8 +21,12 @@ import {
 import { analyzeStats, type AnalyzeResult, collectStats } from "../social/stats";
 import { type PinterestBoard, pinterestBoards, pinterestCreateBoard } from "../social/pinterest";
 import { getPinterestBoard, type PinterestBoardSetting, savePinterestBoard } from "../social/pinterest-board";
+import { rejectRecipe, saveAutoplan } from "../social/autoplan";
+import { runAutoplan } from "../social/autoplan-run";
 import {
+  approveProposal,
   cancelScheduled,
+  dismissProposal,
   recipeSchedule,
   type ScheduledView,
   type ScheduleRefusal,
@@ -242,4 +246,64 @@ export async function suggestSlotAction(platform: string): Promise<string | null
   if (!session || !isPlatform(platform)) return null;
   const slot = await suggestSlot(getDb(), platform);
   return slot ? toParisInput(slot) : null;
+}
+
+const approveSchema = z.object({
+  recipeId: z.uuid(),
+  proposalId: z.uuid(),
+  at: z.string().max(20),
+  caption: z.string().max(2200),
+  tiktok: choicesSchema.nullable(),
+});
+
+/** Validation d'une publication proposée par la planification automatique. */
+export async function approveProposalAction(
+  input: z.input<typeof approveSchema>,
+): Promise<ScheduleActionResult> {
+  const session = await admin();
+  const parsed = approveSchema.safeParse(input);
+  if (!session || !parsed.success) return { ok: false, reason: "invalid" };
+  const at = fromParisInput(parsed.data.at);
+  if (!at) return { ok: false, reason: "invalid_date" };
+  const db = getDb();
+  const result = await approveProposal(db, session.user.id, parsed.data.proposalId, {
+    at,
+    caption: parsed.data.caption,
+    tiktok: parsed.data.tiktok,
+  });
+  if (!result.ok) return result;
+  return { ok: true, schedule: await recipeSchedule(db, parsed.data.recipeId) };
+}
+
+/** Écarte une seule publication proposée. */
+export async function dismissProposalAction(
+  recipeId: string,
+  proposalId: string,
+): Promise<ScheduledView[] | null> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success || !uuid.safeParse(proposalId).success) return null;
+  const db = getDb();
+  await dismissProposal(db, session.user.id, proposalId);
+  return recipeSchedule(db, recipeId);
+}
+
+/** Écarte la recette proposée : une autre est choisie aussitôt pour ce jour-là. */
+export async function rejectRecipeAction(recipeId: string): Promise<ScheduledView[] | null> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success) return null;
+  const db = getDb();
+  if (await rejectRecipe(db, session.user.id, recipeId)) {
+    after(() => runAutoplan(getDb()).then(() => undefined));
+  }
+  return recipeSchedule(db, recipeId);
+}
+
+/** Active ou suspend la planification automatique. */
+export async function saveAutoplanAction(enabled: boolean): Promise<boolean> {
+  const session = await admin();
+  if (!session) return false;
+  const db = getDb();
+  await saveAutoplan(db, session.user.id, { enabled: Boolean(enabled) });
+  if (enabled) after(() => runAutoplan(getDb()).then(() => undefined));
+  return true;
 }

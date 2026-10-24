@@ -250,6 +250,9 @@ export async function planUpcoming(db: Database, deps: AutoplanDeps = {}): Promi
     if (!video?.current || !carousel?.current) {
       await queuePublication(db, chosen.ownerId, chosen.id, ["instagram", "tiktok"]);
     }
+    // Page publique de la recette (lien dans les légendes proposées).
+    const { ensurePublicPage } = await import("../public-recipes");
+    await ensurePublicPage(db, chosen.ownerId, chosen.id);
     for (const { platform, format } of PLAN) {
       const at = slotOnDay(platform, day);
       if (!at) continue;

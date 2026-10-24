@@ -197,6 +197,9 @@ export async function queuePublication(
         set: { status: "queued", publishedAt: null, postUrl: null, note: null, updatedAt: new Date() },
       });
   }
+  // Page publique créée dès l'entrée dans le circuit de publication : son lien est déjà dans les légendes.
+  const { ensurePublicPage } = await import("./public-recipes");
+  await ensurePublicPage(db, adminId, recipeId);
   await audit(db, {
     actorId: adminId,
     action: "publication.queue",

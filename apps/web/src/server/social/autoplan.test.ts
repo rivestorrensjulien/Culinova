@@ -130,6 +130,12 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
         ),
       );
     expect(queued.length).toBeGreaterThan(0);
+    // Page publique créée d'office : son lien est dans les légendes proposées.
+    const [page] = await db
+      .select()
+      .from(s.recipePublicPages)
+      .where(eq(s.recipePublicPages.recipeId, planned[0]!.recipeId));
+    expect(page?.slug).toBeTruthy();
 
     // Tout est prévu : rien de plus, pas de nouvel e-mail.
     expect(await planUpcoming(db, deps)).toEqual([]);

@@ -111,6 +111,8 @@ export async function schedulePublication(
   const refusal = await checkSchedule(db, adminId, input, now);
   if (refusal) return { ok: false, reason: refusal };
   const { recipeId, platform, format, at } = input;
+  const { ensurePublicPage } = await import("../public-recipes");
+  await ensurePublicPage(db, adminId, recipeId);
   const caption = input.caption?.trim() || null;
   const [row] = await db
     .insert(s.scheduledPublications)

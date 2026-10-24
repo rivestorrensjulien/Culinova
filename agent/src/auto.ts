@@ -24,7 +24,9 @@ function notice(message: string) {
 
 function annotate(title: string, note: string) {
   console.log(
-    process.env.GITHUB_ACTIONS ? `::error title=${title}::${note.replace(/\r?\n/g, " ").slice(0, 900)}` : note,
+    process.env.GITHUB_ACTIONS
+      ? `::error title=${title}::${note.replace(/\r?\n/g, " ").slice(0, 900)}`
+      : note,
   );
 }
 

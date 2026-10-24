@@ -45,11 +45,14 @@ async function main() {
   const wanted = arg("recette");
   let failed = false;
 
+  // Recette demandée (identifiant ou morceau du nom) : identifiant retrouvé d'abord.
+  const job = wanted ? await pickJob(client, wanted) : (await client.jobs())[0];
+
   // 1. Carrousels manquants (sans la vidéo).
-  if (!run("render.ts", wanted ? ["--carrousel", `--recette=${wanted}`] : ["--carrousel"])) failed = true;
+  if (!run("render.ts", wanted && job ? ["--carrousel", `--recette=${job.recipeId}`] : ["--carrousel"]))
+    failed = true;
 
   // 2. Vidéo d'une recette.
-  const job = wanted ? await pickJob(client, wanted) : (await client.jobs())[0];
   if (!job) {
     console.log("Aucune vidéo à fabriquer.");
     if (failed) process.exitCode = 1;

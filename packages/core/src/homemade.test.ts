@@ -3,13 +3,36 @@ import { leadTime, looksStoreBought } from "./homemade";
 
 describe("produits achetés tout prêts", () => {
   it("repère les préparations souvent achetées", () => {
-    for (const name of ["Pains bao", "Pâte feuilletée", "Biscuits boudoirs", "Fond de veau", "Yuzu kosho"]) {
+    for (const name of [
+      "Pains bao",
+      "Pâte feuilletée",
+      "Biscuits boudoirs",
+      "Fond de veau",
+      "Yuzu kosho",
+      "Masa harina",
+      "Pain complet de campagne",
+      "Pâtes fraîches",
+      "Garam masala",
+      "Ricotta",
+      "Ghee",
+      "Tahini",
+      "Sauce tomate",
+    ]) {
       expect(looksStoreBought(name)).toBe(true);
     }
   });
 
   it("ignore les produits bruts", () => {
-    for (const name of ["Farine de blé", "Œufs", "Carottes", "Pâtes fraîches", "Sauce soja"]) {
+    for (const name of [
+      "Farine de blé",
+      "Œufs",
+      "Carottes",
+      "Sauce soja",
+      "Beurre doux",
+      "Paprika fumé",
+      "Miso blanc",
+      "Épinards",
+    ]) {
       expect(looksStoreBought(name)).toBe(false);
     }
   });

@@ -5,7 +5,7 @@
 import type { GeneratedRecipe } from "../schemas";
 import { isFusion, type RecipeRequest } from "./request";
 
-export const RECIPE_PROMPT_VERSION = "recipe.generate@10";
+export const RECIPE_PROMPT_VERSION = "recipe.generate@11";
 export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@10";
 export const RECIPE_EDIT_PROMPT_VERSION = "recipe.edit@1";
 
@@ -33,7 +33,7 @@ Exigences :
 - Rédige tous les textes dans la langue demandée, avec un vocabulaire culinaire juste (traduction culinaire, pas littérale).
 - En français, emploie les noms d'ingrédients et de produits utilisés couramment en France, pas les noms étrangers : « biscuits boudoirs » et non « savoiardi », « pâte feuilletée » et non « puff pastry ». Garde le nom d'origine seulement pour un produit sans équivalent français courant (mascarpone, parmesan, miso…).
 - Ne compte une étape de cuisson que si la recette la demande réellement : un produit acheté prêt à l'emploi (biscuits boudoirs, pâte achetée…) ne se cuit pas.
-- Produits achetés tout prêts : storeBought = true pour un ingrédient qui est lui-même une préparation, habituellement achetée toute prête mais réalisable à la maison (pains bao, pains burger, pâte feuilletée, pâte brisée, biscuits boudoirs, brioche, tortillas, fond de veau, bouillon, mayonnaise, pesto, pâte de curry, yuzu kosho…). storeBought = false pour un produit brut ou de base (farine, œufs, légumes, viande, poisson, fromage, épices, huile, vinaigre, sauce soja, chocolat…). La personne pourra choisir de faire ces préparations maison.`;
+- Faits maison possibles : storeBought = true pour tout ingrédient qui est lui-même une préparation réalisable à la maison, même s'il est souvent acheté tout prêt : pains (pain de campagne, pains bao, pains burger, pita, naan, brioche, tortillas, wraps), farines transformées (masa harina, c'est-à-dire farine de maïs nixtamalisée), pâtes (feuilletée, brisée, à pizza, pâtes fraîches, gnocchi), biscuits (boudoirs, sablés), fonds, fumets et bouillons, sauces et condiments (mayonnaise, ketchup, pesto, sauce tomate, sauce teriyaki, harissa, chutney, pickles, tahini, houmous), mélanges d'épices (garam masala, ras el hanout, za'atar, curry en poudre), pâtes d'épices et de piment (pâte de curry, yuzu kosho, sambal), fromages frais simples (ricotta, paneer, labneh, mascarpone), yaourt, ghee, chapelure, laits végétaux, crème pâtissière, caramel, confiture, praliné… En cas de doute, storeBought = true : la personne choisira de le faire maison ou de l'acheter tout prêt. storeBought = false seulement pour un produit brut, ou qu'on ne fait pas simplement à la maison (farine de blé, sucre, sel, œufs, lait, beurre, crème, légumes, fruits, viande, poisson, fromages affinés, épices seules, huile, vinaigre, sauce soja, miso, chocolat…).`;
 
 function list(items: string[]): string {
   return items.length > 0 ? items.join(", ") : "—";

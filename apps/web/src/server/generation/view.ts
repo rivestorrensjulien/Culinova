@@ -317,8 +317,8 @@ export async function loadRecipeView(
         group: line.groupLabel,
         optional: line.optional,
         toConfirm: status === "to_confirm",
-        // Recettes anciennes (non renseigné) : repérage par le nom.
-        storeBought: line.storeBought ?? looksStoreBought(line.label),
+        // Repéré par l'IA, ou par le nom (préparations réalisables maison, et recettes anciennes).
+        storeBought: Boolean(line.storeBought) || looksStoreBought(line.label),
         base: line.baseRecipeId ? (homemade.get(line.baseRecipeId) ?? null) : null,
         pendingBaseGenerationId: pendingBases.get(line.id) ?? null,
       };

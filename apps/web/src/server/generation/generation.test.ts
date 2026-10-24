@@ -177,7 +177,7 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
     ]);
     const main = generations.find((g) => g.kind === "recipe")!;
     expect(main).toMatchObject({
-      promptVersion: "recipe.generate@10",
+      promptVersion: "recipe.generate@11",
       tokensIn: 1200,
       tokensOut: 2400,
       costUsdMicros: 26_400,

@@ -1,7 +1,9 @@
 /**
  * API Instagram avec connexion Instagram (application Meta « Culinova Agent »).
  * Autorisations : instagram_business_basic, instagram_business_content_publish,
- * instagram_business_manage_insights. Variables : INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET.
+ * instagram_business_manage_insights, instagram_business_manage_comments et
+ * instagram_business_manage_messages (« Commente RECETTE » : lien envoyé en message privé).
+ * Variables : INSTAGRAM_APP_ID, INSTAGRAM_APP_SECRET.
  */
 type Env = Record<string, string | undefined>;
 
@@ -9,6 +11,13 @@ export const INSTAGRAM_SCOPES = [
   "instagram_business_basic",
   "instagram_business_content_publish",
   "instagram_business_manage_insights",
+  "instagram_business_manage_comments",
+  "instagram_business_manage_messages",
+] as const;
+/** Autorisations nécessaires au « Commente RECETTE » (compte à relier à nouveau sinon). */
+export const COMMENT_REPLY_SCOPES = [
+  "instagram_business_manage_comments",
+  "instagram_business_manage_messages",
 ] as const;
 const GRAPH = "https://graph.instagram.com/v23.0";
 
@@ -59,6 +68,8 @@ export interface InstagramToken {
   accessToken: string;
   userId: string;
   expiresAt: Date;
+  /** Autorisations accordées par la personne (vide si Instagram ne les renvoie pas). */
+  scopes: string[];
 }
 
 /** Code d'autorisation → jeton de courte durée → jeton de 60 jours. */
@@ -74,7 +85,8 @@ export async function instagramExchangeCode(
   const short = await json<{
     access_token?: string;
     user_id?: string | number;
-    data?: Array<{ access_token: string; user_id: string | number }>;
+    permissions?: string | string[];
+    data?: Array<{ access_token: string; user_id: string | number; permissions?: string | string[] }>;
   }>(
     await fetchImpl("https://api.instagram.com/oauth/access_token", {
       method: "POST",
@@ -102,10 +114,14 @@ export async function instagramExchangeCode(
     ),
     "jeton longue durée",
   );
+  const permissions = first.permissions ?? [];
   return {
     accessToken: long.access_token,
     userId: String(first.user_id),
     expiresAt: new Date(now.getTime() + long.expires_in * 1000),
+    scopes: (Array.isArray(permissions) ? permissions : permissions.split(","))
+      .map((p) => p.trim())
+      .filter(Boolean),
   };
 }
 
@@ -297,4 +313,81 @@ export async function instagramMediaInsights(
     },
     raw: body.data,
   };
+}
+
+export interface InstagramComment {
+  id: string;
+  text: string;
+  timestamp: string;
+  username: string | null;
+  /** Identifiant Instagram de l'auteur (pour ne jamais se répondre à soi-même). */
+  fromId: string | null;
+}
+
+/** Commentaires d'une publication (les plus récents d'abord, 100 au plus). */
+export async function instagramComments(
+  accessToken: string,
+  mediaId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<InstagramComment[]> {
+  const body = await json<{
+    data: Array<{
+      id: string;
+      text?: string;
+      timestamp?: string;
+      username?: string;
+      from?: { id?: string; username?: string };
+    }>;
+  }>(
+    await fetchImpl(
+      `${GRAPH}/${mediaId}/comments?${new URLSearchParams({
+        fields: "id,text,timestamp,username,from",
+        limit: "100",
+        access_token: accessToken,
+      })}`,
+    ),
+    "commentaires",
+  );
+  return body.data.map((c) => ({
+    id: c.id,
+    text: c.text ?? "",
+    timestamp: c.timestamp ?? new Date(0).toISOString(),
+    username: c.username ?? c.from?.username ?? null,
+    fromId: c.from?.id ?? null,
+  }));
+}
+
+/** Réponse privée à un commentaire (une seule par commentaire, dans les 7 jours). */
+export async function instagramPrivateReply(
+  accessToken: string,
+  accountId: string,
+  commentId: string,
+  text: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | null> {
+  const body = await json<{ message_id?: string }>(
+    await fetchImpl(`${GRAPH}/${accountId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ recipient: { comment_id: commentId }, message: { text } }),
+    }),
+    "message privé",
+  );
+  return body.message_id ?? null;
+}
+
+/** Réponse publique sous le commentaire (« Envoyé en message privé »). */
+export async function instagramReplyToComment(
+  accessToken: string,
+  commentId: string,
+  text: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<void> {
+  await json<{ id?: string }>(
+    await fetchImpl(`${GRAPH}/${commentId}/replies`, {
+      method: "POST",
+      body: new URLSearchParams({ message: text, access_token: accessToken }),
+    }),
+    "réponse au commentaire",
+  );
 }

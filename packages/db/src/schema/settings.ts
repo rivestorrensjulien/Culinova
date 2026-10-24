@@ -16,6 +16,8 @@ export const SETTING_KEYS = {
   socialPinterest: "social.pinterest",
   /** Planification automatique des publications (recettes choisies par l'agent, à valider). */
   socialAutoplan: "social.autoplan",
+  /** « Commente RECETTE » : mot-clé qui déclenche l'envoi du lien en message privé sur Instagram. */
+  socialCommentReply: "social.comment_reply",
 } as const;
 
 /** Paramètres modifiables depuis l'admin (quotas par défaut, plafond de budget IA…). */

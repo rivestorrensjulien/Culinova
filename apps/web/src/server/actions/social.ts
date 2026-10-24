@@ -22,6 +22,7 @@ import { analyzeStats, type AnalyzeResult, collectStats } from "../social/stats"
 import { type PinterestBoard, pinterestBoards, pinterestCreateBoard } from "../social/pinterest";
 import { getPinterestBoard, type PinterestBoardSetting, savePinterestBoard } from "../social/pinterest-board";
 import { rejectRecipe, saveAutoplan } from "../social/autoplan";
+import { saveCommentReply } from "../social/comment-reply";
 import { runAutoplan } from "../social/autoplan-run";
 import {
   approveProposal,
@@ -317,4 +318,13 @@ export async function requestVideoAction(recipeId: string, format: string): Prom
     ? (format as RequestableFormat)
     : null;
   return requestVideo(getDb(), session.user.id, recipeId, chosen);
+}
+
+/** « Commente RECETTE » : activé ou non, et mot-clé. */
+export async function saveCommentReplyAction(input: { enabled: boolean; keyword: string }): Promise<boolean> {
+  const session = await admin();
+  const parsed = z.object({ enabled: z.boolean(), keyword: z.string().max(40) }).safeParse(input);
+  if (!session || !parsed.success) return false;
+  await saveCommentReply(getDb(), session.user.id, parsed.data);
+  return true;
 }

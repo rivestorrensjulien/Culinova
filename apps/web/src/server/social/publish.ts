@@ -13,6 +13,7 @@ import { appUrl } from "../auth";
 import { adminRecipe, signedImagePath, signedSlidePath, signedVideoPath } from "../publishing";
 import { accountToken, type SocialPlatform } from "./accounts";
 import { captionFor, MAX_CAPTION, pinTitleFor, withRecipeLink } from "./captions";
+import { getCommentReply, withCommentInvite } from "./comment-reply";
 import { latestCarousel } from "./carousels";
 import {
   instagramContainerStatus,
@@ -126,7 +127,10 @@ export async function startPublication(
   if (!account) return { ok: false, reason: "not_connected" };
   // Chaque publication renvoie à la page publique de la recette (demande de Julien).
   const written = options.caption?.trim() || (await captionFor(db, recipe.versionId, platform));
-  const caption = (slug ? withRecipeLink(written, publicRecipeUrl(appUrl(), slug), platform) : written).slice(
+  // Instagram : invitation « Commente RECETTE » (lien envoyé en message privé), même sur une légende modifiée.
+  const reply = platform === "instagram" ? await getCommentReply(db) : null;
+  const linked = slug ? withRecipeLink(written, publicRecipeUrl(appUrl(), slug), platform) : written;
+  const caption = (reply?.enabled ? withCommentInvite(linked, reply.keyword) : linked).slice(
     0,
     platform === "pinterest" ? PIN_DESCRIPTION_MAX : MAX_CAPTION,
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import type { InsightsAnalysis } from "@culinova/ai";
-import { Badge, Button, Notice, Select, Textarea } from "@culinova/ui";
+import { Badge, Button, Input, Notice, Select, Textarea } from "@culinova/ui";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import {
@@ -11,6 +11,7 @@ import {
   disconnectAccountAction,
   pinterestBoardsAction,
   saveAutoplanAction,
+  saveCommentReplyAction,
   saveCaptionSettingsAction,
   savePinterestBoardAction,
 } from "@/server/actions/social";
@@ -319,5 +320,65 @@ export function AutoplanToggle({ enabled }: { enabled: boolean }) {
         </span>
       </span>
     </label>
+  );
+}
+
+/** « Commente RECETTE » : mot-clé qui déclenche l'envoi du lien de la recette en message privé. */
+export function CommentReplyForm({ enabled, keyword }: { enabled: boolean; keyword: string }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const [on, setOn] = useState(enabled);
+  const [word, setWord] = useState(keyword);
+  const [saved, setSaved] = useState<boolean | null>(null);
+  return (
+    <form
+      className="flex flex-col gap-3 text-sm"
+      data-testid="comment-reply-form"
+      onSubmit={(e) => {
+        e.preventDefault();
+        start(async () => {
+          setSaved(await saveCommentReplyAction({ enabled: on, keyword: word }).catch(() => false));
+          router.refresh();
+        });
+      }}
+    >
+      {saved === true ? <Notice tone="success">Réglage enregistré.</Notice> : null}
+      {saved === false ? <Notice tone="danger">L&apos;enregistrement a échoué.</Notice> : null}
+      <label className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 size-4 accent-primary"
+          checked={on}
+          onChange={(e) => setOn(e.target.checked)}
+        />
+        <span>
+          <span className="font-medium">Envoyer le lien de la recette en message privé</span>
+          <span className="block text-muted">
+            Les légendes Instagram invitent à commenter le mot-clé. Toutes les 10 minutes, chaque personne qui
+            l&apos;a commenté reçoit en message privé le lien cliquable de la recette (une seule fois par
+            commentaire, dans les 7 jours, comme l&apos;exige Instagram), et une réponse « Envoyé en message
+            privé 📩 » s&apos;affiche sous son commentaire.
+          </span>
+        </span>
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="font-medium">Mot-clé</span>
+        <Input
+          className="w-48"
+          value={word}
+          maxLength={30}
+          onChange={(e) => setWord(e.target.value.toUpperCase())}
+          data-testid="comment-reply-keyword"
+        />
+        <span className="text-muted">
+          Un seul mot, sans accent : « recette », « Recette ! » ou « RÉCETTE » sont reconnus.
+        </span>
+      </label>
+      <div>
+        <Button type="submit" size="sm" disabled={pending}>
+          Enregistrer
+        </Button>
+      </div>
+    </form>
   );
 }

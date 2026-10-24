@@ -10,12 +10,15 @@ import { redirectUri } from "@/server/social/oauth";
 import { type AccountTrend, statsOverview } from "@/server/social/stats";
 import { getPinterestBoard } from "@/server/social/pinterest-board";
 import { getAutoplan } from "@/server/social/autoplan";
+import { commentReplyStats, getCommentReply } from "@/server/social/comment-reply";
+import { COMMENT_REPLY_SCOPES } from "@/server/social/instagram";
 import { upcomingSchedule } from "@/server/social/schedule";
 import { RECOMMENDED_SLOTS } from "@/server/social/slots";
 import {
   AnalysisView,
   AnalyzeButton,
   AutoplanToggle,
+  CommentReplyForm,
   CaptionSettingsForm,
   CollectButton,
   DisconnectButton,
@@ -102,6 +105,10 @@ export default async function SocialPage({
     upcomingSchedule(db),
   ]);
   const autoplan = await getAutoplan(db);
+  const [commentReply, replyStats] = await Promise.all([getCommentReply(db), commentReplyStats(db)]);
+  const instagramAccount = accounts.find((a) => a.platform === "instagram");
+  // Autorisations des messages et commentaires : accordées seulement en reliant le compte à nouveau.
+  const replyAllowed = COMMENT_REPLY_SCOPES.every((scope) => instagramAccount?.scopes.includes(scope));
   const agent = agentEnabled();
 
   return (
@@ -260,6 +267,34 @@ export default async function SocialPage({
               ))}
             </ul>
           </div>
+        </CardBody>
+      </Card>
+
+      <Card data-testid="comment-reply">
+        <CardBody className="flex flex-col gap-4 text-sm">
+          <div>
+            <CardTitle>« Commente {commentReply.keyword} » : le lien en message privé</CardTitle>
+            <CardDescription>
+              Instagram ne rend pas les liens des légendes cliquables. En message privé, ils le sont : la
+              personne n&apos;a qu&apos;à toucher le lien pour ouvrir la recette.
+            </CardDescription>
+          </div>
+          {instagramAccount && !replyAllowed ? (
+            <Notice tone="warning">
+              À faire une seule fois : cliquez sur « Relier à nouveau » pour Instagram (en haut de la page) et
+              acceptez les autorisations « messages » et « commentaires ». Sans elles, aucun lien ne peut être
+              envoyé.
+            </Notice>
+          ) : null}
+          <CommentReplyForm enabled={commentReply.enabled} keyword={commentReply.keyword} />
+          <p className="text-muted">
+            30 derniers jours : {replyStats.sent} lien{replyStats.sent > 1 ? "s" : ""} envoyé
+            {replyStats.sent > 1 ? "s" : ""}
+            {replyStats.failed > 0 ? `, ${replyStats.failed} échec${replyStats.failed > 1 ? "s" : ""}` : ""}.
+          </p>
+          {replyStats.lastFailure ? (
+            <Notice tone="danger">Dernier échec : {replyStats.lastFailure}</Notice>
+          ) : null}
         </CardBody>
       </Card>
 

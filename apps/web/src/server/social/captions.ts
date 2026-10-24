@@ -10,6 +10,7 @@ import { eq } from "drizzle-orm";
 import { audit } from "../audit";
 import { appUrl } from "../auth";
 import type { SocialPlatform } from "./accounts";
+import { commentInviteLine, getCommentReply } from "./comment-reply";
 
 export const MAX_CAPTION = 2200;
 const MAX_MENTIONS = 20;
@@ -93,6 +94,8 @@ export function buildCaption(input: {
   settings: CaptionSettings;
   /** Adresse de la page publique de la recette, si elle existe déjà. */
   publicUrl?: string | null;
+  /** Instagram : mot-clé du « Commente RECETTE » (null : désactivé). */
+  commentKeyword?: string | null;
 }): string {
   // Les @ n'ont pas de sens sur Pinterest (comptes différents).
   const mentions =
@@ -109,7 +112,9 @@ export function buildCaption(input: {
     : input.platform === "pinterest"
       ? ""
       : BIO_LINK_NOTICE;
-  const tail = [bioLink, mentions, hashtags, notice].filter(Boolean).join("\n\n");
+  const invite =
+    input.platform === "instagram" && input.commentKeyword ? commentInviteLine(input.commentKeyword) : "";
+  const tail = [invite, bioLink, mentions, hashtags, notice].filter(Boolean).join("\n\n");
   // La fin (mentions, hashtags, mention IA) est toujours gardée : on raccourcit le texte si besoin.
   const room = MAX_LENGTH[input.platform] - (tail ? tail.length + 2 : 0);
   const text = input.text.trim().slice(0, Math.max(0, room));
@@ -136,12 +141,14 @@ export async function captionFor(db: Database, versionId: string, platform: Soci
     .from(s.recipeVersions)
     .innerJoin(s.recipePublicPages, eq(s.recipePublicPages.recipeId, s.recipeVersions.recipeId))
     .where(eq(s.recipeVersions.id, versionId));
+  const reply = platform === "instagram" ? await getCommentReply(db) : null;
   return buildCaption({
     text,
     hashtags: instagram?.hashtags.length ? instagram.hashtags : (tiktok?.hashtags ?? []),
     platform,
     settings: await getCaptionSettings(db),
     publicUrl: page ? `${appUrl()}/recette/${page.slug}` : null,
+    commentKeyword: reply?.enabled ? reply.keyword : null,
   });
 }
 

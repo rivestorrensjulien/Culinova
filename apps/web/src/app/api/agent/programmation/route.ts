@@ -7,6 +7,7 @@ import { getDb } from "@/server/db";
 import { refuseAgent } from "@/server/social/agent-route";
 import { advanceProcessing } from "@/server/social/publish";
 import { runAutoplan } from "@/server/social/autoplan-run";
+import { replyToComments } from "@/server/social/comment-reply";
 import { runDueSchedules } from "@/server/social/schedule";
 
 export const dynamic = "force-dynamic";
@@ -22,5 +23,7 @@ export async function POST(request: Request) {
     console.error(`Planification automatique : ${error instanceof Error ? error.message : error}`);
     return [];
   });
-  return Response.json({ scheduled, planned, publications: await advanceProcessing(db) });
+  // « Commente RECETTE » : lien de la recette envoyé en message privé.
+  const comments = await replyToComments(db).catch(() => ({ sent: 0, failed: 0 }));
+  return Response.json({ comments, scheduled, planned, publications: await advanceProcessing(db) });
 }

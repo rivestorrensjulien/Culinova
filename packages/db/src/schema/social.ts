@@ -149,3 +149,23 @@ export const recipePublicPages = pgTable(
   },
   (t) => [uniqueIndex("recipe_public_pages_slug_unique").on(t.slug)],
 );
+
+/**
+ * « Commente RECETTE » (demande de Julien du 24/10) : chaque commentaire Instagram contenant le
+ * mot-clé reçoit une seule fois le lien de la recette en message privé (lien cliquable).
+ */
+export const instagramCommentReplies = pgTable(
+  "instagram_comment_replies",
+  {
+    /** Identifiant du commentaire chez Instagram : jamais deux messages pour un même commentaire. */
+    commentId: text("comment_id").primaryKey(),
+    recipeId: uuid("recipe_id").references(() => recipes.id, { onDelete: "set null" }),
+    mediaId: text("media_id").notNull(),
+    username: text("username"),
+    /** « sending », « sent » ou « failed ». */
+    status: text("status").$type<"sending" | "sent" | "failed">().notNull().default("sending"),
+    note: text("note"),
+    ...timestamps,
+  },
+  (t) => [index("instagram_comment_replies_created_idx").on(t.createdAt)],
+);

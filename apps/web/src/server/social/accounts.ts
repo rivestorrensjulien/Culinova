@@ -28,6 +28,8 @@ export interface AccountSummary {
   expiresAt: string | null;
   /** Le jeton ne peut plus être renouvelé : il faut relier le compte à nouveau. */
   expired: boolean;
+  /** Autorisations accordées (vide si le réseau ne les a pas renvoyées). */
+  scopes: string[];
 }
 
 export interface SocialSetup {
@@ -134,6 +136,7 @@ export async function listAccounts(db: Database, now = new Date()): Promise<Acco
         : (row.refreshExpiresAt ?? row.expiresAt)
       )?.toISOString() ?? null,
     expired: isExpired(row, now),
+    scopes: row.scopes ?? [],
   }));
 }
 

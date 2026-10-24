@@ -71,7 +71,7 @@ export async function completeConnection(
       refreshToken: null,
       expiresAt: token.expiresAt,
       refreshExpiresAt: null,
-      scopes: [],
+      scopes: token.scopes,
     });
     return { username: profile.username };
   }

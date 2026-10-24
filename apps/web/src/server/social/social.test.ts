@@ -12,6 +12,7 @@ import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { publicationStatuses, queuePublication, signedVideoPath, verifyVideoSignature } from "../publishing";
 import { accountToken, listAccounts, saveAccount } from "./accounts";
+import { replyToComments } from "./comment-reply";
 import { savePinterestBoard } from "./pinterest-board";
 import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slideKey } from "./carousels";
 import { advancePublication, captionFor, startPublication } from "./publish";
@@ -482,7 +483,9 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     expect(new URLSearchParams(parent!.body).get("children")).toBe("child-1,child-2,child-3");
     // Légende validée, complétée par l'adresse de la page publique de la recette.
     const sent = new URLSearchParams(parent!.body).get("caption")!;
-    expect(sent.startsWith("Ma légende avec @maison.dupont #baghrir\n\n🔗")).toBe(true);
+    // Légende modifiée à la main : invitation « Commente RECETTE » puis lien de la recette, ajoutés d'office.
+    expect(sent.startsWith("Ma légende avec @maison.dupont #baghrir\n\n💬 Commente « RECETTE »")).toBe(true);
+    expect(sent).toContain("\n\n🔗");
     expect(sent).toMatch(/\/recette\/[a-z0-9-]+ \(lien dans la bio\)$/);
     expect(decodeURIComponent(calls[0]!.body)).toContain(
       `/api/social/carrousels/${registered.carouselId}/1?`,
@@ -738,6 +741,68 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       .where(eq(s.scheduledPublications.id, proposal!.id));
     expect(expiredRow).toMatchObject({ status: "expired" });
     expect(network.calls.filter((c) => /\/v5\/pins$/.test(c.url))).toHaveLength(1);
+  });
+
+  it("Commente RECETTE : le lien de la recette part en message privé, une seule fois par commentaire", async () => {
+    const db = testDb();
+    const now = new Date();
+    const dish = await recipeOf(admin.id);
+    await addPhoto(dish);
+    await db.insert(s.recipePublications).values({
+      recipeId: dish,
+      platform: "instagram",
+      format: "photo",
+      status: "published",
+      postId: "media-777",
+      publishedAt: now,
+    });
+    const network = fakeNetwork([
+      [
+        /\/media-777\/comments/,
+        {
+          data: [
+            {
+              id: "c1",
+              text: "Recette !",
+              timestamp: now.toISOString(),
+              username: "marie",
+              from: { id: "u1" },
+            },
+            {
+              id: "c2",
+              text: "Trop beau",
+              timestamp: now.toISOString(),
+              username: "paul",
+              from: { id: "u2" },
+            },
+            {
+              id: "c3",
+              text: "RECETTE",
+              timestamp: now.toISOString(),
+              username: "culinova.recette",
+              from: { id: "17841" },
+            },
+          ],
+        },
+      ],
+      [/\/17841\/messages$/, { recipient_id: "u1", message_id: "m1" }],
+      [/\/c1\/replies$/, { id: "r1" }],
+    ]);
+    // Seul le commentaire de Marie contient le mot-clé (jamais le compte lui-même).
+    expect(await replyToComments(db, { fetchImpl: network.impl, now })).toEqual({ sent: 1, failed: 0 });
+    const sent = network.calls.find((c) => /\/messages$/.test(c.url));
+    const body = JSON.parse(sent!.body!);
+    expect(body.recipient).toEqual({ comment_id: "c1" });
+    expect(body.message.text).toContain("@marie");
+    expect(body.message.text).toMatch(/\/recette\/[a-z0-9-]+\?utm_source=instagram/);
+    expect(network.calls.some((c) => /\/c1\/replies$/.test(c.url))).toBe(true);
+    // Passage suivant : rien n'est renvoyé.
+    expect(await replyToComments(db, { fetchImpl: network.impl, now })).toEqual({ sent: 0, failed: 0 });
+    expect(network.calls.filter((c) => /\/messages$/.test(c.url))).toHaveLength(1);
+    // La légende Instagram proposée invite à commenter le mot-clé.
+    const [recipe] = await db.select().from(s.recipes).where(eq(s.recipes.id, dish));
+    expect(await captionFor(db, recipe!.currentVersionId!, "instagram")).toContain("💬 Commente « RECETTE »");
+    expect(await captionFor(db, recipe!.currentVersionId!, "tiktok")).not.toContain("Commente");
   });
 
   it("réservé à l'administrateur : aucune automatisation pour les autres comptes", async () => {

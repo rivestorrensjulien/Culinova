@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { AI_NOTICE, BIO_LINK_NOTICE, buildCaption, MAX_CAPTION, parseMentions } from "./captions";
+import {
+  AI_NOTICE,
+  BIO_LINK_NOTICE,
+  buildCaption,
+  MAX_CAPTION,
+  parseMentions,
+  withRecipeLink,
+} from "./captions";
 
 describe("légendes des réseaux", () => {
   it("nettoie la liste des comptes mentionnés", () => {
@@ -42,5 +49,38 @@ describe("légendes des réseaux", () => {
       settings: { mentions: [], aiNotice: false },
     });
     expect(caption).toBe("Tostadas");
+  });
+
+  it("ajoute l'adresse de la page publique de la recette sur chaque réseau", () => {
+    const url = "https://culinova.fr/recette/tostadas-k3f9";
+    const proposed = buildCaption({
+      text: "Tostadas",
+      hashtags: ["brunch"],
+      platform: "instagram",
+      settings: { mentions: [], aiNotice: false },
+    });
+    expect(withRecipeLink(proposed, url, "instagram")).toBe(
+      "Tostadas\n\n🔗 La recette complète, pesée au gramme : culinova.fr/recette/tostadas-k3f9 (lien dans la bio)\n\n#brunch",
+    );
+    // Légende réécrite à la main, sans renvoi : la ligne est ajoutée avant les hashtags.
+    expect(withRecipeLink("Mon texte\n\n#brunch", url, "tiktok")).toContain(
+      "Mon texte\n\n🔗 La recette complète, pesée au gramme : culinova.fr/recette/tostadas-k3f9",
+    );
+    expect(withRecipeLink("Mon texte", url, "pinterest")).toBe(
+      "Mon texte\n\n🔗 La recette complète, pesée au gramme : culinova.fr/recette/tostadas-k3f9",
+    );
+    // Jamais en double.
+    const once = withRecipeLink(proposed, url, "instagram");
+    expect(withRecipeLink(once, url, "instagram")).toBe(once);
+    // Page déjà créée : la légende proposée contient directement l'adresse.
+    expect(
+      buildCaption({
+        text: "Tostadas",
+        hashtags: [],
+        platform: "tiktok",
+        settings: { mentions: [], aiNotice: false },
+        publicUrl: url,
+      }),
+    ).toContain("culinova.fr/recette/tostadas-k3f9 (lien dans la bio)");
   });
 });

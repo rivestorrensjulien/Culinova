@@ -8,6 +8,7 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { eq } from "drizzle-orm";
 import { audit } from "../audit";
+import { appUrl } from "../auth";
 import type { SocialPlatform } from "./accounts";
 
 export const MAX_CAPTION = 2200;
@@ -22,6 +23,29 @@ export const AI_NOTICE = "📸 Visuel généré par IA à partir de la recette."
  * bio (culinova.fr/recettes, la liste des recettes publiques). Pinterest a son propre lien.
  */
 export const BIO_LINK_NOTICE = "🔗 La recette complète, pesée au gramme : lien dans la bio";
+
+/** Ligne qui renvoie à la page publique de la recette (adresse écrite, et lien de la bio). */
+export function recipeLinkLine(url: string, platform: SocialPlatform): string {
+  const address = url.replace(/^https?:\/\//, "");
+  return platform === "pinterest"
+    ? `🔗 La recette complète, pesée au gramme : ${address}`
+    : `🔗 La recette complète, pesée au gramme : ${address} (lien dans la bio)`;
+}
+
+/**
+ * Ajoute l'adresse de la page publique à une légende (aussi celle modifiée à la main) :
+ * remplace le renvoi « lien dans la bio », sinon l'ajoute avant les mentions et hashtags.
+ */
+export function withRecipeLink(caption: string, url: string, platform: SocialPlatform): string {
+  const address = url.replace(/^https?:\/\//, "");
+  if (caption.includes(address)) return caption;
+  const line = recipeLinkLine(url, platform);
+  if (caption.includes(BIO_LINK_NOTICE)) return caption.replace(BIO_LINK_NOTICE, line);
+  const parts = caption.split("\n\n");
+  const tailStart = parts.findIndex((part, i) => i > 0 && /^[@#📸]/u.test(part.trim()));
+  if (tailStart === -1) return [caption, line].join("\n\n");
+  return [...parts.slice(0, tailStart), line, ...parts.slice(tailStart)].join("\n\n");
+}
 
 export interface CaptionSettings {
   /** Comptes mentionnés dans chaque publication (sans « @ »). */
@@ -67,6 +91,8 @@ export function buildCaption(input: {
   hashtags: string[];
   platform: SocialPlatform;
   settings: CaptionSettings;
+  /** Adresse de la page publique de la recette, si elle existe déjà. */
+  publicUrl?: string | null;
 }): string {
   // Les @ n'ont pas de sens sur Pinterest (comptes différents).
   const mentions =
@@ -78,7 +104,11 @@ export function buildCaption(input: {
     .map((tag) => `#${tag}`)
     .join(" ");
   const notice = input.settings.aiNotice ? AI_NOTICE : "";
-  const bioLink = input.platform === "pinterest" ? "" : BIO_LINK_NOTICE;
+  const bioLink = input.publicUrl
+    ? recipeLinkLine(input.publicUrl, input.platform)
+    : input.platform === "pinterest"
+      ? ""
+      : BIO_LINK_NOTICE;
   const tail = [bioLink, mentions, hashtags, notice].filter(Boolean).join("\n\n");
   // La fin (mentions, hashtags, mention IA) est toujours gardée : on raccourcit le texte si besoin.
   const room = MAX_LENGTH[input.platform] - (tail ? tail.length + 2 : 0);
@@ -101,11 +131,17 @@ export async function captionFor(db: Database, versionId: string, platform: Soci
       : platform === "pinterest"
         ? (pinterest?.description ?? instagram?.description ?? "")
         : [tiktok?.title, tiktok?.description].filter(Boolean).join("\n\n") || (instagram?.caption ?? "");
+  const [page] = await db
+    .select({ slug: s.recipePublicPages.slug })
+    .from(s.recipeVersions)
+    .innerJoin(s.recipePublicPages, eq(s.recipePublicPages.recipeId, s.recipeVersions.recipeId))
+    .where(eq(s.recipeVersions.id, versionId));
   return buildCaption({
     text,
     hashtags: instagram?.hashtags.length ? instagram.hashtags : (tiktok?.hashtags ?? []),
     platform,
     settings: await getCaptionSettings(db),
+    publicUrl: page ? `${appUrl()}/recette/${page.slug}` : null,
   });
 }
 

@@ -12,7 +12,7 @@ import { audit } from "../audit";
 import { appUrl } from "../auth";
 import { adminRecipe, signedImagePath, signedSlidePath, signedVideoPath } from "../publishing";
 import { accountToken, type SocialPlatform } from "./accounts";
-import { captionFor, MAX_CAPTION, pinTitleFor } from "./captions";
+import { captionFor, MAX_CAPTION, pinTitleFor, withRecipeLink } from "./captions";
 import { latestCarousel } from "./carousels";
 import {
   instagramContainerStatus,
@@ -24,7 +24,7 @@ import {
 } from "./instagram";
 import { ensurePublicPage, publicRecipeUrl } from "../public-recipes";
 import { getPinterestBoard } from "./pinterest-board";
-import { pinterestCreatePin } from "./pinterest";
+import { PIN_DESCRIPTION_MAX, pinterestCreatePin } from "./pinterest";
 import { tiktokCreatorInfo, tiktokInitPost, tiktokPostStatus, type TiktokPostOptions } from "./tiktok";
 import { currentPhoto, latestVideo } from "./videos";
 
@@ -124,9 +124,11 @@ export async function startPublication(
 
   const account = await accountToken(db, platform, { fetchImpl, now: deps.now }).catch(() => null);
   if (!account) return { ok: false, reason: "not_connected" };
-  const caption = (options.caption?.trim() || (await captionFor(db, recipe.versionId, platform))).slice(
+  // Chaque publication renvoie à la page publique de la recette (demande de Julien).
+  const written = options.caption?.trim() || (await captionFor(db, recipe.versionId, platform));
+  const caption = (slug ? withRecipeLink(written, publicRecipeUrl(appUrl(), slug), platform) : written).slice(
     0,
-    MAX_CAPTION,
+    platform === "pinterest" ? PIN_DESCRIPTION_MAX : MAX_CAPTION,
   );
   const signed = (path: string | null) => {
     if (!path) throw new Error("AGENT_API_KEY manquante : liens signés impossibles.");

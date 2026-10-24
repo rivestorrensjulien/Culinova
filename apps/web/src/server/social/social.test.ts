@@ -445,7 +445,10 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     ).toEqual({ ok: true });
     const parent = calls.find((c) => c.body.includes("media_type=CAROUSEL"));
     expect(new URLSearchParams(parent!.body).get("children")).toBe("child-1,child-2,child-3");
-    expect(new URLSearchParams(parent!.body).get("caption")).toBe("Ma légende avec @maison.dupont #baghrir");
+    // Légende validée, complétée par l'adresse de la page publique de la recette.
+    const sent = new URLSearchParams(parent!.body).get("caption")!;
+    expect(sent.startsWith("Ma légende avec @maison.dupont #baghrir\n\n🔗")).toBe(true);
+    expect(sent).toMatch(/\/recette\/[a-z0-9-]+ \(lien dans la bio\)$/);
     expect(decodeURIComponent(calls[0]!.body)).toContain(
       `/api/social/carrousels/${registered.carouselId}/1?`,
     );

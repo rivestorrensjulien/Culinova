@@ -34,6 +34,10 @@ describe("créneaux de publication", () => {
     expect(toParisInput(carouselSlotAfter(new Date("2026-10-29T16:30:00Z"))!)).toBe("2026-10-31T12:00");
     expect(toParisInput(carouselSlotAfter(new Date("2026-11-01T09:00:00Z"))!)).toBe("2026-11-04T12:00");
     expect(carouselSlotAfter(new Date("2026-10-28T10:00:00Z"))).toBeNull();
+    // TikTok : même jour, le soir.
+    expect(toParisInput(carouselSlotAfter(new Date("2026-10-27T10:30:00Z"), "tiktok")!)).toBe(
+      "2026-10-30T19:30",
+    );
   });
 
   it("laisse au moins un quart d'heure avant le créneau", () => {

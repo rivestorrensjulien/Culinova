@@ -1365,7 +1365,8 @@
         "video": "Instagram · Reel"
       },
       "tiktok": {
-        "video": "TikTok · vidéo"
+        "video": "TikTok · vidéo",
+        "carousel": "TikTok · carrousel (photos)"
       },
       "pinterest": {
         "photo": "Pinterest · épingle (photo)"

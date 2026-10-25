@@ -273,6 +273,7 @@ const ROWS: Array<{ platform: Platform; format: Format }> = [
   { platform: "instagram", format: "carousel" },
   { platform: "instagram", format: "video" },
   { platform: "tiktok", format: "video" },
+  { platform: "tiktok", format: "carousel" },
   { platform: "pinterest", format: "photo" },
 ];
 
@@ -287,7 +288,8 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [showcase, setShowcase] = useState(recipe.publishing?.showcase ?? false);
   const [publicUrl, setPublicUrl] = useState<string | null>(recipe.publishing?.publicUrl ?? null);
   const [copied, setCopied] = useState(false);
-  const [tiktokOpen, setTiktokOpen] = useState(false);
+  /** Ligne TikTok dont le panneau des choix est ouvert (vidéo ou carrousel). */
+  const [tiktokOpen, setTiktokOpen] = useState<Format | null>(null);
   const [schedule, setSchedule] = useState<ScheduledView[]>(recipe.publishing?.schedule ?? []);
   /** Ligne en cours de programmation (« instagram-photo »…), date choisie et créneau conseillé. */
   const [scheduling, setScheduling] = useState<string | null>(null);
@@ -336,14 +338,14 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             ? t("publishErrors.failedDetail", { detail: outcome.result.detail })
             : t(`publishErrors.${outcome.result.reason}`),
         );
-      } else setTiktokOpen(false);
+      } else setTiktokOpen(null);
     }
     setBusy(false);
   };
 
   const openSchedule = async (platform: Platform, kind: Format) => {
     setScheduling(`${platform}-${kind}`);
-    setTiktokOpen(platform === "tiktok");
+    setTiktokOpen(platform === "tiktok" ? kind : null);
     setPublishError(null);
     setSuggested(undefined);
     setWhen("");
@@ -354,7 +356,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
 
   const closePanels = () => {
     setScheduling(null);
-    setTiktokOpen(false);
+    setTiktokOpen(null);
     setApproving(null);
   };
 
@@ -367,7 +369,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
       setApproving(item.id);
       setWhen(at);
       setSuggested(at);
-      setTiktokOpen(true);
+      setTiktokOpen(item.format);
       return;
     }
     void submitApproval(item.id, item.platform, at, null);
@@ -784,15 +786,15 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                 )}
                 {ready(kind) &&
                 status?.status !== "processing" &&
-                !(hasProposal && !(platform === "tiktok" && tiktokOpen)) ? (
+                !(hasProposal && !(platform === "tiktok" && tiktokOpen === kind)) ? (
                   connected(platform) ? (
-                    platform === "tiktok" && tiktokOpen ? (
+                    platform === "tiktok" && tiktokOpen === kind ? (
                       <TiktokPublishPanel
                         busy={busy || (schedulingThis && !when)}
                         onPublish={(choices) =>
                           schedulingThis
-                            ? scheduleIt("tiktok", "video", choices)
-                            : publish("tiktok", "video", choices)
+                            ? scheduleIt("tiktok", kind, choices)
+                            : publish("tiktok", kind, choices)
                         }
                         onCancel={closePanels}
                         scheduleField={
@@ -831,7 +833,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
                           data-testid={`publish-${key}`}
                           onClick={() => {
                             setScheduling(null);
-                            if (platform === "tiktok") setTiktokOpen(true);
+                            if (platform === "tiktok") setTiktokOpen(kind);
                             else void publish(platform, kind, null);
                           }}
                         >

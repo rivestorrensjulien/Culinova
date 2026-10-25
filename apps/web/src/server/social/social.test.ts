@@ -517,6 +517,72 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     }
   });
 
+  it("TikTok : le carrousel part en publication photo, avec les images du carrousel Instagram", async () => {
+    const db = testDb();
+    const network = fakeNetwork([
+      [
+        /creator_info/,
+        {
+          data: {
+            creator_nickname: "Culinova",
+            creator_username: "culinova.recette",
+            privacy_level_options: ["SELF_ONLY"],
+            comment_disabled: false,
+            duet_disabled: true,
+            stitch_disabled: true,
+            max_video_post_duration_sec: 600,
+          },
+          error: { code: "ok" },
+        },
+      ],
+      [/content\/init/, { data: { publish_id: "p-photo" }, error: { code: "ok" } }],
+      [
+        /status\/fetch/,
+        { data: { status: "PUBLISH_COMPLETE", publicaly_available_post_id: [7999] }, error: { code: "ok" } },
+      ],
+    ]);
+    const choices = {
+      privacy: "SELF_ONLY",
+      allowComments: true,
+      allowDuet: false,
+      allowStitch: false,
+      promoteOwnBrand: false,
+      brandedContent: false,
+    };
+    expect(
+      await startPublication(
+        db,
+        admin.id,
+        recipeId,
+        "tiktok",
+        "carousel",
+        { tiktok: choices },
+        { fetchImpl: network.impl },
+      ),
+    ).toEqual({ ok: true });
+    const init = JSON.parse(network.calls.find((c) => /content\/init/.test(c.url))!.body!);
+    expect(init).toMatchObject({ post_mode: "DIRECT_POST", media_type: "PHOTO", is_aigc: true });
+    expect(init.post_info.privacy_level).toBe("SELF_ONLY");
+    expect(init.post_info.auto_add_music).toBe(true);
+    expect(Array.from(init.post_info.title as string).length).toBeLessThanOrEqual(90);
+    expect(init.source_info.photo_images.length).toBeGreaterThan(0);
+    expect(init.source_info.photo_images[0]).toContain("/api/social/carrousels/");
+    const [row] = await db
+      .select()
+      .from(s.recipePublications)
+      .where(
+        and(
+          eq(s.recipePublications.recipeId, recipeId),
+          eq(s.recipePublications.platform, "tiktok"),
+          eq(s.recipePublications.format, "carousel"),
+        ),
+      );
+    expect(row?.status).toBe("processing");
+    expect(await advancePublication(db, row!.id, { fetchImpl: network.impl })).toBe("published");
+    const [done] = await db.select().from(s.recipePublications).where(eq(s.recipePublications.id, row!.id));
+    expect(done?.postUrl).toMatch(/\/photo\/7999$/);
+  });
+
   it("Pinterest : épingle la photo sur le tableau choisi, avec un lien vers culinova.fr", async () => {
     const db = testDb();
     const now = new Date();

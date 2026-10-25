@@ -26,7 +26,13 @@ import {
 import { ensurePublicPage, publicRecipeUrl } from "../public-recipes";
 import { getPinterestBoard } from "./pinterest-board";
 import { PIN_DESCRIPTION_MAX, pinterestCreatePin } from "./pinterest";
-import { tiktokCreatorInfo, tiktokInitPost, tiktokPostStatus, type TiktokPostOptions } from "./tiktok";
+import {
+  tiktokCreatorInfo,
+  tiktokInitPhotoPost,
+  tiktokInitPost,
+  tiktokPostStatus,
+  type TiktokPostOptions,
+} from "./tiktok";
 import { currentPhoto, latestVideo } from "./videos";
 
 export { captionFor } from "./captions";
@@ -55,7 +61,7 @@ export type StartResult = { ok: true } | StartRefusal;
 /** Formats possibles par réseau. */
 export const FORMATS_BY_PLATFORM: Record<SocialPlatform, readonly PublicationFormat[]> = {
   instagram: ["photo", "carousel", "video"],
-  tiktok: ["video"],
+  tiktok: ["video", "carousel"],
   pinterest: ["photo"],
 };
 
@@ -226,22 +232,44 @@ export async function startPublication(
       if (choices.brandedContent && choices.privacy === "SELF_ONLY") {
         return { ok: false, reason: "invalid_privacy" };
       }
-      if (durationS > creator.maxDurationS) return { ok: false, reason: "too_long" };
-      externalId = await tiktokInitPost(
-        account.accessToken,
-        signed(signedVideoPath(mediaId, deps.now)),
-        {
-          title: caption,
-          privacy: choices.privacy,
-          allowComments: choices.allowComments && !creator.commentDisabled,
-          allowDuet: choices.allowDuet && !creator.duetDisabled,
-          allowStitch: choices.allowStitch && !creator.stitchDisabled,
-          promoteOwnBrand: choices.promoteOwnBrand,
-          brandedContent: choices.brandedContent,
-        },
-        fetchImpl,
-      );
-      privacy = choices.privacy;
+      if (format === "carousel") {
+        // Carrousel en publication photo : les mêmes images que sur Instagram.
+        const carousel = (await latestCarousel(db, recipeId))!;
+        const images = Array.from({ length: carousel.slideCount }, (_, i) =>
+          signed(signedSlidePath(mediaId, i + 1, deps.now)),
+        );
+        externalId = await tiktokInitPhotoPost(
+          account.accessToken,
+          images,
+          {
+            title: await pinTitleFor(db, recipe.versionId),
+            description: caption,
+            privacy: choices.privacy,
+            allowComments: choices.allowComments && !creator.commentDisabled,
+            promoteOwnBrand: choices.promoteOwnBrand,
+            brandedContent: choices.brandedContent,
+          },
+          fetchImpl,
+        );
+        privacy = choices.privacy;
+      } else {
+        if (durationS > creator.maxDurationS) return { ok: false, reason: "too_long" };
+        externalId = await tiktokInitPost(
+          account.accessToken,
+          signed(signedVideoPath(mediaId, deps.now)),
+          {
+            title: caption,
+            privacy: choices.privacy,
+            allowComments: choices.allowComments && !creator.commentDisabled,
+            allowDuet: choices.allowDuet && !creator.duetDisabled,
+            allowStitch: choices.allowStitch && !creator.stitchDisabled,
+            promoteOwnBrand: choices.promoteOwnBrand,
+            brandedContent: choices.brandedContent,
+          },
+          fetchImpl,
+        );
+        privacy = choices.privacy;
+      }
     }
     // video_id garde ce qui a été publié (vidéo, carrousel ou photo).
     await setPublication(db, recipeId, platform, format, {
@@ -331,9 +359,10 @@ export async function advancePublication(
     if (status.status === "FAILED") return fail(`TikTok : ${status.failReason ?? "échec"}`);
     if (status.status !== "PUBLISH_COMPLETE") return "processing";
     const handle = account.username ? `@${account.username}` : null;
+    const kind = row.format === "carousel" ? "photo" : "video";
     return succeed(
       status.postId,
-      status.postId && handle ? `https://www.tiktok.com/${handle}/video/${status.postId}` : null,
+      status.postId && handle ? `https://www.tiktok.com/${handle}/${kind}/${status.postId}` : null,
     );
   } catch (error) {
     // Erreur passagère (réseau, 5xx) : on réessaiera ; erreur définitive : échec.

@@ -24,7 +24,7 @@ export function PublicationsToApproveEmail({ items, url }: PublicationsToApprove
       <Paragraph>
         L&apos;agent a choisi {items.length > 1 ? "ces recettes" : "cette recette"} pour les prochains jours.
         Pour chacune : Reel Instagram, vidéo TikTok et épingle Pinterest aux créneaux conseillés, puis le
-        carrousel Instagram quelques jours plus tard.
+        carrousel sur Instagram et TikTok quelques jours plus tard.
       </Paragraph>
       {items.map((item) => (
         <Paragraph key={`${item.day}-${item.name}`}>

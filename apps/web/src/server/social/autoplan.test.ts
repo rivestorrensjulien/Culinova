@@ -120,6 +120,7 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
       ["pinterest", "photo", "2030-02-03T21:00", "proposed"],
       // Le carrousel de la même recette, trois jours après le Reel du dimanche : mercredi midi.
       ["instagram", "carousel", "2030-02-06T12:00", "proposed"],
+      ["tiktok", "carousel", "2030-02-06T19:30", "proposed"],
     ]);
     // La vidéo et le carrousel sont demandés à l'agent.
     const queued = await db
@@ -208,10 +209,13 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
     }
     await planUpcoming(db, { now: NOW, onlyOwner: other.id, startPhoto: async () => false });
     const carousel = (await recipeSchedule(db, dish, NOW)).filter((p) => p.format === "carousel");
-    expect(carousel.map((p) => toParisInput(new Date(p.scheduledAt)))).toEqual(["2030-02-08T12:00"]);
+    expect(carousel.map((p) => [p.platform, toParisInput(new Date(p.scheduledAt))])).toEqual([
+      ["instagram", "2030-02-08T12:00"],
+      ["tiktok", "2030-02-08T19:30"],
+    ]);
     // Une seule fois.
     await planUpcoming(db, { now: NOW, onlyOwner: other.id, startPhoto: async () => false });
-    expect((await recipeSchedule(db, dish, NOW)).filter((p) => p.format === "carousel")).toHaveLength(1);
+    expect((await recipeSchedule(db, dish, NOW)).filter((p) => p.format === "carousel")).toHaveLength(2);
   });
 
   it("plus aucune recette disponible : rien n'est proposé (pas de photo si le quota manque)", async () => {

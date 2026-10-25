@@ -218,9 +218,10 @@ export interface TiktokPostOptions {
   brandedContent: boolean;
 }
 
-/** Lance la publication : TikTok télécharge la vidéo depuis videoUrl (domaine vérifié culinova.fr). */
 /** Image de la vidéo utilisée comme miniature sur le profil TikTok (photo du plat avec l'accroche). */
 export const COVER_TIMESTAMP_MS = 1000;
+
+/** Lance la publication : TikTok télécharge la vidéo depuis videoUrl (domaine vérifié culinova.fr). */
 
 export async function tiktokInitPost(
   accessToken: string,
@@ -256,6 +257,46 @@ export async function tiktokInitPost(
 }
 
 /** État : PROCESSING_DOWNLOAD, PROCESSING_UPLOAD, SEND_TO_USER_INBOX, PUBLISH_COMPLETE ou FAILED. */
+/** Titre d'une publication photo TikTok : 90 caractères au plus. */
+export const PHOTO_TITLE_MAX = 90;
+/** Description d'une publication photo TikTok : 4 000 caractères au plus. */
+export const PHOTO_DESCRIPTION_MAX = 4000;
+
+/**
+ * Publication photo (carrousel à faire défiler) : TikTok télécharge les images depuis culinova.fr
+ * (domaine vérifié), une musique est ajoutée automatiquement, étiquetée « générée par IA ».
+ */
+export async function tiktokInitPhotoPost(
+  accessToken: string,
+  imageUrls: string[],
+  options: Omit<TiktokPostOptions, "allowDuet" | "allowStitch"> & { description: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<string> {
+  const data = await read<{ publish_id: string }>(
+    await fetchImpl(`${API}/post/publish/content/init/`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json; charset=UTF-8" },
+      body: JSON.stringify({
+        post_info: {
+          title: Array.from(options.title).slice(0, PHOTO_TITLE_MAX).join(""),
+          description: options.description.slice(0, PHOTO_DESCRIPTION_MAX),
+          privacy_level: options.privacy,
+          disable_comment: !options.allowComments,
+          auto_add_music: true,
+          brand_content_toggle: options.brandedContent,
+          brand_organic_toggle: options.promoteOwnBrand,
+        },
+        source_info: { source: "PULL_FROM_URL", photo_images: imageUrls, photo_cover_index: 0 },
+        post_mode: "DIRECT_POST",
+        media_type: "PHOTO",
+        is_aigc: true,
+      }),
+    }),
+    "lancement de la publication photo",
+  );
+  return data.publish_id;
+}
+
 export async function tiktokPostStatus(
   accessToken: string,
   publishId: string,

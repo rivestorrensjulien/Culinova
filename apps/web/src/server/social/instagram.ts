@@ -391,3 +391,18 @@ export async function instagramReplyToComment(
     "réponse au commentaire",
   );
 }
+
+/** Nombre de commentaires affiché par Instagram sous une publication (pour le diagnostic). */
+export async function instagramCommentsCount(
+  accessToken: string,
+  mediaId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<number | null> {
+  const body = await json<{ comments_count?: number }>(
+    await fetchImpl(
+      `${GRAPH}/${mediaId}?${new URLSearchParams({ fields: "comments_count", access_token: accessToken })}`,
+    ),
+    "nombre de commentaires",
+  );
+  return body.comments_count ?? null;
+}

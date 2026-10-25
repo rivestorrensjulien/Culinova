@@ -11,7 +11,12 @@ import { and, count, desc, eq, gte, inArray, isNotNull } from "drizzle-orm";
 import { audit } from "../audit";
 import { appUrl } from "../auth";
 import { accountToken } from "./accounts";
-import { instagramComments, instagramPrivateReply, instagramReplyToComment } from "./instagram";
+import {
+  instagramComments,
+  instagramCommentsCount,
+  instagramPrivateReply,
+  instagramReplyToComment,
+} from "./instagram";
 
 export interface CommentReplySettings {
   enabled: boolean;
@@ -108,7 +113,14 @@ export interface ReplyOutcome {
   /** Ce qui a empêché la lecture ou l'envoi (compte, autorisations…). */
   error?: string | null;
   /** Détail par publication : commentaires lus, ou ce qui a bloqué. */
-  details?: Array<{ name: string; mediaId: string; comments: number | null; error: string | null }>;
+  details?: Array<{
+    name: string;
+    mediaId: string;
+    comments: number | null;
+    /** Nombre affiché par Instagram (s'il dépasse les commentaires lus, Instagram en cache). */
+    shown?: number | null;
+    error: string | null;
+  }>;
 }
 
 /** Compte rendu du dernier passage (affiché dans l'administration). */
@@ -216,7 +228,16 @@ async function runReplies(
       continue;
     }
     outcome.comments = (outcome.comments ?? 0) + comments.length;
-    outcome.details?.push({ name: post.name, mediaId: post.mediaId, comments: comments.length, error: null });
+    const shown = await instagramCommentsCount(account.accessToken, post.mediaId, fetchImpl).catch(
+      () => null,
+    );
+    outcome.details?.push({
+      name: post.name,
+      mediaId: post.mediaId,
+      comments: comments.length,
+      shown,
+      error: null,
+    });
     const wanted = comments.filter(
       (c) =>
         c.fromId !== account.accountId &&

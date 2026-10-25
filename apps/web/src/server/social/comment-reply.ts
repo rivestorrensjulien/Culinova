@@ -207,8 +207,11 @@ async function runReplies(
       comments = await instagramComments(account.accessToken, post.mediaId, fetchImpl);
     } catch (error) {
       // Lecture refusée (autorisation « commentaires » absente…) : signalée, publication suivante.
-      const note = (error instanceof Error ? error.message : String(error)).slice(0, 300);
-      outcome.error = note;
+      const raw = error instanceof Error ? error.message : String(error);
+      // Publication supprimée d'Instagram : rien de bloquant, elle est simplement ignorée.
+      const deleted = /does not exist/i.test(raw);
+      const note = deleted ? "Publication supprimée d'Instagram (ignorée)." : raw.slice(0, 300);
+      if (!deleted) outcome.error = note;
       outcome.details?.push({ name: post.name, mediaId: post.mediaId, comments: null, error: note });
       continue;
     }

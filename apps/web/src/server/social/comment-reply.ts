@@ -107,6 +107,8 @@ export interface ReplyOutcome {
   matched?: number;
   /** Ce qui a empêché la lecture ou l'envoi (compte, autorisations…). */
   error?: string | null;
+  /** Détail par publication : commentaires lus, ou ce qui a bloqué. */
+  details?: Array<{ name: string; mediaId: string; comments: number | null; error: string | null }>;
 }
 
 /** Compte rendu du dernier passage (affiché dans l'administration). */
@@ -140,7 +142,15 @@ export async function replyToComments(
 ): Promise<ReplyOutcome> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const now = deps.now ?? new Date();
-  const outcome: ReplyOutcome = { sent: 0, failed: 0, posts: 0, comments: 0, matched: 0, error: null };
+  const outcome: ReplyOutcome = {
+    sent: 0,
+    failed: 0,
+    posts: 0,
+    comments: 0,
+    matched: 0,
+    error: null,
+    details: [],
+  };
   const settings = await getCommentReply(db);
   if (!settings.enabled) return outcome;
   try {
@@ -197,10 +207,13 @@ async function runReplies(
       comments = await instagramComments(account.accessToken, post.mediaId, fetchImpl);
     } catch (error) {
       // Lecture refusée (autorisation « commentaires » absente…) : signalée, publication suivante.
-      outcome.error = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+      const note = (error instanceof Error ? error.message : String(error)).slice(0, 300);
+      outcome.error = note;
+      outcome.details?.push({ name: post.name, mediaId: post.mediaId, comments: null, error: note });
       continue;
     }
     outcome.comments = (outcome.comments ?? 0) + comments.length;
+    outcome.details?.push({ name: post.name, mediaId: post.mediaId, comments: comments.length, error: null });
     const wanted = comments.filter(
       (c) =>
         c.fromId !== account.accountId &&

@@ -306,6 +306,20 @@ export default async function SocialPage({
           ) : (
             <p className="text-muted">Pas encore de vérification.</p>
           )}
+          {replyStatus?.details?.length ? (
+            <ul className="flex flex-col gap-1 text-xs text-muted">
+              {replyStatus.details.map((d) => (
+                <li key={d.mediaId}>
+                  {d.name} ({d.mediaId}) :{" "}
+                  {d.error ? (
+                    <span className="text-danger">{d.error}</span>
+                  ) : (
+                    `${d.comments} commentaire${(d.comments ?? 0) > 1 ? "s" : ""}`
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {replyStatus?.error ? (
             <Notice tone="danger">Ce qui bloque : {replyStatus.error}</Notice>
           ) : replyStats.lastFailure ? (

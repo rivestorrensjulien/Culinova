@@ -315,8 +315,9 @@ export function AutoplanToggle({ enabled }: { enabled: boolean }) {
           Chaque jour de publication des 7 prochains jours (mardi, jeudi, dimanche), l&apos;agent choisit au
           hasard une recette jamais publiée en variant les moments du repas, génère la photo si elle manque,
           fait fabriquer la vidéo et le carrousel, et propose le Reel Instagram, la vidéo TikTok et
-          l&apos;épingle Pinterest aux créneaux conseillés. Vous recevez un e-mail ; rien ne part sans votre
-          validation, et une proposition non validée à l&apos;heure prévue ne part pas.
+          l&apos;épingle Pinterest aux créneaux conseillés, puis le carrousel Instagram de la même recette
+          quelques jours plus tard (vendredi, samedi ou mercredi à midi). Vous recevez un e-mail ; rien ne
+          part sans votre validation, et une proposition non validée à l&apos;heure prévue ne part pas.
         </span>
       </span>
     </label>

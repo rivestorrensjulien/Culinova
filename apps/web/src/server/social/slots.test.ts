@@ -1,6 +1,6 @@
 /** Créneaux conseillés de la programmation (heure de Paris, changements d'heure compris). */
 import { describe, expect, it } from "vitest";
-import { fromParisInput, nextSlots, parisTime, toParisInput } from "./slots";
+import { carouselSlotAfter, fromParisInput, nextSlots, parisTime, toParisInput } from "./slots";
 
 describe("créneaux de publication", () => {
   it("passe d'heure d'été à heure d'hiver sans décalage", () => {
@@ -26,6 +26,14 @@ describe("créneaux de publication", () => {
     ]);
     // Pinterest : une épingle par jour à 21 h, dès ce soir.
     expect(toParisInput(nextSlots("pinterest", now)[0]!)).toBe("2026-10-24T21:00");
+  });
+
+  it("carrousel : quelques jours après le Reel, à midi, un jour sans Reel", () => {
+    // Reel du mardi 27 octobre → vendredi 30 ; jeudi 29 → samedi 31 ; dimanche 1er novembre → mercredi 4.
+    expect(toParisInput(carouselSlotAfter(new Date("2026-10-27T10:30:00Z"))!)).toBe("2026-10-30T12:00");
+    expect(toParisInput(carouselSlotAfter(new Date("2026-10-29T16:30:00Z"))!)).toBe("2026-10-31T12:00");
+    expect(toParisInput(carouselSlotAfter(new Date("2026-11-01T09:00:00Z"))!)).toBe("2026-11-04T12:00");
+    expect(carouselSlotAfter(new Date("2026-10-28T10:00:00Z"))).toBeNull();
   });
 
   it("laisse au moins un quart d'heure avant le créneau", () => {

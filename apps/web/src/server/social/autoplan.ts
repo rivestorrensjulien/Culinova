@@ -3,7 +3,7 @@
  * 7 prochains jours de publication (mardi, jeudi, dimanche) avec des recettes de l'administrateur
  * jamais publiées, tirées au hasard en variant les moments du repas ; il génère la photo si elle
  * manque, demande la vidéo et le carrousel, puis propose les publications (Reel Instagram, vidéo
- * TikTok, épingle Pinterest) aux créneaux conseillés. Rien ne part sans validation : une
+ * TikTok, épingle Pinterest, et le carrousel Instagram quelques jours après) aux créneaux conseillés. Rien ne part sans validation : une
  * proposition non validée à l'heure prévue expire. Les administrateurs sont prévenus par e-mail.
  */
 import type { Database } from "@culinova/db";
@@ -14,7 +14,7 @@ import { cancelPublication, queuePublication } from "../publishing";
 import type { SocialPlatform } from "./accounts";
 import { latestCarousel } from "./carousels";
 import type { PublicationFormat } from "./publish";
-import { nextSlots, sameParisDay, slotOnDay } from "./slots";
+import { carouselSlotAfter, nextSlots, sameParisDay, slotOnDay } from "./slots";
 import { currentPhoto, latestVideo } from "./videos";
 
 export interface AutoplanSettings {
@@ -36,6 +36,8 @@ const PLAN: ReadonlyArray<{ platform: SocialPlatform; format: PublicationFormat 
   { platform: "instagram", format: "video" },
   { platform: "tiktok", format: "video" },
   { platform: "pinterest", format: "photo" },
+  // Même recette, sous forme de carrousel, quelques jours après le Reel (décision du 25/10).
+  { platform: "instagram", format: "carousel" },
 ];
 
 /** Statuts qui « occupent » une journée (une recette écartée libère la sienne). */
@@ -199,6 +201,7 @@ async function rankCandidates(
 export async function planUpcoming(db: Database, deps: AutoplanDeps = {}): Promise<PlannedDay[]> {
   if (!(await getAutoplan(db)).enabled) return [];
   const now = deps.now ?? new Date();
+  await addMissingCarousels(db, now, deps.onlyOwner);
   const random = deps.random ?? Math.random;
   const days = nextSlots("instagram", now, [], 6).filter(
     (d) => d.getTime() - now.getTime() >= MIN_LEAD_MS && d.getTime() - now.getTime() <= HORIZON_MS,
@@ -254,7 +257,8 @@ export async function planUpcoming(db: Database, deps: AutoplanDeps = {}): Promi
     const { ensurePublicPage } = await import("../public-recipes");
     await ensurePublicPage(db, chosen.ownerId, chosen.id);
     for (const { platform, format } of PLAN) {
-      const at = slotOnDay(platform, day);
+      // Carrousel : quelques jours après le Reel ; le reste : créneaux du jour du Reel.
+      const at = format === "carousel" ? carouselSlotAfter(day) : slotOnDay(platform, day);
       if (!at) continue;
       await db.insert(s.scheduledPublications).values({
         recipeId: chosen.id,
@@ -276,6 +280,48 @@ export async function planUpcoming(db: Database, deps: AutoplanDeps = {}): Promi
   }
   if (planned.length > 0 && deps.notify) await deps.notify(db, planned).catch(() => {});
   return planned;
+}
+
+/**
+ * Rattrapage : les recettes planifiées avant l'ajout du carrousel (Reel et TikTok le même jour,
+ * encore à venir) reçoivent leur carrousel proposé quelques jours après le Reel.
+ */
+async function addMissingCarousels(db: Database, now: Date, onlyOwner?: string): Promise<void> {
+  const rows = await db
+    .select({
+      id: s.scheduledPublications.id,
+      recipeId: s.scheduledPublications.recipeId,
+      platform: s.scheduledPublications.platform,
+      format: s.scheduledPublications.format,
+      status: s.scheduledPublications.status,
+      at: s.scheduledPublications.scheduledAt,
+      createdBy: s.scheduledPublications.createdBy,
+    })
+    .from(s.scheduledPublications)
+    .where(
+      and(
+        gte(s.scheduledPublications.scheduledAt, new Date(now.getTime() - HORIZON_MS)),
+        onlyOwner ? eq(s.scheduledPublications.createdBy, onlyOwner) : undefined,
+      ),
+    );
+  for (const reel of rows) {
+    if (reel.platform !== "instagram" || reel.format !== "video") continue;
+    if (reel.status !== "proposed" && reel.status !== "scheduled") continue;
+    const sameRecipe = rows.filter((r) => r.recipeId === reel.recipeId);
+    // Planifiée par l'agent : vidéo TikTok proposée le même jour.
+    if (!sameRecipe.some((r) => r.platform === "tiktok" && sameParisDay(r.at, reel.at))) continue;
+    if (sameRecipe.some((r) => r.format === "carousel")) continue;
+    const at = carouselSlotAfter(reel.at);
+    if (!at || at.getTime() < now.getTime() + MIN_LEAD_MS) continue;
+    await db.insert(s.scheduledPublications).values({
+      recipeId: reel.recipeId,
+      platform: "instagram",
+      format: "carousel",
+      scheduledAt: at,
+      status: "proposed",
+      createdBy: reel.createdBy,
+    });
+  }
 }
 
 /**

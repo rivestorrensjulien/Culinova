@@ -146,3 +146,19 @@ export function slotOnDay(platform: SlotPlatform, day: Date): Date | null {
   const [h, m] = slot.time.split(":").map(Number) as [number, number];
   return parisTime(p.year, p.month, p.day, h, m);
 }
+
+/**
+ * Carrousel Instagram de la même recette, quelques jours après son Reel, à midi, un jour sans
+ * Reel (décision de Julien du 25/10) : mardi → vendredi, jeudi → samedi, dimanche → mercredi.
+ */
+export const CAROUSEL_AFTER_DAYS: Record<number, number> = { 2: 3, 4: 2, 0: 3 };
+export const CAROUSEL_TIME = "12:00";
+
+export function carouselSlotAfter(reelDay: Date): Date | null {
+  const p = parisParts(reelDay);
+  const after = CAROUSEL_AFTER_DAYS[p.weekday];
+  if (after === undefined) return null;
+  const day = new Date(Date.UTC(p.year, p.month - 1, p.day + after, 12));
+  const [h, m] = CAROUSEL_TIME.split(":").map(Number) as [number, number];
+  return parisTime(day.getUTCFullYear(), day.getUTCMonth() + 1, day.getUTCDate(), h, m);
+}

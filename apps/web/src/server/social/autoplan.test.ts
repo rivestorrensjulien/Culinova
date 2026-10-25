@@ -118,6 +118,8 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
       ["instagram", "video", "2030-02-03T10:00", "proposed"],
       ["tiktok", "video", "2030-02-03T18:00", "proposed"],
       ["pinterest", "photo", "2030-02-03T21:00", "proposed"],
+      // Le carrousel de la même recette, trois jours après le Reel du dimanche : mercredi midi.
+      ["instagram", "carousel", "2030-02-06T12:00", "proposed"],
     ]);
     // La vidéo et le carrousel sont demandés à l'agent.
     const queued = await db
@@ -183,6 +185,33 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
     expect(photos).toEqual([withoutPhoto]);
     // La recette écartée n'est plus proposée.
     expect((await recipeSchedule(db, reelRecipe, NOW)).some((p) => p.status === "proposed")).toBe(false);
+  });
+
+  it("rattrapage : une recette planifiée sans carrousel reçoit le sien", async () => {
+    const db = testDb();
+    const other = await createTestUser({ role: "admin" });
+    const dish = await recipeOf(other.id);
+    await addPhoto(dish);
+    // Planification d'avant le carrousel : Reel et TikTok le mardi 5 février.
+    for (const [platform, at] of [
+      ["instagram", "2030-02-05T10:30:00Z"],
+      ["tiktok", "2030-02-05T18:30:00Z"],
+    ] as const) {
+      await db.insert(s.scheduledPublications).values({
+        recipeId: dish,
+        platform,
+        format: "video",
+        scheduledAt: new Date(at),
+        status: "proposed",
+        createdBy: other.id,
+      });
+    }
+    await planUpcoming(db, { now: NOW, onlyOwner: other.id, startPhoto: async () => false });
+    const carousel = (await recipeSchedule(db, dish, NOW)).filter((p) => p.format === "carousel");
+    expect(carousel.map((p) => toParisInput(new Date(p.scheduledAt)))).toEqual(["2030-02-08T12:00"]);
+    // Une seule fois.
+    await planUpcoming(db, { now: NOW, onlyOwner: other.id, startPhoto: async () => false });
+    expect((await recipeSchedule(db, dish, NOW)).filter((p) => p.format === "carousel")).toHaveLength(1);
   });
 
   it("plus aucune recette disponible : rien n'est proposé (pas de photo si le quota manque)", async () => {

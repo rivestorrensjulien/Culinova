@@ -138,6 +138,8 @@ async function main() {
 
   let explodeClip: string | null;
   let secondClip: string | null = null;
+  /** Dernière image du clip (résultat du geste ou part soulevée), tenue avant le plan suivant. */
+  let holdImage: string | null = null;
   let voilaClip: string;
   let synced = false;
   const topViews: string[] = [];
@@ -174,7 +176,13 @@ async function main() {
               // Deux plans autour de la même part : chaque image part de la précédente.
               const whole = await edit(cutStartPrompt(layers), [dish], "coupe-01-plat-entier.jpg");
               const sliced = await edit(cutMidPrompt(), [whole, dish], "coupe-02-part-decoupee.jpg");
-              const lifted = await edit(cutEndPrompt(layers), [sliced, dish], "coupe-03-part-soulevee.jpg");
+              const lifted = await edit(
+                cutEndPrompt(layers),
+                [sliced, dish],
+                "coupe-03-part-soulevee.jpg",
+                true,
+              );
+              holdImage = "realiste/coupe-03-part-soulevee.jpg";
               const [knife] = await Promise.all([
                 animate(whole, sliced, CUT_KNIFE_MOTION, "eclate.mp4"),
                 animate(sliced, lifted, cutMotion(layers), "coupe-part.mp4").then((clip) => {
@@ -186,7 +194,8 @@ async function main() {
           : format === "geste"
             ? (async () => {
                 const start = await edit(gestureStartPrompt(layers), [dish], "geste-01-avant.jpg");
-                const end = await edit(gestureEndPrompt(layers), [start, dish], "geste-02-apres.jpg");
+                const end = await edit(gestureEndPrompt(layers), [start, dish], "geste-02-apres.jpg", true);
+                holdImage = "realiste/geste-02-apres.jpg";
                 return animate(start, end, gestureMotion(layers), "eclate.mp4");
               })()
             : Promise.resolve(null);
@@ -267,6 +276,7 @@ async function main() {
     format,
     explodeClip: explodeClip || null,
     secondClip,
+    holdImage,
     // Kling ne fait pas le son avec une image d'arrivée : clip muet, la musique l'accompagne.
     clipSound: false,
     topViews,

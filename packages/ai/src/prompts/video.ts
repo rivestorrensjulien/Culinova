@@ -97,7 +97,7 @@ export function videoScenesProblems(scenes: VideoScenes, shotCount: number): str
  * - geste : gros plan filmé sur le geste qui rend le plat appétissant (nappage, coulure, glaçage…).
  * Toutes les descriptions sont rendues, pour qu'un autre format puisse être demandé sans nouvelle analyse.
  */
-export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@2";
+export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@3";
 
 export const VIDEO_FORMATS = ["eclate", "coupe", "dessus", "geste"] as const;
 export type VideoFormat = (typeof VIDEO_FORMATS)[number];
@@ -118,7 +118,7 @@ Décris dans tous les cas (en anglais sauf les noms) :
 - container : le contenant de service exact du dressage (planche, assiette, bol, barquette…), sa matière et sa couleur, et la surface sur laquelle il est posé.
 - layers : les éléments visibles du plat fini, de celui posé en premier dans le contenant à celui posé en dernier (3 à 7). Pour chacun : name (français, court, avec majuscule : « Pain de campagne grillé »), look (anglais : aspect exact, forme, quantité, disposition dans le contenant, comme sur le plat fini). Regroupe ce qui se pose en même temps (« sel, poivre et piment » = une seule couche). Les accompagnements servis à côté forment la dernière couche, posés à côté du plat.
 - cut : la coupe. vessel (anglais : le plat de cuisson ou de service entier, intact, avant la première part : matière, forme, dessus doré…), start (anglais : image de départ, le plat entier intact, un couteau et une spatule à côté, vue de trois quarts), end (anglais : une part nette soulevée sur la spatule juste au-dessus du plat entamé, sa tranche bien visible avec chaque couche de bas en haut, vapeur), motion (anglais, une phrase au présent commençant par un verbe : le couteau tranche, la spatule soulève la part au ralenti), strata (noms français des couches visibles dans la tranche, de bas en haut, 2 à 6). Pour un plat sans couches, la tranche montre son intérieur (mie, farce, cœur coulant).
-- gesture : le geste. action (français, court : « Napper de caramel »), start (anglais : gros plan juste avant le geste, plat fini sans la finition, la main ou l'ustensile prêt), end (anglais : juste après, finition en place comme sur le plat fini), motion (anglais, une phrase au présent : ce qui se passe pendant 5 secondes, avec la matière qui coule ou tombe).
+- gesture : le geste. action (français, court : « Napper de caramel »), start (anglais : gros plan juste avant le geste, plat fini sans la finition, la main ou l'ustensile prêt), end (anglais : juste après, finition en place comme sur le plat fini), motion (anglais, une phrase au présent : ce qui se passe pendant 5 secondes, avec la matière qui coule ou tombe). Le geste n'apporte que ce qu'on voit sur le plat fini (dressage) ; tout ce qui est versé, saupoudré ou déposé reste posé sur le plat jusqu'à la fin et figure dans end (fleurs, zestes, sirop brillant…) : rien ne disparaît.
 - layered : true si le plat se prête à une vue éclatée, sinon false.
 Jamais de visage humain : seulement des mains, des ustensiles et la nourriture.`;
 

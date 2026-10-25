@@ -42,6 +42,11 @@ export interface ExplodedProps extends VideoProps {
   clipSound?: boolean;
   /** Coupe : second plan, enchaîné après le premier (la part soulevée). */
   secondClip?: string | null;
+  /**
+   * Coupe et geste : image d'arrivée du clip, tenue à l'écran avant le plan suivant (retour de
+   * Julien du 25/10 : ce qui tombe sur le plat reste visible jusqu'au changement de plan).
+   */
+  holdImage?: string | null;
   /** Vues du dessus : 0 = contenant vide, puis une image par couche posée. */
   topViews: string[];
   layerNames: string[];
@@ -55,6 +60,8 @@ export const EXPLODE_FRAMES = 120;
 export const CLIP_FRAMES = 150;
 /** Coupe : deux plans de 5 s enchaînés, un peu accélérés (2 × 105 images à 30 i/s). */
 export const CUT_FRAMES = 210;
+/** Tenue du résultat (image d'arrivée) à la fin du geste ou de la coupe, avant le plan suivant. */
+export const HOLD_FRAMES = 30;
 export const EMPTY_FRAMES = 24;
 export const LAYER_FRAMES = 27;
 export const FINAL_FRAMES = 48;
@@ -89,8 +96,8 @@ export function explodedTimeline(props: Pick<ExplodedProps, "layerNames" | "form
       : format === "dessus"
         ? [assemble]
         : format === "coupe"
-          ? [["explode", CUT_FRAMES]]
-          : [["explode", CLIP_FRAMES]];
+          ? [["explode", CUT_FRAMES + HOLD_FRAMES]]
+          : [["explode", CLIP_FRAMES + HOLD_FRAMES]];
   const frames: Array<[ExplodedKind, number]> = [
     ["photo", PHOTO_FRAMES],
     ...middle,
@@ -232,7 +239,8 @@ export const CUT_KNIFE_MOTION =
 export function cutMotion(script: LayerScript): string {
   return (
     "The spatula already under the cut portion lifts it straight up in slow motion, revealing its layers; " +
-    "the empty space it leaves stays exactly where the portion was, the rest of the dish does not move. " +
+    "the empty space it leaves stays exactly where the portion was, the rest of the dish does not move; " +
+    "nothing on the dish disappears. " +
     `${script.cut!.motion} Static camera, steam rising, realistic food textures.`
   );
 }
@@ -252,11 +260,17 @@ export function gestureEndPrompt(script: LayerScript): string {
   return [
     "Exactly the same close-up as image 1: same dish, same framing, same light.",
     `Right after the finishing touch: ${script.gesture!.end}`,
+    "Everything that was poured, drizzled, sprinkled or dropped during the gesture is still clearly",
+    "visible, resting exactly where it landed on the food: nothing has disappeared, melted away or moved.",
     "The dish now looks exactly like the finished dish in image 2.",
     NO_TEXT,
   ].join(" ");
 }
 
 export function gestureMotion(script: LayerScript): string {
-  return `${script.gesture!.motion} Slow motion close-up, static camera, glossy realistic textures.`;
+  return (
+    `${script.gesture!.motion} Everything that falls or flows lands on the food and stays there, ` +
+    "clearly visible until the very end of the shot; nothing vanishes. " +
+    "Slow motion close-up, static camera, glossy realistic textures."
+  );
 }

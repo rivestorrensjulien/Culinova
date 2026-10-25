@@ -112,7 +112,8 @@ export function motionPrompt(motion: string): string {
 
 export const NEGATIVE_PROMPT =
   "blur, distortion, low quality, text, subtitles, watermark, logo, extra fingers, deformed hands, " +
-  "deformed face, character change, flicker, objects appearing from nowhere";
+  "deformed face, character change, flicker, objects appearing from nowhere, " +
+  "objects disappearing, garnish vanishing, toppings fading away";
 
 export function sceneFrames(sceneCount: number): number {
   return SCENE_FRAMES[Math.min(3, Math.max(1, sceneCount))]!;

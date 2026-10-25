@@ -22,6 +22,7 @@ import {
   EMPTY_FRAMES,
   explodedTimeline,
   type ExplodedProps,
+  HOLD_FRAMES,
   LAYER_FRAMES,
   layerAt,
   VOICE_START,
@@ -96,7 +97,11 @@ function ExplodeScene({ props, frames }: { props: ExplodedProps; frames: number 
   const second = src(props.secondClip);
   // Coupe : deux plans enchaînés (le couteau, puis la part soulevée) ; les couches s'affichent
   // pendant le second, quand la tranche est visible.
-  const half = second ? Math.round(frames / 2) : frames;
+  // Coupe et geste : le résultat (image d'arrivée) reste à l'écran avant le plan suivant.
+  const holds = props.format === "coupe" || props.format === "geste";
+  const hold = holds ? HOLD_FRAMES : 0;
+  const played = frames - hold;
+  const half = second ? Math.round(played / 2) : played;
   const names = props.layerNames;
   const labelsFrom = second ? half : 0;
   const step = (frames - labelsFrom - 30) / Math.max(1, names.length);
@@ -116,13 +121,18 @@ function ExplodeScene({ props, frames }: { props: ExplodedProps; frames: number 
         <Cover path={props.photoUrl} />
       )}
       {second ? (
-        <Sequence from={half} durationInFrames={frames - half} layout="none">
+        <Sequence from={half} durationInFrames={played - half} layout="none">
           <OffthreadVideo
             src={second}
             muted={!props.clipSound}
-            playbackRate={(5 * fps) / (frames - half)}
+            playbackRate={(5 * fps) / (played - half)}
             style={videoStyle}
           />
+        </Sequence>
+      ) : null}
+      {hold > 0 ? (
+        <Sequence from={played} durationInFrames={hold} layout="none">
+          <Cover path={props.holdImage ?? props.photoUrl} />
         </Sequence>
       ) : null}
       <AbsoluteFill style={{ background: "linear-gradient(0deg, #000b 0%, #0000 36%)" }} />

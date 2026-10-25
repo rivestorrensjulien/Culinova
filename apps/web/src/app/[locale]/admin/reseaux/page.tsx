@@ -10,7 +10,7 @@ import { redirectUri } from "@/server/social/oauth";
 import { type AccountTrend, statsOverview } from "@/server/social/stats";
 import { getPinterestBoard } from "@/server/social/pinterest-board";
 import { getAutoplan } from "@/server/social/autoplan";
-import { commentReplyStats, getCommentReply } from "@/server/social/comment-reply";
+import { commentReplyStats, commentReplyStatus, getCommentReply } from "@/server/social/comment-reply";
 import { COMMENT_REPLY_SCOPES } from "@/server/social/instagram";
 import { upcomingSchedule } from "@/server/social/schedule";
 import { RECOMMENDED_SLOTS } from "@/server/social/slots";
@@ -105,7 +105,11 @@ export default async function SocialPage({
     upcomingSchedule(db),
   ]);
   const autoplan = await getAutoplan(db);
-  const [commentReply, replyStats] = await Promise.all([getCommentReply(db), commentReplyStats(db)]);
+  const [commentReply, replyStats, replyStatus] = await Promise.all([
+    getCommentReply(db),
+    commentReplyStats(db),
+    commentReplyStatus(db),
+  ]);
   const instagramAccount = accounts.find((a) => a.platform === "instagram");
   // Autorisations des messages et commentaires : accordées seulement en reliant le compte à nouveau.
   const replyAllowed = COMMENT_REPLY_SCOPES.every((scope) => instagramAccount?.scopes.includes(scope));
@@ -292,7 +296,19 @@ export default async function SocialPage({
             {replyStats.sent > 1 ? "s" : ""}
             {replyStats.failed > 0 ? `, ${replyStats.failed} échec${replyStats.failed > 1 ? "s" : ""}` : ""}.
           </p>
-          {replyStats.lastFailure ? (
+          {replyStatus ? (
+            <p className="text-muted" data-testid="comment-reply-status">
+              Dernière vérification : {dateTime(replyStatus.at)} · {replyStatus.posts ?? 0} publication
+              {(replyStatus.posts ?? 0) > 1 ? "s" : ""} lue{(replyStatus.posts ?? 0) > 1 ? "s" : ""},{" "}
+              {replyStatus.comments ?? 0} commentaire{(replyStatus.comments ?? 0) > 1 ? "s" : ""}, dont{" "}
+              {replyStatus.matched ?? 0} avec le mot-clé.
+            </p>
+          ) : (
+            <p className="text-muted">Pas encore de vérification.</p>
+          )}
+          {replyStatus?.error ? (
+            <Notice tone="danger">Ce qui bloque : {replyStatus.error}</Notice>
+          ) : replyStats.lastFailure ? (
             <Notice tone="danger">Dernier échec : {replyStats.lastFailure}</Notice>
           ) : null}
         </CardBody>

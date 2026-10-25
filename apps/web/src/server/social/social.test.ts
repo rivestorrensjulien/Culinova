@@ -12,7 +12,7 @@ import { runGeneration } from "../generation/run";
 import { startRecipeGeneration } from "../generation/start";
 import { publicationStatuses, queuePublication, signedVideoPath, verifyVideoSignature } from "../publishing";
 import { accountToken, listAccounts, saveAccount } from "./accounts";
-import { replyToComments } from "./comment-reply";
+import { commentReplyStatus, replyToComments } from "./comment-reply";
 import { savePinterestBoard } from "./pinterest-board";
 import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slideKey } from "./carousels";
 import { advancePublication, captionFor, startPublication } from "./publish";
@@ -856,7 +856,13 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       [/\/c1\/replies$/, { id: "r1" }],
     ]);
     // Seul le commentaire de Marie contient le mot-clé (jamais le compte lui-même).
-    expect(await replyToComments(db, { fetchImpl: network.impl, now })).toEqual({ sent: 1, failed: 0 });
+    expect(await replyToComments(db, { fetchImpl: network.impl, now })).toMatchObject({
+      sent: 1,
+      failed: 0,
+      matched: 1,
+    });
+    // Compte rendu du passage, affiché dans l'administration.
+    expect(await commentReplyStatus(db)).toMatchObject({ sent: 1 });
     const sent = network.calls.find((c) => /\/messages$/.test(c.url));
     const body = JSON.parse(sent!.body!);
     expect(body.recipient).toEqual({ comment_id: "c1" });
@@ -864,7 +870,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     expect(body.message.text).toMatch(/\/recette\/[a-z0-9-]+\?utm_source=instagram/);
     expect(network.calls.some((c) => /\/c1\/replies$/.test(c.url))).toBe(true);
     // Passage suivant : rien n'est renvoyé.
-    expect(await replyToComments(db, { fetchImpl: network.impl, now })).toEqual({ sent: 0, failed: 0 });
+    expect(await replyToComments(db, { fetchImpl: network.impl, now })).toMatchObject({ sent: 0, failed: 0 });
     expect(network.calls.filter((c) => /\/messages$/.test(c.url))).toHaveLength(1);
     // La légende Instagram proposée invite à commenter le mot-clé.
     const [recipe] = await db.select().from(s.recipes).where(eq(s.recipes.id, dish));

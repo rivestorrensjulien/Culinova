@@ -100,6 +100,34 @@ export const PUBLIC_REPLY = "Envoyé en message privé 📩";
 export interface ReplyOutcome {
   sent: number;
   failed: number;
+  /** Publications Instagram des 7 derniers jours lues. */
+  posts?: number;
+  /** Commentaires lus, et ceux qui contiennent le mot-clé. */
+  comments?: number;
+  matched?: number;
+  /** Ce qui a empêché la lecture ou l'envoi (compte, autorisations…). */
+  error?: string | null;
+}
+
+/** Compte rendu du dernier passage (affiché dans l'administration). */
+export interface CommentReplyStatus extends ReplyOutcome {
+  at: string;
+}
+
+async function saveStatus(db: Database, outcome: ReplyOutcome, now: Date): Promise<void> {
+  const value: CommentReplyStatus = { ...outcome, at: now.toISOString() };
+  await db
+    .insert(s.siteSettings)
+    .values({ key: s.SETTING_KEYS.socialCommentReplyStatus, value })
+    .onConflictDoUpdate({ target: s.siteSettings.key, set: { value, updatedAt: now } });
+}
+
+export async function commentReplyStatus(db: Database): Promise<CommentReplyStatus | null> {
+  const [row] = await db
+    .select({ value: s.siteSettings.value })
+    .from(s.siteSettings)
+    .where(eq(s.siteSettings.key, s.SETTING_KEYS.socialCommentReplyStatus));
+  return (row?.value as CommentReplyStatus | undefined) ?? null;
 }
 
 /**
@@ -112,9 +140,25 @@ export async function replyToComments(
 ): Promise<ReplyOutcome> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const now = deps.now ?? new Date();
-  const outcome: ReplyOutcome = { sent: 0, failed: 0 };
+  const outcome: ReplyOutcome = { sent: 0, failed: 0, posts: 0, comments: 0, matched: 0, error: null };
   const settings = await getCommentReply(db);
   if (!settings.enabled) return outcome;
+  try {
+    await runReplies(db, settings, outcome, fetchImpl, now);
+  } catch (error) {
+    outcome.error = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+  }
+  await saveStatus(db, outcome, now).catch(() => {});
+  return outcome;
+}
+
+async function runReplies(
+  db: Database,
+  settings: CommentReplySettings,
+  outcome: ReplyOutcome,
+  fetchImpl: typeof fetch,
+  now: Date,
+): Promise<void> {
   const posts = await db
     .select({
       recipeId: s.recipePublications.recipeId,
@@ -135,13 +179,28 @@ export async function replyToComments(
         gte(s.recipePublications.publishedAt, new Date(now.getTime() - REPLY_WINDOW_MS)),
       ),
     );
-  if (posts.length === 0) return outcome;
+  outcome.posts = posts.length;
+  if (posts.length === 0) {
+    outcome.error = "Aucune publication Instagram faite depuis Culinova ces 7 derniers jours.";
+    return;
+  }
   const account = await accountToken(db, "instagram", { fetchImpl, now }).catch(() => null);
-  if (!account) return outcome;
+  if (!account) {
+    outcome.error = "Compte Instagram non relié ou connexion expirée.";
+    return;
+  }
 
   for (const post of posts) {
     if (!post.mediaId) continue;
-    const comments = await instagramComments(account.accessToken, post.mediaId, fetchImpl).catch(() => []);
+    let comments: Awaited<ReturnType<typeof instagramComments>>;
+    try {
+      comments = await instagramComments(account.accessToken, post.mediaId, fetchImpl);
+    } catch (error) {
+      // Lecture refusée (autorisation « commentaires » absente…) : signalée, publication suivante.
+      outcome.error = (error instanceof Error ? error.message : String(error)).slice(0, 500);
+      continue;
+    }
+    outcome.comments = (outcome.comments ?? 0) + comments.length;
     const wanted = comments.filter(
       (c) =>
         c.fromId !== account.accountId &&
@@ -149,6 +208,7 @@ export async function replyToComments(
         now.getTime() - new Date(c.timestamp).getTime() < REPLY_WINDOW_MS &&
         matchesKeyword(c.text, settings.keyword),
     );
+    outcome.matched = (outcome.matched ?? 0) + wanted.length;
     if (wanted.length === 0) continue;
     const already = await db
       .select({ id: s.instagramCommentReplies.commentId })
@@ -207,10 +267,10 @@ export async function replyToComments(
           .set({ status: "failed", note, updatedAt: now })
           .where(eq(s.instagramCommentReplies.commentId, comment.id));
         outcome.failed++;
+        outcome.error = note;
       }
     }
   }
-  return outcome;
 }
 
 /** Messages envoyés et échecs des 30 derniers jours (page Administration › Réseaux). */

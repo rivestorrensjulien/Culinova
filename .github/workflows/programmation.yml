@@ -28,5 +28,8 @@ jobs:
       - name: Publications arrivées à l'heure
         run: |
           if [ -z "$AGENT_API_KEY" ]; then echo "AGENT_API_KEY absente : rien à faire."; exit 0; fi
-          curl -fsS --max-time 150 -X POST -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/programmation"
-          echo
+          r=$(curl -fsS --max-time 150 -X POST -H "Authorization: Bearer $AGENT_API_KEY" "$CULINOVA_URL/api/agent/programmation")
+          echo "$r"
+          # Résumé visible dans GitHub (Commente RECETTE, publications lancées, planification).
+          echo "::notice title=Commente RECETTE::$(echo "$r" | jq -c '.comments')"
+          echo "::notice title=Programmation::$(echo "$r" | jq -c '{scheduled, planned: (.planned | length)}')"

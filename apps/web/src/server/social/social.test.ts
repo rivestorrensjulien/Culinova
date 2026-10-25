@@ -401,6 +401,7 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
       brand_content_toggle: false,
       brand_organic_toggle: false,
       is_aigc: true,
+      video_cover_timestamp_ms: 1000,
     });
     expect(init.source_info.source).toBe("PULL_FROM_URL");
     expect(init.post_info.title).toContain("#");

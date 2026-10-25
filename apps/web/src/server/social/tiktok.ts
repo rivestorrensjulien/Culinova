@@ -219,6 +219,9 @@ export interface TiktokPostOptions {
 }
 
 /** Lance la publication : TikTok télécharge la vidéo depuis videoUrl (domaine vérifié culinova.fr). */
+/** Image de la vidéo utilisée comme miniature sur le profil TikTok (photo du plat avec l'accroche). */
+export const COVER_TIMESTAMP_MS = 1000;
+
 export async function tiktokInitPost(
   accessToken: string,
   videoUrl: string,
@@ -241,6 +244,8 @@ export async function tiktokInitPost(
           brand_organic_toggle: options.promoteOwnBrand,
           // Les visuels sont générés par IA : étiquette « générée par IA » de TikTok.
           is_aigc: true,
+          // Miniature : l'image à 1 s (la photo du plat), pas la première image souvent vide.
+          video_cover_timestamp_ms: COVER_TIMESTAMP_MS,
         },
         source_info: { source: "PULL_FROM_URL", video_url: videoUrl },
       }),

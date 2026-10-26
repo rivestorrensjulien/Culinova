@@ -6,6 +6,7 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { type DemoExample, HomeDemo } from "@/components/home/demo";
 import { MobileCta } from "@/components/home/mobile-cta";
 import { RequestForm } from "@/components/home/request-form";
+import { visitSource } from "@/server/request";
 import { Reveal } from "@/components/home/reveal";
 import { formatDuration } from "@/components/recipe/format";
 import { SiteFooter } from "@/components/site-footer";
@@ -62,8 +63,16 @@ async function signedIn(): Promise<boolean> {
 }
 
 /** Page d'accueil : présentation de Culinova et demande d'invitation. */
-export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function HomePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { locale } = await params;
+  // Provenance de la visite (réseau, message, recette), jointe à la demande d'invitation.
+  const origin = await visitSource(await searchParams);
   setRequestLocale(locale);
   const t = await getTranslations("Home");
   const common = await getTranslations("Common");
@@ -459,7 +468,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
               <p className="border-l-2 border-gold pl-4 text-sm">{t("request.included")}</p>
             </div>
             <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm sm:p-8">
-              <RequestForm />
+              <RequestForm origin={origin} />
             </div>
           </div>
         </section>

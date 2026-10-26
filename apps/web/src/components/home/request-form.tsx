@@ -5,12 +5,13 @@ import { useTranslations } from "next-intl";
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/submit-button";
 import { Link } from "@/i18n/navigation";
+import type { RequestSource } from "@/lib/request-source";
 import { type InvitationRequestState, requestInvitationAction } from "@/server/actions/invitation-request";
 
 const PROFILES = ["chef", "caterer", "creator", "enthusiast", "other"] as const;
 
-/** Formulaire de demande d'invitation de la page d'accueil. */
-export function RequestForm() {
+/** Formulaire de demande d'invitation de la page d'accueil (`origin` : provenance de la visite). */
+export function RequestForm({ origin }: { origin?: RequestSource }) {
   const t = useTranslations("Home.request");
   const [state, action] = useActionState<InvitationRequestState, FormData>(requestInvitationAction, {
     status: "idle",
@@ -79,6 +80,15 @@ export function RequestForm() {
           />
         )}
       </Field>
+      {origin ? (
+        <>
+          <input type="hidden" name="src_source" value={origin.source} />
+          <input type="hidden" name="src_medium" value={origin.medium ?? ""} />
+          <input type="hidden" name="src_campaign" value={origin.campaign ?? ""} />
+          <input type="hidden" name="src_recipe" value={origin.recipe ?? ""} />
+          <input type="hidden" name="src_referrer" value={origin.referrer ?? ""} />
+        </>
+      ) : null}
       {/* Champ piège : invisible pour les personnes, rempli par les robots. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>

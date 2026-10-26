@@ -70,6 +70,16 @@ export const invitationRequests = pgTable(
     profile: text("profile"),
     message: text("message"),
     locale: text("locale").notNull().default("fr"),
+    /**
+     * Provenance de la demande (demande de Julien du 26/10) : réseau (instagram, tiktok,
+     * pinterest…, « direct » sans indice), canal (publication, message privé, lien en bio),
+     * campagne, recette publique d'où vient la personne et site précédent (nom de domaine seul).
+     */
+    source: text("source"),
+    sourceMedium: text("source_medium"),
+    sourceCampaign: text("source_campaign"),
+    sourceRecipe: text("source_recipe"),
+    sourceReferrer: text("source_referrer"),
     /** Acceptation de la politique de confidentialité au moment de la demande. */
     consentedAt: tz("consented_at"),
     status: text("status").$type<"pending" | "invited" | "declined">().notNull().default("pending"),

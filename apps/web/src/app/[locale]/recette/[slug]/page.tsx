@@ -12,9 +12,11 @@ import { formatDuration } from "@/components/recipe/format";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
+import { sourceQuery, withRecipe } from "@/lib/request-source";
 import { appUrl } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { loadPublicRecipe, PUBLIC_LIST_PATH } from "@/server/public-recipes";
+import { visitSource } from "@/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -48,13 +50,17 @@ export async function generateMetadata({
 
 export default async function PublicRecipePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
   const recipe = await loadPublicRecipe(getDb(), slug);
   if (!recipe) notFound();
+  // Provenance (réseau, message « RECETTE »…) et recette d'origine, jusqu'au formulaire.
+  const query = sourceQuery(withRecipe(await visitSource(await searchParams), recipe.slug));
   const t = await getTranslations("PublicRecipe");
   const tr = await getTranslations("Recipe");
   const total = recipe.prepS + recipe.cookS + recipe.restS;
@@ -229,13 +235,13 @@ export default async function PublicRecipePage({
               <p className="text-lg opacity-90">{t("ctaText")}</p>
               <div className="flex flex-wrap gap-3 pt-2">
                 <Link
-                  href="/#invitation"
+                  href={{ pathname: "/", query, hash: "invitation" }}
                   className="inline-flex items-center rounded-full bg-background px-6 py-3 font-medium text-foreground shadow-sm transition hover:opacity-90"
                 >
                   {t("ctaButton")}
                 </Link>
                 <Link
-                  href={PUBLIC_LIST_PATH}
+                  href={{ pathname: PUBLIC_LIST_PATH, query }}
                   className="inline-flex items-center rounded-full border border-current px-6 py-3 font-medium opacity-90 transition hover:opacity-100"
                 >
                   {t("moreRecipes")}

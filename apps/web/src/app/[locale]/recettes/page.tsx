@@ -9,8 +9,10 @@ import { MobileCta } from "@/components/home/mobile-cta";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
+import { sourceQuery } from "@/lib/request-source";
 import { getDb } from "@/server/db";
 import { listPublicRecipes, PUBLIC_RECIPE_PATH } from "@/server/public-recipes";
+import { visitSource } from "@/server/request";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +32,16 @@ export async function generateMetadata({
   return { title: t("listTitle"), description: t("listIntro") };
 }
 
-export default async function PublicRecipesPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function PublicRecipesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { locale } = await params;
+  // La provenance (lien en bio d'Instagram, de TikTok…) suit la personne jusqu'au formulaire.
+  const query = sourceQuery(await visitSource(await searchParams));
   setRequestLocale(locale);
   const t = await getTranslations("PublicRecipe");
   const recipes = await listPublicRecipes(getDb());
@@ -75,7 +85,7 @@ export default async function PublicRecipesPage({ params }: { params: Promise<{ 
             {recipes.map((recipe) => (
               <li key={recipe.slug}>
                 <Link
-                  href={`${PUBLIC_RECIPE_PATH}/${recipe.slug}`}
+                  href={{ pathname: `${PUBLIC_RECIPE_PATH}/${recipe.slug}`, query }}
                   className="group flex flex-col gap-3 rounded-3xl focus-visible:outline-2 focus-visible:outline-primary"
                 >
                   {recipe.imageId ? (
@@ -105,7 +115,7 @@ export default async function PublicRecipesPage({ params }: { params: Promise<{ 
           <h2 className="font-display text-3xl text-balance sm:text-4xl">{t("ctaTitle")}</h2>
           <p className="max-w-xl text-lg opacity-90">{t("ctaText")}</p>
           <Link
-            href="/#invitation"
+            href={{ pathname: "/", query, hash: "invitation" }}
             className="inline-flex items-center rounded-full bg-background px-6 py-3 font-medium text-foreground shadow-sm transition hover:opacity-90"
           >
             {t("ctaButton")}

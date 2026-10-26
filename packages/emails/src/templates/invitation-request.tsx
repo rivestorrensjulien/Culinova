@@ -46,6 +46,8 @@ export interface InvitationRequestAlertEmailProps {
   email: string;
   profile: string | null;
   message: string | null;
+  /** Provenance lisible (« Instagram · message privé « RECETTE » »). */
+  source?: string | null;
   /** Lien vers la page « Demandes » de l'administration. */
   url: string;
 }
@@ -60,6 +62,7 @@ export function InvitationRequestAlertEmail({
   email,
   profile,
   message,
+  source,
   url,
 }: InvitationRequestAlertEmailProps) {
   return (
@@ -72,6 +75,7 @@ export function InvitationRequestAlertEmail({
         {name} ({email}){profile ? ` · ${profile}` : ""}
       </Paragraph>
       {message ? <Paragraph muted>« {message} »</Paragraph> : null}
+      {source ? <Paragraph muted>Provenance : {source}</Paragraph> : null}
       <CallToAction href={url}>Voir les demandes</CallToAction>
     </EmailLayout>
   );

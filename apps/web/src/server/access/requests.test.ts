@@ -8,6 +8,7 @@ import {
   acceptInvitationRequest,
   declineInvitationRequest,
   listInvitationRequests,
+  requestSourceStats,
   submitInvitationRequest,
 } from "./requests";
 
@@ -42,6 +43,8 @@ describe.skipIf(!hasTestDb)("demandes d'invitation", () => {
     const [row] = await requestsFor(email);
     expect(row).toMatchObject({ name: "Camille", profile: "chef", status: "pending", locale: "fr" });
     expect(row!.consentedAt).not.toBeNull();
+    // Sans indice de provenance : accès direct.
+    expect(row!.source).toBe("direct");
     expect((await lastEmailTo(email, "invitation-request"))?.subject).toBe(
       "Votre demande d'invitation à Culinova",
     );
@@ -132,5 +135,48 @@ describe.skipIf(!hasTestDb)("demandes d'invitation", () => {
     expect(await lastEmailTo(email, "invitation")).toBeNull();
     const declined = await listInvitationRequests(testDb(), "declined");
     expect(declined.some((r) => r.email === email)).toBe(true);
+  });
+
+  it("enregistre la provenance (réseau, canal, recette) et la résume pour l'administrateur", async () => {
+    const email = uniqueEmail();
+    await submitInvitationRequest(
+      testDb(),
+      {
+        name: "Léa",
+        email,
+        profile: "enthusiast",
+        message: null,
+        locale: "fr",
+        origin: {
+          source: "instagram",
+          medium: "message",
+          campaign: "commente",
+          recipe: "tostadas-argentines",
+          referrer: "l.instagram.com",
+        },
+      },
+      meta(),
+    );
+    const [row] = await requestsFor(email);
+    expect(row).toMatchObject({
+      source: "instagram",
+      sourceMedium: "message",
+      sourceCampaign: "commente",
+      sourceRecipe: "tostadas-argentines",
+      sourceReferrer: "l.instagram.com",
+    });
+    const view = (await listInvitationRequests(testDb())).find((r) => r.email === email)!;
+    expect(view.origin).toMatchObject({
+      label: "Instagram",
+      detail: "message privé « RECETTE »",
+      recipe: "tostadas-argentines",
+    });
+    // L'alerte dit d'où vient la personne.
+    expect((await lastEmailTo(admin.email, "invitation-request-alert"))?.text).toContain(
+      "Instagram · message privé « RECETTE » · recette tostadas-argentines",
+    );
+    const stats = await requestSourceStats(testDb());
+    expect(stats.bySource.find((s) => s.source === "instagram")?.requests).toBeGreaterThanOrEqual(1);
+    expect(stats.byRecipe.some((r) => r.recipe === "tostadas-argentines")).toBe(true);
   });
 });

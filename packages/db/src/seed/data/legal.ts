@@ -78,13 +78,13 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
   },
   {
     type: "privacy" as const,
-    version: "1.1",
+    version: "1.2",
     title: "Politique de confidentialité",
     bodyMd: `## Responsable du traitement
 {{editeur.nom}}, {{editeur.adresse}} — {{editeur.email}}.
 
 ## Données traitées
-- **Demande d'invitation** : nom, adresse e-mail, profil, message facultatif et langue saisis sur la page d'accueil.
+- **Demande d'invitation** : nom, adresse e-mail, profil, message facultatif et langue saisis sur la page d'accueil, ainsi que sa provenance (réseau social ou nom du site d'où vous venez, publication, message ou recette qui vous a amené), lue dans l'adresse de la page, sans cookie ni traceur.
 - **Compte** : adresse e-mail, nom (facultatif), langue, code d'invitation utilisé, rôle.
 - **Sécurité** : dates de connexion, sessions ouvertes, adresse IP et navigateur, journal des actions sensibles.
 - **Contenus** : paramètres de création, recettes et leurs versions, traductions, photos, ingrédients, prix, fournisseurs, réglages de prix de vente, correspondances nutritionnelles, favoris.
@@ -95,6 +95,7 @@ Aucune donnée de paiement n'est collectée pendant la phase sur invitation.
 
 ## Finalités et bases légales
 - Étudier votre demande d'invitation et vous répondre — **mesures précontractuelles prises à votre demande**.
+- Savoir quels réseaux et quelles recettes font connaître Culinova (provenance des demandes) — **intérêt légitime**.
 - Créer et gérer votre compte, vous connecter par lien magique — **exécution du contrat** (CGU).
 - Générer recettes, images, traductions et analyses — **exécution du contrat** (CGU).
 - Appliquer les quotas et maîtriser le budget d'intelligence artificielle — **intérêt légitime**.
@@ -166,7 +167,7 @@ export const PROCESSING_REGISTER = [
   {
     purpose: "Demandes d'invitation depuis la page d'accueil",
     legalBasis: "Mesures précontractuelles prises à la demande de la personne",
-    dataCategories: ["nom", "e-mail", "profil", "message", "langue"],
+    dataCategories: ["nom", "e-mail", "profil", "message", "langue", "provenance (réseau, canal, recette)"],
     retention: "12 mois après la demande",
     processors: ["Supabase", "Vercel", "Resend"],
   },

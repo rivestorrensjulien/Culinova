@@ -2,6 +2,7 @@
 
 import { getLocale } from "next-intl/server";
 import { z } from "zod";
+import { sourceFromForm } from "@/lib/request-source";
 import { REQUEST_PROFILES, submitInvitationRequest } from "../access/requests";
 import { getDb } from "../db";
 import { requestMeta } from "../request";
@@ -59,7 +60,11 @@ export async function requestInvitationAction(
 
   try {
     const locale = (await getLocale()) === "en" ? "en" : "fr";
-    const result = await submitInvitationRequest(getDb(), { ...parsed.data, locale }, await requestMeta());
+    const result = await submitInvitationRequest(
+      getDb(),
+      { ...parsed.data, locale, origin: sourceFromForm(formData) },
+      await requestMeta(),
+    );
     return result.ok ? { status: "sent" } : fail("rate");
   } catch (error) {
     console.error(

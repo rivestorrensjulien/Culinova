@@ -12,6 +12,7 @@ import {
 } from "@culinova/emails";
 import { invitationRequests, invitations, users } from "@culinova/db/schema";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
+import { DIRECT, type RequestSource, sourceDetail, sourceLabel } from "@/lib/request-source";
 import { audit } from "../audit";
 import { appUrl, localePrefix } from "../auth";
 import { isAllowed, RATE_RULES, recordAttempt } from "../rate-limit";
@@ -42,6 +43,8 @@ export interface NewInvitationRequest {
   profile: RequestProfile | null;
   message: string | null;
   locale: "fr" | "en";
+  /** Provenance de la personne (réseau, canal, recette) ; accès direct par défaut. */
+  origin?: RequestSource;
 }
 
 type SubmitRefused = { ok: false; reason: "rate_limited" };
@@ -82,6 +85,11 @@ export async function submitInvitationRequest(
       profile: input.profile,
       message: input.message?.trim().slice(0, 1000) || null,
       locale: input.locale,
+      source: (input.origin ?? DIRECT).source,
+      sourceMedium: input.origin?.medium ?? null,
+      sourceCampaign: input.origin?.campaign ?? null,
+      sourceRecipe: input.origin?.recipe ?? null,
+      sourceReferrer: input.origin?.referrer ?? null,
       consentedAt: new Date(),
     })
     .returning();
@@ -116,6 +124,7 @@ export async function submitInvitationRequest(
       email,
       profile: profileLabel(request!.profile),
       message: request!.message,
+      source: originText(request!),
       url: `${appUrl()}${localePrefix("fr")}/admin/demandes`,
     });
     for (const admin of admins) {
@@ -129,6 +138,27 @@ export async function submitInvitationRequest(
   return { ok: true };
 }
 
+/** « Instagram · message privé « RECETTE » · recette tostadas-argentines ». */
+function originText(row: {
+  source: string | null;
+  sourceMedium: string | null;
+  sourceCampaign: string | null;
+  sourceRecipe: string | null;
+}): string {
+  const detail = sourceDetail({ medium: row.sourceMedium, campaign: row.sourceCampaign });
+  return [sourceLabel(row.source), detail, row.sourceRecipe ? `recette ${row.sourceRecipe}` : null]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+export interface RequestOriginView {
+  source: string | null;
+  label: string;
+  detail: string | null;
+  recipe: string | null;
+  referrer: string | null;
+}
+
 export interface InvitationRequestView {
   id: string;
   name: string;
@@ -137,6 +167,7 @@ export interface InvitationRequestView {
   message: string | null;
   locale: string;
   status: RequestStatus;
+  origin: RequestOriginView;
   createdAt: Date;
   decidedAt: Date | null;
 }
@@ -159,9 +190,54 @@ export async function listInvitationRequests(
     message: row.message,
     locale: row.locale,
     status: row.status,
+    origin: {
+      source: row.source,
+      label: sourceLabel(row.source),
+      detail: sourceDetail({ medium: row.sourceMedium, campaign: row.sourceCampaign }),
+      recipe: row.sourceRecipe,
+      referrer: row.sourceReferrer,
+    },
     createdAt: row.createdAt,
     decidedAt: row.decidedAt,
   }));
+}
+
+export interface SourceStat {
+  source: string | null;
+  label: string;
+  requests: number;
+  invited: number;
+}
+
+export interface SourceStats {
+  bySource: SourceStat[];
+  /** Recettes publiques qui ont amené le plus de demandes. */
+  byRecipe: Array<{ recipe: string; requests: number }>;
+}
+
+/** Provenance des demandes reçues (toutes, conservées 12 mois), de la plus fréquente à la plus rare. */
+export async function requestSourceStats(db: Database): Promise<SourceStats> {
+  const rows = await db
+    .select({
+      source: invitationRequests.source,
+      requests: sql<number>`count(*)::int`,
+      invited: sql<number>`count(*) filter (where ${invitationRequests.status} = 'invited')::int`,
+    })
+    .from(invitationRequests)
+    .groupBy(invitationRequests.source);
+  const recipes = await db
+    .select({ recipe: invitationRequests.sourceRecipe, requests: sql<number>`count(*)::int` })
+    .from(invitationRequests)
+    .where(sql`${invitationRequests.sourceRecipe} is not null`)
+    .groupBy(invitationRequests.sourceRecipe)
+    .orderBy(sql`count(*) desc`)
+    .limit(5);
+  return {
+    bySource: rows
+      .map((row) => ({ ...row, label: sourceLabel(row.source) }))
+      .sort((a, b) => b.requests - a.requests || a.label.localeCompare(b.label)),
+    byRecipe: recipes.map((row) => ({ recipe: row.recipe!, requests: row.requests })),
+  };
 }
 
 export async function pendingRequestCount(db: Database): Promise<number> {

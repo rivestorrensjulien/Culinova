@@ -107,7 +107,9 @@ test("consignes de la coupe et du geste", () => {
   assert.match(cutMotion(moussaka), /already under the cut portion/);
   assert.match(gestureStartPrompt(moussaka), /never a face/);
   assert.match(gestureEndPrompt(moussaka), /sauce glossy/);
-  // Ce qui tombe sur le plat reste visible (retour de Julien du 25/10).
+  // Ce qui est versé reste visible (25/10) ; un seul liquide, rien qui tombe en morceaux (26/10).
+  assert.match(gestureStartPrompt(moussaka), /solid garnishes .* already in place/);
   assert.match(gestureEndPrompt(moussaka), /nothing has disappeared/);
   assert.match(gestureMotion(moussaka), /stays there/);
+  assert.match(gestureMotion(moussaka), /Nothing else falls/);
 });

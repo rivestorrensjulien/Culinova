@@ -62,5 +62,7 @@ describe("vue éclatée", () => {
     expect(system).toMatch(/coupe pour .*moussaka/);
     expect(system).toMatch(/dessus pour .*currys/);
     expect(system).toMatch(/geste pour .*nappés/);
+    // Geste limité à un seul liquide : rien qui tombe en morceaux (retour de Julien du 26/10).
+    expect(system).toMatch(/jamais rien qui tombe en morceaux/);
   });
 });

@@ -94,10 +94,10 @@ export function videoScenesProblems(scenes: VideoScenes, shotCount: number): str
  * - eclate : les couches s'écartent au-dessus du contenant, puis se reposent une à une (vue du dessus) ;
  * - coupe : le couteau tranche le plat, une part se soulève et montre ses couches intérieures ;
  * - dessus : vue du dessus, la base arrive dans le contenant puis chaque garniture tombe une à une ;
- * - geste : gros plan filmé sur le geste qui rend le plat appétissant (nappage, coulure, glaçage…).
+ * - geste : gros plan filmé sur un seul liquide qui nappe ou coule (sauce, sirop, glaçage…), garnitures déjà en place.
  * Toutes les descriptions sont rendues, pour qu'un autre format puisse être demandé sans nouvelle analyse.
  */
-export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@3";
+export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@4";
 
 export const VIDEO_FORMATS = ["eclate", "coupe", "dessus", "geste"] as const;
 export type VideoFormat = (typeof VIDEO_FORMATS)[number];
@@ -106,7 +106,7 @@ export const VIDEO_LAYERS_SYSTEM_PROMPT = `Tu prépares une vidéo culinaire cou
 - eclate : les éléments du plat s'écartent verticalement au-dessus du contenant, puis, vus du dessus, se reposent un à un dans le contenant jusqu'au plat fini.
 - coupe : un couteau tranche le plat, une spatule soulève une part au ralenti et montre ses couches intérieures (vapeur, fromage qui file).
 - dessus : vue du dessus, le contenant vide reçoit la base, puis chaque garniture et chaque finition tombe une à une.
-- geste : un gros plan filmé, avec le son, sur le geste qui rend le plat appétissant (sauce qui nappe, caramel ou sirop qui coule, glaçage, huile qui grésille, saupoudrage).
+- geste : un gros plan filmé sur un seul geste simple qui rend le plat appétissant : un liquide qui nappe ou coule (sauce, caramel, sirop, glaçage, crème, huile).
 
 format : choisis celui qui montre le mieux CE plat :
 - eclate pour ce qui est empilé ou posé en éléments bien distincts : tartines, tostadas, burgers, sandwichs, bao, tacos, wraps ouverts, assiettes à plusieurs éléments, desserts montés en hauteur.
@@ -118,7 +118,7 @@ Décris dans tous les cas (en anglais sauf les noms) :
 - container : le contenant de service exact du dressage (planche, assiette, bol, barquette…), sa matière et sa couleur, et la surface sur laquelle il est posé.
 - layers : les éléments visibles du plat fini, de celui posé en premier dans le contenant à celui posé en dernier (3 à 7). Pour chacun : name (français, court, avec majuscule : « Pain de campagne grillé »), look (anglais : aspect exact, forme, quantité, disposition dans le contenant, comme sur le plat fini). Regroupe ce qui se pose en même temps (« sel, poivre et piment » = une seule couche). Les accompagnements servis à côté forment la dernière couche, posés à côté du plat.
 - cut : la coupe. vessel (anglais : le plat de cuisson ou de service entier, intact, avant la première part : matière, forme, dessus doré…), start (anglais : image de départ, le plat entier intact, un couteau et une spatule à côté, vue de trois quarts), end (anglais : une part nette soulevée sur la spatule juste au-dessus du plat entamé, sa tranche bien visible avec chaque couche de bas en haut, vapeur), motion (anglais, une phrase au présent commençant par un verbe : le couteau tranche, la spatule soulève la part au ralenti), strata (noms français des couches visibles dans la tranche, de bas en haut, 2 à 6). Pour un plat sans couches, la tranche montre son intérieur (mie, farce, cœur coulant).
-- gesture : le geste. action (français, court : « Napper de caramel »), start (anglais : gros plan juste avant le geste, plat fini sans la finition, la main ou l'ustensile prêt), end (anglais : juste après, finition en place comme sur le plat fini), motion (anglais, une phrase au présent : ce qui se passe pendant 5 secondes, avec la matière qui coule ou tombe). Le geste n'apporte que ce qu'on voit sur le plat fini (dressage) ; tout ce qui est versé, saupoudré ou déposé reste posé sur le plat jusqu'à la fin et figure dans end (fleurs, zestes, sirop brillant…) : rien ne disparaît.
+- gesture : le geste. Un seul liquide versé ou passé au pinceau, en un filet continu (sauce, caramel, sirop, miel, glaçage, crème, huile) : jamais rien qui tombe en morceaux (fleurs, pétales, zestes, graines, amandes, sucre, herbes), car l'IA vidéo fait disparaître ces éléments en vol. action (français, court : « Napper de caramel »), start (anglais : gros plan juste avant le geste, plat fini avec toutes ses garnitures solides déjà en place — fleurs, zestes, amandes… — il ne manque que le liquide, la main ou l'ustensile prêt), end (anglais : juste après, le liquide brillant en place, garnitures identiques au départ, comme sur le plat fini), motion (anglais, une phrase au présent : le liquide coule ou nappe lentement pendant 5 secondes, rien d'autre ne tombe ni ne bouge sur le plat).
 - layered : true si le plat se prête à une vue éclatée, sinon false.
 Jamais de visage humain : seulement des mains, des ustensiles et la nourriture.`;
 

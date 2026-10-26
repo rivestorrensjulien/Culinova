@@ -250,6 +250,8 @@ export function gestureStartPrompt(script: LayerScript): string {
   return [
     "The exact same dish as image 1 (same container, same presentation, same surface and warm light),",
     `in a vertical 9:16 close-up, just before the finishing touch: ${script.gesture!.start}`,
+    "All solid garnishes of the finished dish (flowers, zest, nuts, seeds, herbs) are already in place;",
+    "only the sauce, syrup or glaze is still missing.",
     "Only hands and utensils, never a face.",
     NO_TEXT,
   ].join(" ");
@@ -260,8 +262,8 @@ export function gestureEndPrompt(script: LayerScript): string {
   return [
     "Exactly the same close-up as image 1: same dish, same framing, same light.",
     `Right after the finishing touch: ${script.gesture!.end}`,
-    "Everything that was poured, drizzled, sprinkled or dropped during the gesture is still clearly",
-    "visible, resting exactly where it landed on the food: nothing has disappeared, melted away or moved.",
+    "The poured liquid is now on the food, glossy and clearly visible where it landed.",
+    "Every solid garnish is exactly as in image 1: same number, same place; nothing has disappeared or moved.",
     "The dish now looks exactly like the finished dish in image 2.",
     NO_TEXT,
   ].join(" ");
@@ -269,8 +271,9 @@ export function gestureEndPrompt(script: LayerScript): string {
 
 export function gestureMotion(script: LayerScript): string {
   return (
-    `${script.gesture!.motion} Everything that falls or flows lands on the food and stays there, ` +
-    "clearly visible until the very end of the shot; nothing vanishes. " +
+    `${script.gesture!.motion} Only one continuous stream of liquid flows onto the food and stays there, ` +
+    "clearly visible until the very end of the shot. Nothing else falls, no petals, flakes or particles in the air; " +
+    "the garnishes already on the dish never move or vanish. " +
     "Slow motion close-up, static camera, glossy realistic textures."
   );
 }

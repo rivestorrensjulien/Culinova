@@ -158,7 +158,7 @@ export async function startPublication(
     try {
       // Accès d'essai : épingle créée dans le bac à sable de Pinterest (tableau du même nom).
       const board = sandbox
-        ? await sandboxBoard(sandbox, chosen?.boardName ?? PINTEREST_BOARD_NAME, fetchImpl)
+        ? await sandboxBoard(db, sandbox, chosen?.boardName ?? PINTEREST_BOARD_NAME, fetchImpl)
         : chosen!;
       const title = await pinTitleFor(db, recipe.versionId);
       const pin = await pinterestCreatePin(
@@ -202,6 +202,7 @@ export async function startPublication(
       });
       return { ok: true };
     } catch (error) {
+      if (sandbox && /board/i.test(message(error))) await forgetSandboxBoard(db);
       await setPublication(db, recipeId, platform, format, { status: "failed", note: message(error) });
       return { ok: false, reason: "failed", detail: message(error) };
     }
@@ -411,21 +412,50 @@ const PINTEREST_BOARD_NAME = "Recettes Culinova";
 export const SANDBOX_NOTE =
   "Épingle de test dans le bac à sable de Pinterest (accès d'essai) : publique après l'accès Standard.";
 
-/** Tableau du bac à sable portant ce nom, créé s'il n'existe pas encore. */
+/**
+ * Tableau du bac à sable où partent les épingles de test : celui retenu la dernière fois, sinon
+ * un tableau de ce nom, sinon créé (avec « · test » si Pinterest dit que le nom est déjà pris
+ * sans le montrer dans la liste) ; retenu dans le réglage `social.pinterest_sandbox`.
+ */
 async function sandboxBoard(
+  db: Database,
   sandbox: NonNullable<ReturnType<typeof pinterestSandbox>>,
   name: string,
   fetchImpl: typeof fetch,
 ): Promise<{ boardId: string; boardName: string }> {
-  const boards = await pinterestBoards(sandbox.token, fetchImpl, sandbox.env);
-  const found =
-    boards.find((b) => b.name.trim().toLowerCase() === name.trim().toLowerCase()) ??
-    (await pinterestCreateBoard(
-      sandbox.token,
-      name,
-      "Les recettes de Culinova, pesées au gramme.",
-      fetchImpl,
-      sandbox.env,
-    ));
-  return { boardId: found.id, boardName: found.name };
+  const [saved] = await db
+    .select({ value: s.siteSettings.value })
+    .from(s.siteSettings)
+    .where(eq(s.siteSettings.key, s.SETTING_KEYS.socialPinterestSandbox));
+  const kept = (saved?.value ?? {}) as { boardId?: string; boardName?: string };
+  if (kept.boardId) return { boardId: kept.boardId, boardName: kept.boardName ?? name };
+
+  const boards = await pinterestBoards(sandbox.token, fetchImpl, sandbox.env).catch(() => []);
+  let board = boards.find((b) => b.name.trim().toLowerCase() === name.trim().toLowerCase()) ?? null;
+  for (const candidate of [name, `${name} · test`, `${name} · test ${Date.now() % 10000}`]) {
+    if (board) break;
+    try {
+      board = await pinterestCreateBoard(
+        sandbox.token,
+        candidate,
+        "Les recettes de Culinova, pesées au gramme.",
+        fetchImpl,
+        sandbox.env,
+      );
+    } catch (error) {
+      if (!/already have a board/i.test(message(error))) throw error;
+    }
+  }
+  if (!board) throw new Error("Pinterest · bac à sable : impossible de trouver ou de créer le tableau.");
+  const value = { boardId: board.id, boardName: board.name };
+  await db
+    .insert(s.siteSettings)
+    .values({ key: s.SETTING_KEYS.socialPinterestSandbox, value })
+    .onConflictDoUpdate({ target: s.siteSettings.key, set: { value, updatedAt: new Date() } });
+  return value;
+}
+
+/** Tableau du bac à sable oublié (supprimé ou introuvable) : un autre sera trouvé ou créé. */
+async function forgetSandboxBoard(db: Database) {
+  await db.delete(s.siteSettings).where(eq(s.siteSettings.key, s.SETTING_KEYS.socialPinterestSandbox));
 }

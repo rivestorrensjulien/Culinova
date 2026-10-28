@@ -882,20 +882,34 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const db = testDb();
     process.env.PINTEREST_SANDBOX_TOKEN = "pina_sandbox";
     try {
-      const network = fakeNetwork([
-        [/api-sandbox\.pinterest\.com\/v5\/boards\?/, { items: [], bookmark: null }],
-        [
-          /api-sandbox\.pinterest\.com\/v5\/boards$/,
-          { id: "sb-1", name: "Recettes Culinova", privacy: "PUBLIC" },
-        ],
-        [/api-sandbox\.pinterest\.com\/v5\/pins$/, { id: "555" }],
-      ]);
+      const calls: Array<{ url: string; method: string; body: string | null }> = [];
+      let boardCreations = 0;
+      const impl = (async (input: string | URL | Request, init?: RequestInit) => {
+        const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+        const method = init?.method ?? "GET";
+        calls.push({ url, method, body: init?.body ? String(init.body) : null });
+        if (/\/v5\/boards\?/.test(url)) return Response.json({ items: [], bookmark: null });
+        if (/\/v5\/boards$/.test(url)) {
+          boardCreations++;
+          // Nom déjà pris sans apparaître dans la liste (vu en accès d'essai) : nom de repli.
+          if (boardCreations === 1)
+            return Response.json(
+              { code: 58, message: "Try a different name. You already have a board with this name!" },
+              { status: 400 },
+            );
+          const { name } = JSON.parse(String(init!.body)) as { name: string };
+          return Response.json({ id: "sb-1", name, privacy: "PUBLIC" });
+        }
+        if (/\/v5\/pins$/.test(url)) return Response.json({ id: "555" });
+        return Response.json({ message: `route inconnue ${url}` }, { status: 404 });
+      }) as typeof fetch;
+
       expect(
-        await startPublication(db, admin.id, recipeId, "pinterest", "photo", {}, { fetchImpl: network.impl }),
+        await startPublication(db, admin.id, recipeId, "pinterest", "photo", {}, { fetchImpl: impl }),
       ).toEqual({ ok: true });
-      // Jamais le vrai Pinterest pour créer l'épingle (refusé en accès d'essai).
-      expect(network.calls.some((c) => /\/\/api\.pinterest\.com\/v5\/pins/.test(c.url))).toBe(false);
-      const pin = JSON.parse(network.calls.find((c) => /\/v5\/pins$/.test(c.url))!.body!);
+      // Tout passe par le bac à sable, jamais par le vrai Pinterest (refusé en accès d'essai).
+      expect(calls.every((c) => c.url.startsWith("https://api-sandbox.pinterest.com/"))).toBe(true);
+      const pin = JSON.parse(calls.find((c) => /\/v5\/pins$/.test(c.url))!.body!);
       expect(pin.board_id).toBe("sb-1");
       const [row] = await db
         .select()
@@ -904,6 +918,13 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
           and(eq(s.recipePublications.recipeId, recipeId), eq(s.recipePublications.platform, "pinterest")),
         );
       expect(row).toMatchObject({ status: "published", postUrl: null, note: SANDBOX_NOTE });
+
+      // Le tableau est retenu : la publication suivante n'en cherche ni n'en crée.
+      calls.length = 0;
+      expect(
+        await startPublication(db, admin.id, recipeId, "pinterest", "photo", {}, { fetchImpl: impl }),
+      ).toEqual({ ok: true });
+      expect(calls.map((c) => c.url).filter((u) => /boards/.test(u))).toEqual([]);
     } finally {
       delete process.env.PINTEREST_SANDBOX_TOKEN;
     }

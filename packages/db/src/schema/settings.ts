@@ -14,6 +14,8 @@ export const SETTING_KEYS = {
   socialCaptions: "social.captions",
   /** Pinterest : tableau où sont épinglées les recettes. */
   socialPinterest: "social.pinterest",
+  /** Pinterest en accès d'essai : tableau du bac à sable où partent les épingles de test. */
+  socialPinterestSandbox: "social.pinterest_sandbox",
   /** Planification automatique des publications (recettes choisies par l'agent, à valider). */
   socialAutoplan: "social.autoplan",
   /** « Commente RECETTE » : mot-clé qui déclenche l'envoi du lien en message privé sur Instagram. */

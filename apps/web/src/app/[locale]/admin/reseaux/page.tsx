@@ -179,8 +179,9 @@ export default async function SocialPage({
                 ) : null}
                 {platform === "pinterest" && setup.hints.pinterestSandbox ? (
                   <Notice tone="info">
-                    Accès d&apos;essai (bac à sable) : les épingles ne sont visibles que par votre compte tant
-                    que Pinterest n&apos;a pas accordé l&apos;accès « Standard ».
+                    Accès d&apos;essai : les épingles sont créées dans le bac à sable de Pinterest (épingles
+                    de test, invisibles sur le vrai compte) tant que Pinterest n&apos;a pas accordé
+                    l&apos;accès « Standard ».
                   </Notice>
                 ) : null}
                 {trend?.followers != null ? (
@@ -459,8 +460,10 @@ export default async function SocialPage({
               <code>PINTEREST_APP_ID</code> et <code>PINTEREST_APP_SECRET</code> (developers.pinterest.com ›
               My apps › Culinova). Adresse de retour à déclarer : <code>{redirectUri("pinterest")}</code>
               <span className="block text-muted">
-                Facultatif : <code>PINTEREST_API_URL</code> = <code>https://api-sandbox.pinterest.com</code>{" "}
-                tant que l&apos;application est en accès d&apos;essai.
+                Accès d&apos;essai : <code>PINTEREST_SANDBOX_TOKEN</code> = jeton du bac à sable
+                (developers.pinterest.com › Culinova › Générer des jetons d&apos;accès › Sandbox), les
+                épingles de test y sont créées ; à retirer après l&apos;accès « Standard ». Jamais de{" "}
+                <code>PINTEREST_API_URL</code>.
                 {setup.hints.pinterestAppId ? (
                   <>
                     {" "}

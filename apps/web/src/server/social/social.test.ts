@@ -15,7 +15,7 @@ import { accountToken, listAccounts, saveAccount } from "./accounts";
 import { commentReplyStatus, replyToComments } from "./comment-reply";
 import { savePinterestBoard } from "./pinterest-board";
 import { carouselJobs, completeCarousel, latestCarousel, registerCarousel, slideKey } from "./carousels";
-import { advancePublication, captionFor, startPublication } from "./publish";
+import { advancePublication, captionFor, SANDBOX_NOTE, startPublication } from "./publish";
 import {
   cancelScheduled,
   recipeSchedule,
@@ -876,6 +876,37 @@ describe.skipIf(!hasTestDb)("agent de publication", () => {
     const [recipe] = await db.select().from(s.recipes).where(eq(s.recipes.id, dish));
     expect(await captionFor(db, recipe!.currentVersionId!, "instagram")).toContain("💬 Commente « RECETTE »");
     expect(await captionFor(db, recipe!.currentVersionId!, "tiktok")).not.toContain("Commente");
+  });
+
+  it("Pinterest en accès d'essai : épingle de test créée dans le bac à sable, avec son jeton", async () => {
+    const db = testDb();
+    process.env.PINTEREST_SANDBOX_TOKEN = "pina_sandbox";
+    try {
+      const network = fakeNetwork([
+        [/api-sandbox\.pinterest\.com\/v5\/boards\?/, { items: [], bookmark: null }],
+        [
+          /api-sandbox\.pinterest\.com\/v5\/boards$/,
+          { id: "sb-1", name: "Recettes Culinova", privacy: "PUBLIC" },
+        ],
+        [/api-sandbox\.pinterest\.com\/v5\/pins$/, { id: "555" }],
+      ]);
+      expect(
+        await startPublication(db, admin.id, recipeId, "pinterest", "photo", {}, { fetchImpl: network.impl }),
+      ).toEqual({ ok: true });
+      // Jamais le vrai Pinterest pour créer l'épingle (refusé en accès d'essai).
+      expect(network.calls.some((c) => /\/\/api\.pinterest\.com\/v5\/pins/.test(c.url))).toBe(false);
+      const pin = JSON.parse(network.calls.find((c) => /\/v5\/pins$/.test(c.url))!.body!);
+      expect(pin.board_id).toBe("sb-1");
+      const [row] = await db
+        .select()
+        .from(s.recipePublications)
+        .where(
+          and(eq(s.recipePublications.recipeId, recipeId), eq(s.recipePublications.platform, "pinterest")),
+        );
+      expect(row).toMatchObject({ status: "published", postUrl: null, note: SANDBOX_NOTE });
+    } finally {
+      delete process.env.PINTEREST_SANDBOX_TOKEN;
+    }
   });
 
   it("réservé à l'administrateur : aucune automatisation pour les autres comptes", async () => {

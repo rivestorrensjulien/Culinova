@@ -2,10 +2,13 @@
  * API Pinterest v5 (application « Culinova » sur developers.pinterest.com) : connexion OAuth,
  * tableaux, création d'épingles (photo de la recette + lien vers culinova.fr), statistiques.
  * Portées : boards:read, boards:write (création du tableau), pins:read, pins:write, user_accounts:read.
- * Variables : PINTEREST_APP_ID, PINTEREST_APP_SECRET ; PINTEREST_API_URL facultative
- * (https://api-sandbox.pinterest.com tant que l'application est en accès d'essai).
- * En accès d'essai (« Trial »), les épingles créées ne sont visibles que par le compte qui les crée :
- * il faut l'accès « Standard » (vidéo de démonstration) pour qu'elles soient publiques.
+ * Variables : PINTEREST_APP_ID, PINTEREST_APP_SECRET ; PINTEREST_SANDBOX_TOKEN tant que
+ * l'application est en accès d'essai (« Trial ») : Pinterest y autorise la lecture du vrai compte
+ * (connexion, profil, tableaux) mais refuse d'y créer des épingles (« Apps with Trial access may not
+ * create Pins in production ») ; elles sont alors créées dans le bac à sable avec ce jeton, généré
+ * sur developers.pinterest.com (environnement « Sandbox »). Le bac à sable refuse en revanche les
+ * jetons de la connexion OAuth : jamais PINTEREST_API_URL vers le bac à sable pour la connexion.
+ * Accès « Standard » obtenu : retirer PINTEREST_SANDBOX_TOKEN, les épingles partent sur le vrai compte.
  */
 import { type PostMetrics, SocialApiError } from "./instagram";
 
@@ -32,6 +35,17 @@ function config(env: Env) {
   const value = pinterestConfig(env);
   if (!value) throw new Error("PINTEREST_APP_ID et PINTEREST_APP_SECRET manquants.");
   return value;
+}
+
+export const PINTEREST_SANDBOX_API = "https://api-sandbox.pinterest.com";
+
+/**
+ * Création des épingles en accès d'essai : bac à sable et son jeton (null = vrai compte).
+ * `env` à passer aux fonctions de ce fichier pour viser le bac à sable.
+ */
+export function pinterestSandbox(env: Env = process.env): { token: string; env: Env } | null {
+  const token = env.PINTEREST_SANDBOX_TOKEN?.trim();
+  return token ? { token, env: { ...env, PINTEREST_API_URL: PINTEREST_SANDBOX_API } } : null;
 }
 
 type PinterestError = { code?: number; message?: string };

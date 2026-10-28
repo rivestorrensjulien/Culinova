@@ -66,7 +66,7 @@ export function socialSetup(env: Record<string, string | undefined> = process.en
       instagramAppId: hint(instagramConfig(env)?.appId),
       tiktokClientKey: hint(tiktokConfig(env)?.clientKey),
       pinterestAppId: hint(pinterestConfig(env)?.appId),
-      pinterestSandbox: Boolean(pinterestConfig(env)?.api.includes("sandbox")),
+      pinterestSandbox: Boolean(env.PINTEREST_SANDBOX_TOKEN?.trim()),
     },
   };
 }

@@ -25,7 +25,13 @@ import {
 } from "./instagram";
 import { ensurePublicPage, publicRecipeUrl } from "../public-recipes";
 import { getPinterestBoard } from "./pinterest-board";
-import { PIN_DESCRIPTION_MAX, pinterestCreatePin } from "./pinterest";
+import {
+  PIN_DESCRIPTION_MAX,
+  pinterestBoards,
+  pinterestCreateBoard,
+  pinterestCreatePin,
+  pinterestSandbox,
+} from "./pinterest";
 import {
   tiktokCreatorInfo,
   tiktokInitPhotoPost,
@@ -146,12 +152,17 @@ export async function startPublication(
   };
 
   if (platform === "pinterest") {
-    const board = await getPinterestBoard(db);
-    if (!board) return { ok: false, reason: "no_board" };
+    const sandbox = pinterestSandbox();
+    const chosen = await getPinterestBoard(db);
+    if (!chosen && !sandbox) return { ok: false, reason: "no_board" };
     try {
+      // Accès d'essai : épingle créée dans le bac à sable de Pinterest (tableau du même nom).
+      const board = sandbox
+        ? await sandboxBoard(sandbox, chosen?.boardName ?? PINTEREST_BOARD_NAME, fetchImpl)
+        : chosen!;
       const title = await pinTitleFor(db, recipe.versionId);
       const pin = await pinterestCreatePin(
-        account.accessToken,
+        sandbox?.token ?? account.accessToken,
         {
           boardId: board.boardId,
           title,
@@ -161,6 +172,7 @@ export async function startPublication(
           imageUrl: signed(signedImagePath(mediaId, deps.now)),
         },
         fetchImpl,
+        sandbox?.env,
       );
       const now = deps.now ?? new Date();
       await setPublication(db, recipeId, platform, format, {
@@ -168,17 +180,25 @@ export async function startPublication(
         externalId: pin.id,
         videoId: mediaId,
         privacy: null,
-        postId: pin.id,
-        postUrl: pin.url,
+        // Bac à sable : pas d'adresse sur pinterest.com ni de statistiques.
+        postId: sandbox ? null : pin.id,
+        postUrl: sandbox ? null : pin.url,
         publishedAt: now,
-        note: null,
+        note: sandbox ? SANDBOX_NOTE : null,
       });
       await audit(db, {
         actorId: adminId,
         action: "publication.published",
         entity: "recipe",
         entityId: recipeId,
-        after: { platform, format, mediaId, postUrl: pin.url, board: board.boardName },
+        after: {
+          platform,
+          format,
+          mediaId,
+          postUrl: pin.url,
+          board: board.boardName,
+          sandbox: Boolean(sandbox),
+        },
       });
       return { ok: true };
     } catch (error) {
@@ -385,4 +405,27 @@ export async function advanceProcessing(db: Database, recipeId?: string, deps: P
   const outcomes: AdvanceOutcome[] = [];
   for (const row of rows) outcomes.push(await advancePublication(db, row.id, deps));
   return outcomes;
+}
+
+const PINTEREST_BOARD_NAME = "Recettes Culinova";
+export const SANDBOX_NOTE =
+  "Épingle de test dans le bac à sable de Pinterest (accès d'essai) : publique après l'accès Standard.";
+
+/** Tableau du bac à sable portant ce nom, créé s'il n'existe pas encore. */
+async function sandboxBoard(
+  sandbox: NonNullable<ReturnType<typeof pinterestSandbox>>,
+  name: string,
+  fetchImpl: typeof fetch,
+): Promise<{ boardId: string; boardName: string }> {
+  const boards = await pinterestBoards(sandbox.token, fetchImpl, sandbox.env);
+  const found =
+    boards.find((b) => b.name.trim().toLowerCase() === name.trim().toLowerCase()) ??
+    (await pinterestCreateBoard(
+      sandbox.token,
+      name,
+      "Les recettes de Culinova, pesées au gramme.",
+      fetchImpl,
+      sandbox.env,
+    ));
+  return { boardId: found.id, boardName: found.name };
 }

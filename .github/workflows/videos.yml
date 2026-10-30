@@ -140,4 +140,3 @@ jobs:
             agent/sortie/comparatif/format.txt
           if-no-files-found: ignore
           retention-days: 2
-          retention-days: 7

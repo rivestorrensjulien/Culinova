@@ -137,5 +137,6 @@ jobs:
           cd /tmp/comparatif
           git config user.name "Agent Culinova"
           git config user.email "agent@culinova.fr"
+          mkdir -p apps/web && echo '{"git":{"deploymentEnabled":false}}' | tee vercel.json > apps/web/vercel.json  # branche de fichiers : jamais déployée par Vercel
           git add -A && git commit -qm "Comparatif vidéo (${GITHUB_SHA::7})" || echo "Rien de nouveau"
           git push -q "$url" HEAD:comparatif-video

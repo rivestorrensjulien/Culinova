@@ -125,6 +125,7 @@ jobs:
           name: comparatif-video
           path: agent/sortie/comparatif/
           if-no-files-found: ignore
+          retention-days: 2
       - name: Fichiers sur la branche comparatif-video
         # On garde les fichiers déjà présents (clips, images) et on ajoute ou remplace les nouveaux.
         run: |

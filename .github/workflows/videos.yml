@@ -89,7 +89,7 @@ jobs:
           path: |
             agent/sortie/exemple.mp4
             agent/sortie/carrousel-*.jpg
-          retention-days: 14
+          retention-days: 2
 
       - name: Aperçu en images (branche apercus-video)
         if: github.event_name == 'push' || inputs.exemple
@@ -139,4 +139,5 @@ jobs:
             agent/sortie/comparatif/*.jpg
             agent/sortie/comparatif/format.txt
           if-no-files-found: ignore
+          retention-days: 2
           retention-days: 7

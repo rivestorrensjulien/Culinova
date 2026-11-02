@@ -156,6 +156,9 @@ export async function runGeneration(
       options.estimatePrices && generation.userId
         ? autoEstimate(db, ai, generation.userId, saved.versionId, request.language)
         : null,
+      // Nouvelle recette d'un administrateur : sa page publique est créée d'office (case cochée
+      // dans l'encart « Publication sur les réseaux »). Une régénération ne la recrée pas.
+      !isRegeneration && generation.userId ? autoPublicPage(db, generation.userId, saved.recipeId) : null,
     ]);
 
     // 3. … et seulement alors, la génération est annoncée comme terminée.
@@ -323,6 +326,7 @@ async function runImportGeneration(
     await Promise.all([
       generateSocial(db, ai, { userId: generation.userId, versionId: saved.versionId, recipe, language }),
       options.estimatePrices ? autoEstimate(db, ai, generation.userId, saved.versionId, language) : null,
+      autoPublicPage(db, generation.userId, saved.recipeId),
     ]);
     await db
       .update(s.aiGenerations)
@@ -352,5 +356,18 @@ async function runImportGeneration(
       await releaseQuota(db, { userId: generation.userId, metric: "recipes", now: generation.createdAt });
     }
     return "failed";
+  }
+}
+
+/**
+ * Page publique créée d'office pour une nouvelle recette d'administrateur (sans effet pour les
+ * autres comptes). Facultative : un échec ne fait jamais échouer la génération.
+ */
+async function autoPublicPage(db: Database, userId: string, recipeId: string): Promise<void> {
+  try {
+    const { ensurePublicPage } = await import("../public-recipes");
+    await ensurePublicPage(db, userId, recipeId);
+  } catch (error) {
+    console.error(`Page publique de ${recipeId} : ${error instanceof Error ? error.message : String(error)}`);
   }
 }

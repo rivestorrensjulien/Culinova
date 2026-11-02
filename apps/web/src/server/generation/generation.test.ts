@@ -41,10 +41,10 @@ async function draftRow(id: string) {
   return (await testDb().select().from(s.recipeDrafts).where(eq(s.recipeDrafts.id, id)))[0]!;
 }
 
-async function setUsage(userId: string, metric: string, count: number) {
+async function setUsage(userId: string, metric: string, count: number, at: Date = new Date()) {
   await testDb()
     .insert(s.usageCounters)
-    .values({ subjectType: "user", subjectId: userId, metric, period: monthlyPeriod(new Date()), count })
+    .values({ subjectType: "user", subjectId: userId, metric, period: monthlyPeriod(at), count })
     .onConflictDoUpdate({
       target: [
         s.usageCounters.subjectType,
@@ -203,12 +203,13 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
   it("refuse la 6e recette du mois avec la date de remise à zéro", async () => {
     const db = testDb();
     const user = await createTestUser();
-    await setUsage(user.id, "recipes", 5);
+    const now = new Date("2026-10-15T10:00:00Z");
+    await setUsage(user.id, "recipes", 5, now);
     const draft = await newDraft(user.id);
     const result = await startRecipeGeneration(db, {
       userId: user.id,
       draftId: draft.id,
-      now: new Date("2026-10-15T10:00:00Z"),
+      now,
     });
     expect(result).toEqual({
       ok: false,
@@ -277,6 +278,38 @@ describe.skipIf(!hasTestDb)("génération d'une recette", () => {
     expect(generation!.error).toMatch(/^invalid_output : /);
     // Après un échec, on peut relancer.
     expect((await startRecipeGeneration(db, { userId: user.id, draftId: draft.id })).ok).toBe(true);
+  });
+
+  it("crée d'office la page publique d'une nouvelle recette d'administrateur, pas une seconde fois", async () => {
+    const db = testDb();
+    const ai = new FakeLlmAdapter();
+    const pages = async (recipeId: string) =>
+      db.select().from(s.recipePublicPages).where(eq(s.recipePublicPages.recipeId, recipeId));
+
+    // Compte ordinaire : jamais de page publique.
+    const user = await createTestUser();
+    const userDraft = await newDraft(user.id);
+    const userStart = await startRecipeGeneration(db, { userId: user.id, draftId: userDraft.id });
+    if (!userStart.ok) throw new Error("refusé");
+    await runGeneration(db, ai, userStart.generationId);
+    expect(await pages((await draftRow(userDraft.id)).recipeId!)).toHaveLength(0);
+
+    // Administrateur : case « Page publique de la recette » cochée dès la génération.
+    const admin = await createTestUser({ role: "admin" });
+    const draft = await newDraft(admin.id);
+    const started = await startRecipeGeneration(db, { userId: admin.id, draftId: draft.id });
+    if (!started.ok) throw new Error("refusé");
+    await runGeneration(db, ai, started.generationId);
+    const recipeId = (await draftRow(draft.id)).recipeId!;
+    expect(await pages(recipeId)).toHaveLength(1);
+    expect((await loadRecipeView(db, recipeId, admin.id))!.publishing?.publicUrl).toContain("/recette/");
+
+    // Page retirée à la main : une régénération ne la recrée pas.
+    await db.delete(s.recipePublicPages).where(eq(s.recipePublicPages.recipeId, recipeId));
+    const regen = await startRegeneration(db, { userId: admin.id, recipeId });
+    if (!regen.ok) throw new Error("refusé");
+    await runGeneration(db, ai, regen.generationId);
+    expect(await pages(recipeId)).toHaveLength(0);
   });
 
   it("autorise 2 régénérations par recette, chacune crée une nouvelle version", async () => {

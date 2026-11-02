@@ -8,6 +8,7 @@ import { refuseAgent } from "@/server/social/agent-route";
 import { advanceProcessing } from "@/server/social/publish";
 import { runAutoplan } from "@/server/social/autoplan-run";
 import { replyToComments } from "@/server/social/comment-reply";
+import { accountsHealth } from "@/server/social/health";
 import { runDueSchedules } from "@/server/social/schedule";
 
 export const dynamic = "force-dynamic";
@@ -25,5 +26,8 @@ export async function POST(request: Request) {
   });
   // « Commente RECETTE » : lien de la recette envoyé en message privé.
   const comments = await replyToComments(db).catch(() => ({ sent: 0, failed: 0 }));
-  return Response.json({ comments, scheduled, planned, publications: await advanceProcessing(db) });
+  const publications = await advanceProcessing(db);
+  // État des connexions (clés, compte relié, autorisations, appel réel au réseau).
+  const accounts = await accountsHealth(db).catch(() => []);
+  return Response.json({ comments, scheduled, planned, publications, accounts });
 }

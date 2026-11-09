@@ -97,35 +97,39 @@ export function videoScenesProblems(scenes: VideoScenes, shotCount: number): str
  * - geste : gros plan filmé sur un seul liquide qui nappe ou coule (sauce, sirop, glaçage…), garnitures déjà en place.
  * Toutes les descriptions sont rendues, pour qu'un autre format puisse être demandé sans nouvelle analyse.
  */
-export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@4";
+export const VIDEO_LAYERS_PROMPT_VERSION = "video.layers@5";
 
 export const VIDEO_FORMATS = ["eclate", "coupe", "dessus", "geste"] as const;
 export type VideoFormat = (typeof VIDEO_FORMATS)[number];
 
 export const VIDEO_LAYERS_SYSTEM_PROMPT = `Tu prépares une vidéo culinaire courte (TikTok, Reels) d'un plat, à partir de sa recette (ingrédients, étapes, dressage). La vidéo commence par la photo du plat fini et se termine par le chef qui dit « Et voilà ! ». Entre les deux, un des quatre formats :
 - eclate : les éléments du plat s'écartent verticalement au-dessus du contenant, puis, vus du dessus, se reposent un à un dans le contenant jusqu'au plat fini.
-- coupe : un couteau tranche le plat, une spatule soulève une part au ralenti et montre ses couches intérieures (vapeur, fromage qui file).
+- coupe : un couteau tranche le plat, une spatule soulève une part au ralenti et montre ses couches intérieures (fromage qui file, vapeur si le plat est servi chaud).
 - dessus : vue du dessus, le contenant vide reçoit la base, puis chaque garniture et chaque finition tombe une à une.
 - geste : un gros plan filmé sur un seul geste simple qui rend le plat appétissant : un liquide qui nappe ou coule (sauce, caramel, sirop, glaçage, crème, huile).
 
 format : choisis celui qui montre le mieux CE plat :
 - eclate pour ce qui est empilé ou posé en éléments bien distincts : tartines, tostadas, burgers, sandwichs, bao, tacos, wraps ouverts, assiettes à plusieurs éléments, desserts montés en hauteur.
-- coupe pour ce qui est cuit ou moulé en strates, ou dont l'intérieur fait le spectacle : moussaka, lasagnes, gratins, tartes, quiches, tourtes, gâteaux, terrines, roulés, fondants, pains farcis.
+- coupe pour ce qui est cuit ou moulé en strates et se tranche au couteau dans un plat ou sur une planche, ou dont l'intérieur fait le spectacle : moussaka, lasagnes, gratins, tartes, quiches, tourtes, gâteaux, terrines, roulés, fondants, pains farcis. Jamais pour ce qui est servi dans un verre, une verrine, une coupe, un bocal, un pot ou une tasse : on ne coupe pas au couteau dans un verre.
+- verrines, desserts en verre ou en bocal, parfaits, trifles : geste si une sauce, un coulis ou un sirop se verse sur le dessus, sinon eclate (les couches s'élèvent hors du verre puis s'y reposent une à une).
 - dessus pour ce qui est mélangé, en sauce ou servi dans un bol : soupes, currys, mijotés, ragoûts, risottos, pâtes, purées, bols composés, salades, poke.
 - geste pour ce que définit un nappage, une coulure, un glaçage ou un service versé : crêpes et pancakes nappés, desserts arrosés de sauce, boissons, affogato, plats flambés.
 
 Décris dans tous les cas (en anglais sauf les noms) :
 - container : le contenant de service exact du dressage (planche, assiette, bol, barquette…), sa matière et sa couleur, et la surface sur laquelle il est posé.
 - layers : les éléments visibles du plat fini, de celui posé en premier dans le contenant à celui posé en dernier (3 à 7). Pour chacun : name (français, court, avec majuscule : « Pain de campagne grillé »), look (anglais : aspect exact, forme, quantité, disposition dans le contenant, comme sur le plat fini). Regroupe ce qui se pose en même temps (« sel, poivre et piment » = une seule couche). Les accompagnements servis à côté forment la dernière couche, posés à côté du plat.
-- cut : la coupe. vessel (anglais : le plat de cuisson ou de service entier, intact, avant la première part : matière, forme, dessus doré…), start (anglais : image de départ, le plat entier intact, un couteau et une spatule à côté, vue de trois quarts), end (anglais : une part nette soulevée sur la spatule juste au-dessus du plat entamé, sa tranche bien visible avec chaque couche de bas en haut, vapeur), motion (anglais, une phrase au présent commençant par un verbe : le couteau tranche, la spatule soulève la part au ralenti), strata (noms français des couches visibles dans la tranche, de bas en haut, 2 à 6). Pour un plat sans couches, la tranche montre son intérieur (mie, farce, cœur coulant).
+- cut : la coupe. vessel (anglais : le plat de cuisson ou de service entier, intact, avant la première part : matière, forme, dessus doré…), start (anglais : image de départ, le plat entier intact, un couteau et une spatule à côté, vue de trois quarts), end (anglais : une part nette soulevée sur la spatule juste au-dessus du plat entamé, sa tranche bien visible avec chaque couche de bas en haut ; vapeur seulement si le plat est servi chaud), motion (anglais, une phrase au présent commençant par un verbe : le couteau tranche, la spatule soulève la part au ralenti), strata (noms français des couches visibles dans la tranche, de bas en haut, 2 à 6). Pour un plat sans couches, la tranche montre son intérieur (mie, farce, cœur coulant).
 - gesture : le geste. Un seul liquide versé ou passé au pinceau, en un filet continu (sauce, caramel, sirop, miel, glaçage, crème, huile) : jamais rien qui tombe en morceaux (fleurs, pétales, zestes, graines, amandes, sucre, herbes), car l'IA vidéo fait disparaître ces éléments en vol. action (français, court : « Napper de caramel »), start (anglais : gros plan juste avant le geste, plat fini avec toutes ses garnitures solides déjà en place — fleurs, zestes, amandes… — il ne manque que le liquide, la main ou l'ustensile prêt), end (anglais : juste après, le liquide brillant en place, garnitures identiques au départ, comme sur le plat fini), motion (anglais, une phrase au présent : le liquide coule ou nappe lentement pendant 5 secondes, rien d'autre ne tombe ni ne bouge sur le plat).
 - layered : true si le plat se prête à une vue éclatée, sinon false.
+- hot : true seulement si le plat est servi chaud (sorti du four, de la poêle, de la casserole) ; false pour un plat froid, frais, glacé ou à température ambiante (verrines, salades, tartares, cheesecakes, gâteaux, tartes sucrées, entremets et tous les desserts, sauf ceux servis tièdes à la sortie du four comme un fondant ou un crumble). Jamais de vapeur ni de fumée sur un plat froid.
 Jamais de visage humain : seulement des mains, des ustensiles et la nourriture.`;
 
 export const videoLayersSchema = z.object({
   format: z.enum(VIDEO_FORMATS),
   container: z.string().min(1),
   layered: z.boolean(),
+  /** Servi chaud : seule condition pour montrer de la vapeur (retour de Julien du 09/11). */
+  hot: z.boolean(),
   layers: z
     .array(z.object({ name: z.string().min(1), look: z.string().min(1) }))
     .min(2)
@@ -146,6 +150,20 @@ export const videoLayersSchema = z.object({
 });
 
 export type VideoLayers = z.infer<typeof videoLayersSchema>;
+
+/** Contenants où l'on ne coupe jamais au couteau (retour de Julien du 09/11, verrine coupée). */
+const GLASS_CONTAINER =
+  /\b(verrines?|verres?|bocal|bocaux|coupes? à|pots?|tasses?|mugs?|glass(es)?|jars?|cups?|tumblers?|parfait)\b/i;
+
+/** Problèmes de l'analyse, renvoyés au modèle pour une nouvelle tentative. */
+export function videoLayersProblems(data: VideoLayers): string[] {
+  if (data.format === "coupe" && GLASS_CONTAINER.test(data.container)) {
+    return [
+      "format « coupe » interdit pour un plat servi dans un verre, une verrine, un bocal ou un pot : choisis geste (coulis ou sauce versé dessus) ou eclate.",
+    ];
+  }
+  return [];
+}
 
 export function buildVideoLayersPrompt(input: Omit<VideoScenesInput, "hook" | "shots">): {
   system: string;

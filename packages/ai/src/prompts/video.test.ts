@@ -5,6 +5,7 @@ import {
   buildVideoScenesPrompt,
   VIDEO_FORMATS,
   VIDEO_LAYERS_PROMPT_VERSION,
+  videoLayersProblems,
   videoLayersSchema,
   VIDEO_SCENES_PROMPT_VERSION,
   videoScenesProblems,
@@ -64,5 +65,29 @@ describe("vue éclatée", () => {
     expect(system).toMatch(/geste pour .*nappés/);
     // Geste limité à un seul liquide : rien qui tombe en morceaux (retour de Julien du 26/10).
     expect(system).toMatch(/jamais rien qui tombe en morceaux/);
+  });
+
+  it("ne coupe jamais une verrine et ne met de vapeur que sur un plat chaud (retour de Julien du 09/11)", async () => {
+    const { system } = buildVideoLayersPrompt(input);
+    expect(VIDEO_LAYERS_PROMPT_VERSION).toBe("video.layers@5");
+    expect(system).toContain("on ne coupe pas au couteau dans un verre");
+    expect(system).toContain("Jamais de vapeur ni de fumée sur un plat froid");
+    expect(system).toMatch(/false pour .*cheesecakes/);
+    const base = (
+      await new FakeLlmAdapter().generateStructured({
+        promptId: VIDEO_LAYERS_PROMPT_VERSION,
+        ...buildVideoLayersPrompt(input),
+        schema: videoLayersSchema,
+      })
+    ).data;
+    expect(base.hot).toBe(false);
+    const verrine = {
+      ...base,
+      format: "coupe" as const,
+      container: "Six small glass verrines on a marble tray.",
+    };
+    expect(videoLayersProblems(verrine)).toEqual([expect.stringContaining("verrine")]);
+    expect(videoLayersProblems({ ...verrine, format: "geste" })).toEqual([]);
+    expect(videoLayersProblems({ ...verrine, container: "A rectangular ceramic baking dish." })).toEqual([]);
   });
 });

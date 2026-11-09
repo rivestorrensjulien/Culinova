@@ -12,6 +12,7 @@ import {
   VIDEO_LAYERS_PROMPT_VERSION,
   VIDEO_SCENES_PROMPT_VERSION,
   type VideoLayers,
+  videoLayersProblems,
   videoLayersSchema,
   type VideoScenes,
   videoScenesProblems,
@@ -183,6 +184,7 @@ export async function videoLayers(
     promptVersion: VIDEO_LAYERS_PROMPT_VERSION,
     schema: videoLayersSchema,
     build: (view) => buildVideoLayersPrompt(recipeInput(view)),
+    validate: videoLayersProblems,
     fresh: options.fresh,
   });
 }

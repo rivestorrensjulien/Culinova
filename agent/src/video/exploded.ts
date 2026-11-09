@@ -26,6 +26,8 @@ export interface LayerScript {
   format?: ShortFormat;
   container: string;
   layered: boolean;
+  /** Servi chaud : seule condition pour la vapeur (absent d'une ancienne analyse : pas de vapeur). */
+  hot?: boolean;
   layers: Array<{ name: string; look: string }>;
   /** Coupe : plat entier, puis part soulevée qui montre ses couches (strata, de bas en haut). */
   cut?: { vessel: string; start: string; end: string; motion: string; strata: string[] };
@@ -225,7 +227,9 @@ export function cutEndPrompt(script: LayerScript): string {
     "showing the clean cut walls of the remaining dish. The rest of the dish is unchanged.",
     `The lifted portion's cut side faces the camera and shows, from bottom to top: ${cut.strata.join(", ")}.`,
     `${cut.end}`,
-    "Gentle steam rises. The food looks exactly like the finished dish in image 2.",
+    script.hot
+      ? "Gentle steam rises. The food looks exactly like the finished dish in image 2."
+      : "The dish is served cold: no steam, no smoke, no vapour. The food looks exactly like the finished dish in image 2.",
     NO_TEXT,
   ].join(" ");
 }
@@ -241,7 +245,7 @@ export function cutMotion(script: LayerScript): string {
     "The spatula already under the cut portion lifts it straight up in slow motion, revealing its layers; " +
     "the empty space it leaves stays exactly where the portion was, the rest of the dish does not move; " +
     "nothing on the dish disappears. " +
-    `${script.cut!.motion} Static camera, steam rising, realistic food textures.`
+    `${script.cut!.motion} Static camera, ${script.hot ? "steam rising" : "cold dish, no steam or smoke"}, realistic food textures.`
   );
 }
 

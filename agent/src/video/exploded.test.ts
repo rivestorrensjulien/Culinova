@@ -105,6 +105,11 @@ test("consignes de la coupe et du geste", () => {
   assert.match(cutEndPrompt(moussaka), /Aubergines, Viande, Béchamel/);
   assert.match(CUT_KNIFE_MOTION, /nothing is lifted/);
   assert.match(cutMotion(moussaka), /already under the cut portion/);
+  // Vapeur seulement pour un plat servi chaud (retour de Julien du 09/11 : cheesecake et verrine qui fument).
+  assert.match(cutEndPrompt({ ...moussaka, hot: true }), /steam rises/);
+  assert.doesNotMatch(cutEndPrompt({ ...moussaka, hot: false }), /steam rises/);
+  assert.match(cutEndPrompt({ ...moussaka, hot: false }), /no steam, no smoke/);
+  assert.doesNotMatch(cutMotion({ ...moussaka, hot: false }), /steam rising/);
   assert.match(gestureStartPrompt(moussaka), /never a face/);
   assert.match(gestureEndPrompt(moussaka), /sauce glossy/);
   // Ce qui est versé reste visible (25/10) ; un seul liquide, rien qui tombe en morceaux (26/10).

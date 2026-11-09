@@ -448,6 +448,7 @@ const defaultResponder: Responder = (request) => {
       format: "eclate",
       container: "A light oak serving board on a linen tablecloth.",
       layered: true,
+      hot: false,
       cut: {
         vessel: "A whole dish on a light oak board.",
         start: "The whole dish, untouched, a knife and a spatula beside it.",

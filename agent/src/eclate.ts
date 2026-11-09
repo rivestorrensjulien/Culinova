@@ -129,7 +129,8 @@ async function main() {
         ...(end ? { end_image_url: end } : {}),
         duration: "5",
         generate_audio: audio,
-        negative_prompt: NEGATIVE_PROMPT,
+        // Plat froid : jamais de vapeur ni de fumée (retour de Julien du 09/11, verrine hibiscus).
+        negative_prompt: layers.hot ? NEGATIVE_PROMPT : `${NEGATIVE_PROMPT}, steam, smoke, vapour, mist`,
       }),
     );
     await writeFile(join(assets, file), await download(clip.video.url));

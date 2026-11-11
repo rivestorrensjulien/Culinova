@@ -38,8 +38,8 @@ export default async function StockPage({ params }: { params: Promise<{ locale: 
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="font-display text-4xl">{t("title")}</h1>
-        <p className="mt-2 max-w-2xl text-muted">{t("intro")}</p>
+        <h1 className="font-display text-4xl">{session.user.proMode ? t("title") : t("homeTitle")}</h1>
+        <p className="mt-2 max-w-2xl text-muted">{session.user.proMode ? t("intro") : t("homeIntro")}</p>
       </div>
       {low > 0 || soon > 0 ? (
         <Notice tone="warning">

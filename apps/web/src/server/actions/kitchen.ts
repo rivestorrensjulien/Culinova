@@ -22,6 +22,7 @@ import {
   createShoppingList,
   deleteShoppingList,
   setShoppingItemChecked,
+  setShoppingItemInPantry,
 } from "../kitchen/shopping";
 import {
   addToStock,
@@ -156,6 +157,13 @@ export async function toggleShoppingItemAction(itemId: string, checked: boolean)
   const session = await currentUser();
   if (!uuid.safeParse(itemId).success) return false;
   return setShoppingItemChecked(getDb(), session.user.id, itemId, Boolean(checked));
+}
+
+/** « J'en ai déjà » : l'article quitte les courses pour « Déjà chez vous » (et inversement). */
+export async function setShoppingItemInPantryAction(itemId: string, inPantry: boolean): Promise<boolean> {
+  const session = await currentUser();
+  if (!uuid.safeParse(itemId).success) return false;
+  return setShoppingItemInPantry(getDb(), session.user.id, itemId, Boolean(inPantry));
 }
 
 export async function deleteShoppingListAction(formData: FormData): Promise<void> {

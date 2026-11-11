@@ -7,20 +7,50 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import {
   deleteShoppingListAction,
+  setShoppingItemInPantryAction,
   stockFromListAction,
   toggleShoppingItemAction,
 } from "@/server/actions/kitchen";
-import type { ShoppingListView } from "@/server/kitchen/shopping";
+import type { ShoppingListItemView, ShoppingListView } from "@/server/kitchen/shopping";
 
-/** Liste de courses à cocher, rangée par rayon ; les cases cochées sont enregistrées. */
-export function ShoppingChecklist({ list }: { list: ShoppingListView }) {
+/**
+ * Liste de courses à cocher, rangée par rayon ; les cases cochées sont enregistrées. Ce qui est déjà
+ * chez soi (garde-manger, « j'en ai déjà ») est rangé à part, hors du total ; pour un particulier,
+ * les basiques du placard (sel, huile, épices…) aussi.
+ */
+export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingListView; proMode?: boolean }) {
   const t = useTranslations("Shopping");
   const tr = useTranslations("Recipe");
   const format = useFormatter();
   const [checked, setChecked] = useState(
     () => new Set(list.groups.flatMap((g) => g.items.filter((i) => i.checked).map((i) => i.id))),
   );
-  const count = list.groups.reduce((sum, g) => sum + g.items.length, 0);
+  const [atHome, setAtHome] = useState(
+    () => new Set(list.groups.flatMap((g) => g.items.filter((i) => i.inPantry).map((i) => i.id))),
+  );
+  const allItems = list.groups.flatMap((g) => g.items);
+  const isStaple = (item: ShoppingListItemView) => !proMode && item.staple;
+  const toBuy = list.groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => !atHome.has(i.id) && !isStaple(i)) }))
+    .filter((g) => g.items.length > 0);
+  const staples = allItems.filter((i) => !atHome.has(i.id) && isStaple(i));
+  const home = allItems.filter((i) => atHome.has(i.id));
+  const shopping = [...toBuy.flatMap((g) => g.items), ...staples];
+  const count = shopping.length;
+  const checkedCount = shopping.filter((i) => checked.has(i.id)).length;
+  // Total des courses : ce qui est déjà chez soi n'en fait pas partie.
+  const totalCents = shopping.reduce((sum, i) => sum + (i.costCents ?? 0), 0);
+  const unpriced = shopping.filter((i) => i.costCents === null).length;
+
+  const markHome = (itemId: string, value: boolean) => {
+    setAtHome((all) => {
+      const copy = new Set(all);
+      if (value) copy.add(itemId);
+      else copy.delete(itemId);
+      return copy;
+    });
+    void setShoppingItemInPantryAction(itemId, value).catch(() => undefined);
+  };
   const [stocking, setStocking] = useState(false);
   const [stocked, setStocked] = useState<number | null>(null);
   const euros = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
@@ -42,6 +72,60 @@ export function ShoppingChecklist({ list }: { list: ShoppingListView }) {
     return `${format.number(display.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
   };
 
+  const renderItems = (items: ShoppingListItemView[]) => (
+    <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
+      {items.map((item) => (
+        <li key={item.id} className="flex items-center gap-3 px-4 py-3" data-testid="shopping-item">
+          <input
+            id={`item-${item.id}`}
+            type="checkbox"
+            className="size-5 shrink-0 accent-primary"
+            checked={checked.has(item.id)}
+            onChange={() => toggle(item.id)}
+          />
+          <label
+            htmlFor={`item-${item.id}`}
+            className={cx(
+              "flex flex-1 cursor-pointer flex-col",
+              checked.has(item.id) && "text-muted line-through",
+            )}
+          >
+            <span>{item.name}</span>
+            {item.recipes.length > 0 ? (
+              <span className="text-xs text-muted no-underline">
+                {t("from", { list: item.recipes.join(", ") })}
+              </span>
+            ) : null}
+            {item.pantryQuantity ? (
+              <span className="text-xs text-muted no-underline">
+                {t("partlyHome", { quantity: quantityText(item.pantryQuantity) })}
+              </span>
+            ) : null}
+            <button
+              type="button"
+              className="mt-0.5 w-fit text-xs text-primary hover:underline print:hidden"
+              onClick={(e) => {
+                e.preventDefault();
+                markHome(item.id, true);
+              }}
+            >
+              {t("haveIt")}
+            </button>
+          </label>
+          <span className="text-right">
+            <span className="block font-medium tabular-nums">{quantityText(item.quantity)}</span>
+            {item.costCents !== null ? (
+              <span className="block text-xs text-muted tabular-nums">
+                {euros(item.costCents)}
+                {item.estimated ? ` · ${t("estimated")}` : ""}
+              </span>
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <Link href="/app/courses" className="text-sm text-primary hover:underline print:hidden">
@@ -51,7 +135,7 @@ export function ShoppingChecklist({ list }: { list: ShoppingListView }) {
         <div>
           <h1 className="font-display text-4xl">{list.name}</h1>
           <p className="mt-1 text-muted" data-testid="shopping-progress">
-            {t("progress", { checked: checked.size, count })}
+            {t("progress", { checked: checkedCount, count })}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2 print:hidden">
@@ -69,75 +153,62 @@ export function ShoppingChecklist({ list }: { list: ShoppingListView }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-5">
-          {list.groups.map((group) => (
+          {toBuy.map((group) => (
             <section key={group.code ?? "other"} className="flex flex-col gap-2 break-inside-avoid">
               <h2 className="text-sm font-medium tracking-wide text-muted uppercase">
                 {group.label ?? t("other")}
               </h2>
-              <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
-                {group.items.map((item) => (
-                  <li key={item.id}>
-                    <label
-                      className="flex cursor-pointer items-center gap-3 px-4 py-3"
-                      data-testid="shopping-item"
+              {renderItems(group.items)}
+            </section>
+          ))}
+          {staples.length > 0 ? (
+            <section className="flex flex-col gap-2 break-inside-avoid" data-testid="shopping-staples">
+              <h2 className="text-sm font-medium tracking-wide text-muted uppercase">{t("staplesTitle")}</h2>
+              <p className="text-sm text-muted">{t("staplesHint")}</p>
+              {renderItems(staples)}
+            </section>
+          ) : null}
+          {home.length > 0 ? (
+            <section className="flex flex-col gap-2 break-inside-avoid" data-testid="shopping-home">
+              <h2 className="text-sm font-medium tracking-wide text-muted uppercase">{t("homeTitle")}</h2>
+              <ul className="divide-y divide-border rounded-lg border border-dashed border-border">
+                {home.map((item) => (
+                  <li key={item.id} className="flex items-center gap-3 px-4 py-2.5 text-muted">
+                    <span className="flex-1">{item.name}</span>
+                    <span className="tabular-nums">{quantityText(item.quantity)}</span>
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline print:hidden"
+                      onClick={() => markHome(item.id, false)}
                     >
-                      <input
-                        type="checkbox"
-                        className="size-5 accent-primary"
-                        checked={checked.has(item.id)}
-                        onChange={() => toggle(item.id)}
-                      />
-                      <span
-                        className={cx(
-                          "flex flex-1 flex-col",
-                          checked.has(item.id) && "text-muted line-through",
-                        )}
-                      >
-                        <span>{item.name}</span>
-                        {item.recipes.length > 0 ? (
-                          <span className="text-xs text-muted no-underline">
-                            {t("from", { list: item.recipes.join(", ") })}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="text-right">
-                        <span className="block font-medium tabular-nums">{quantityText(item.quantity)}</span>
-                        {item.costCents !== null ? (
-                          <span className="block text-xs text-muted tabular-nums">
-                            {euros(item.costCents)}
-                            {item.estimated ? ` · ${t("estimated")}` : ""}
-                          </span>
-                        ) : null}
-                      </span>
-                    </label>
+                      {t("buyAfterAll")}
+                    </button>
                   </li>
                 ))}
               </ul>
             </section>
-          ))}
+          ) : null}
         </div>
         <Card className="h-fit">
           <CardBody className="flex flex-col gap-1 text-sm">
             <span className="text-muted">{t("total")}</span>
             <span className="font-display text-3xl" data-testid="shopping-total">
-              {euros(list.totalCents)}
+              {euros(totalCents)}
             </span>
-            {list.unpricedCount > 0 ? (
-              <span className="text-muted">{t("unpriced", { count: list.unpricedCount })}</span>
-            ) : null}
-            <span className="text-muted">{t("stockHint")}</span>
+            {unpriced > 0 ? <span className="text-muted">{t("unpriced", { count: unpriced })}</span> : null}
+            <span className="text-muted">{t(proMode ? "stockHint" : "homeStockHint")}</span>
             <div className="mt-3 flex flex-col items-start gap-2 border-t border-border pt-3 print:hidden">
               <Button
                 size="sm"
                 variant="secondary"
-                disabled={stocking || stocked !== null || checked.size === 0}
+                disabled={stocking || stocked !== null || checkedCount === 0}
                 onClick={async () => {
                   setStocking(true);
                   setStocked(await stockFromListAction(list.id).catch(() => 0));
                   setStocking(false);
                 }}
               >
-                {t("toStock")}
+                {t(proMode ? "toStock" : "homeToStock")}
               </Button>
               {stocked !== null ? (
                 <span className="text-sm" data-testid="stocked">

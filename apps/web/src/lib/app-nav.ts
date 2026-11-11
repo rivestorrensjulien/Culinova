@@ -1,7 +1,7 @@
 /**
  * Pages de l'espace connecté, selon le mode du compte. Par défaut, Culinova s'adresse aux
- * particuliers (décision de Julien du 11/11) : menus, stocks et réglages de chiffrage (coefficient,
- * TVA, main-d'œuvre) n'apparaissent qu'en mode pro. Rien n'est supprimé : les pages restent en place.
+ * particuliers (décision de Julien du 11/11) : menus et réglages de chiffrage (coefficient, TVA,
+ * main-d'œuvre) n'apparaissent qu'en mode pro ; les stocks deviennent « Mon garde-manger ». Rien n'est supprimé : les pages restent en place.
  */
 export type AppPageKey =
   | "dashboard"
@@ -33,7 +33,7 @@ const PAGES: readonly AppPage[] = [
   { key: "bases", href: "/app/bases", menu: true },
   { key: "menus", href: "/app/menus", menu: true, pro: true },
   { key: "shopping", href: "/app/courses", menu: true },
-  { key: "stock", href: "/app/stocks", menu: true, pro: true },
+  { key: "stock", href: "/app/stocks", menu: true },
   { key: "import", href: "/app/importer" },
   { key: "ingredients", href: "/app/ingredients", menu: true },
   { key: "settings", href: "/app/reglages", menu: true, pro: true },
@@ -46,7 +46,10 @@ export function appPages(proMode: boolean, where: "menu" | "search"): AppPage[] 
   return PAGES.filter((p) => (proMode || !p.pro) && (where === "search" || p.menu));
 }
 
-/** Clé de libellé (App.nav) : « Ingrédients » en mode pro, « Mes prix » pour un particulier. */
+/** Clé de libellé (App.nav) : pour un particulier, « Mes prix » et « Mon garde-manger ». */
 export function pageLabel(key: AppPageKey, proMode: boolean): string {
-  return key === "ingredients" && !proMode ? "prices" : key;
+  if (proMode) return key;
+  if (key === "ingredients") return "prices";
+  if (key === "stock") return "pantry";
+  return key;
 }

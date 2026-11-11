@@ -246,6 +246,8 @@ export async function stockFromShoppingList(db: Database, userId: string, listId
         eq(s.shoppingListItems.shoppingListId, listId),
         eq(s.shoppingLists.ownerId, userId),
         eq(s.shoppingListItems.checked, true),
+        // Ce qui était déjà chez soi n'a pas été acheté.
+        eq(s.shoppingListItems.inPantry, false),
       ),
     );
   let count = 0;

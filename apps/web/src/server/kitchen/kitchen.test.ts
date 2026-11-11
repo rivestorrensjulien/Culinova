@@ -15,6 +15,7 @@ import {
   deductStock,
   loadShoppingList,
   setShoppingItemChecked,
+  setShoppingItemInPantry,
 } from "./shopping";
 import { addToStock, consumeStock, listStock, stockFromShoppingList } from "./stock";
 
@@ -132,6 +133,20 @@ describe.skipIf(!hasTestDb)("menus et listes de courses", () => {
       await buildShoppingNeeds(db, user.id, [{ recipeId, servings: 2 }]),
     );
     expect(small.some((n) => n.ingredientId === riceId)).toBe(false);
+    // Dans une liste, il reste visible, rangé dans « Déjà chez vous », hors du total.
+    const smallId = (await createShoppingList(db, user.id, {
+      name: "Pour deux",
+      source: "recipes",
+      entries: [{ recipeId, servings: 2 }],
+    }))!;
+    const smallRice = (await loadShoppingList(db, user.id, smallId))!.groups
+      .flatMap((g) => g.items)
+      .find((i) => i.ingredientId === riceId)!;
+    expect(smallRice).toMatchObject({
+      inPantry: true,
+      quantity: { value: 150 },
+      pantryQuantity: { value: 150 },
+    });
 
     // Les courses cochées rejoignent le stock.
     const listId = (await createShoppingList(db, user.id, {
@@ -140,7 +155,25 @@ describe.skipIf(!hasTestDb)("menus et listes de courses", () => {
       entries: [{ recipeId, servings: 4 }],
     }))!;
     const list = (await loadShoppingList(db, user.id, listId))!;
-    const riceItem = list.groups.flatMap((g) => g.items).find((i) => i.ingredientId === riceId)!;
+    const items = list.groups.flatMap((g) => g.items);
+    const riceItem = items.find((i) => i.ingredientId === riceId)!;
+    // 100 g à acheter, et la mention des 200 g déjà au garde-manger.
+    expect(riceItem).toMatchObject({
+      quantity: { dimension: "mass", value: 100 },
+      pantryQuantity: { dimension: "mass", value: 200 },
+      inPantry: false,
+    });
+    // L'eau du robinet n'est jamais à acheter.
+    expect(items.some((i) => /^eau$/i.test(i.name))).toBe(false);
+    // « J'en ai déjà » sur un autre article : il sort du total et n'ira pas au stock.
+    const other =
+      items.find((i) => i.ingredientId !== riceId && i.costCents !== null) ??
+      items.find((i) => i.ingredientId !== riceId)!;
+    expect(await setShoppingItemInPantry(db, user.id, other.id, true)).toBe(true);
+    expect(await setShoppingItemInPantry(db, (await createTestUser()).id, other.id, true)).toBe(false);
+    const after = (await loadShoppingList(db, user.id, listId))!;
+    expect(after.totalCents).toBe(list.totalCents - (other.costCents ?? 0));
+    await setShoppingItemChecked(db, user.id, other.id, true);
     await setShoppingItemChecked(db, user.id, riceItem.id, true);
     expect(await stockFromShoppingList(db, user.id, listId)).toBe(1);
     [item] = await listStock(db, user.id);

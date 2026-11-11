@@ -59,6 +59,10 @@ export const shoppingListItems = pgTable(
     quantityMl: numeric("quantity_ml", { precision: 12, scale: 3 }),
     quantityPiece: numeric("quantity_piece", { precision: 10, scale: 2 }),
     checked: boolean("checked").notNull().default(false),
+    /** Déjà chez soi (garde-manger ou « j'en ai déjà ») : rien à acheter (11/11). */
+    inPantry: boolean("in_pantry").notNull().default(false),
+    /** Quantité prise au garde-manger, dans l'unité de l'article (g, ml ou pièces). */
+    pantryQuantity: numeric("pantry_quantity", { precision: 12, scale: 3 }),
     sources: jsonb("sources").$type<Array<{ recipeId: string; quantity: number }>>(),
     ...timestamps,
   },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeShoppingItems } from "./shopping-list";
+import { isPantryStaple, isTapWater, mergeShoppingItems } from "./shopping-list";
 
 describe("liste de courses", () => {
   it("additionne un même ingrédient (200 g + 300 g = 500 g)", () => {
@@ -35,5 +35,35 @@ describe("liste de courses", () => {
 
   it("renvoie une liste vide sans ingrédient", () => {
     expect(mergeShoppingItems([])).toEqual([]);
+  });
+});
+
+describe("basiques du placard", () => {
+  it("reconnaît sel, poivre, huile, épices et eau, pas les produits frais", () => {
+    for (const name of [
+      "Sel fin",
+      "Poivre noir moulu",
+      "Huile d'olive",
+      "Sucre en poudre",
+      "Farine de blé T55",
+      "Cumin en poudre",
+      "Eau",
+      "Levure chimique",
+      "Moutarde de Dijon",
+    ]) {
+      expect(isPantryStaple(name), name).toBe(true);
+    }
+    for (const name of [
+      "Poivrons rouges",
+      "Saumon",
+      "Sucre glace décoratif à la rose",
+      "Eau de fleur d'oranger",
+      "Farine de pois chiches bio aux herbes",
+      "Crème fraîche",
+    ]) {
+      expect(isPantryStaple(name), name).toBe(false);
+    }
+    expect(isTapWater("Eau")).toBe(true);
+    expect(isTapWater("Eau de coco")).toBe(false);
   });
 });

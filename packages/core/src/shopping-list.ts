@@ -34,3 +34,39 @@ export function mergeShoppingItems(items: readonly ShoppingItemInput[]): Shoppin
   }
   return [...merged.values()];
 }
+
+/**
+ * Basiques du placard (sel, poivre, huile, sucre, farine, épices sèches…) : dans la liste d'un
+ * particulier, ils sont rangés à part, « Sûrement déjà dans vos placards », plutôt que mêlés aux
+ * courses. L'eau du robinet n'est jamais à acheter.
+ */
+const STAPLE_PATTERN = new RegExp(
+  [
+    "^sel\\b",
+    "fleur de sel",
+    "^poivre\\b(?! (rouge|vert|jaune)s?$)",
+    "^huile\\b",
+    "^vinaigre\\b",
+    "^sucre( (en poudre|semoule|blanc|roux|cassonade))?$",
+    "^cassonade$",
+    "^farine( de blé)?( t\\d+)?$",
+    "^levure chimique",
+    "^bicarbonate",
+    "^maïzena|^fécule de maïs",
+    "^moutarde\\b",
+    "^(cumin|paprika|curcuma|cannelle|muscade|noix de muscade|curry|gingembre en poudre|piment d'espelette|herbes de provence|origan séché|thym séché|laurier|clou de girofle|quatre-épices|piment en poudre|ras el-hanout)\\b",
+    "^extrait de vanille|^arôme vanille",
+    "^bouillon\\b.*\\b(cube|tablette)",
+  ].join("|"),
+  "i",
+);
+const TAP_WATER = /^eau( (du robinet|froide|chaude|tiède|bouillante))?$/i;
+
+export function isPantryStaple(name: string): boolean {
+  const label = name.trim().toLowerCase();
+  return TAP_WATER.test(label) || STAPLE_PATTERN.test(label);
+}
+
+export function isTapWater(name: string): boolean {
+  return TAP_WATER.test(name.trim().toLowerCase());
+}

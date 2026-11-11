@@ -27,5 +27,5 @@ export default async function ShoppingListPage({
   if (!z.uuid().safeParse(id).success) notFound();
   const list = await loadShoppingList(getDb(), session.user.id, id, await getLocale());
   if (!list) notFound();
-  return <ShoppingChecklist list={list} />;
+  return <ShoppingChecklist list={list} proMode={session.user.proMode} />;
 }

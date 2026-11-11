@@ -456,7 +456,8 @@
       "shopping": "Courses",
       "stock": "Stocks",
       "import": "Importer",
-      "prices": "Mes prix"
+      "prices": "Mes prix",
+      "pantry": "Mon garde-manger"
     },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
@@ -1251,7 +1252,15 @@
     "allInStock": "Tout est déjà dans votre stock : aucune liste n’a été créée.",
     "toStock": "Ranger les articles cochés dans le stock",
     "stocked": "{count, plural, =0 {Aucun article coché.} one {# article rangé dans le stock.} other {# articles rangés dans le stock.}}",
-    "stockHint": "Votre stock a été déduit des quantités."
+    "stockHint": "Votre stock a été déduit des quantités.",
+    "staplesTitle": "Sûrement déjà dans vos placards",
+    "staplesHint": "Sel, huile, épices… à vérifier avant de partir.",
+    "homeTitle": "Déjà chez vous",
+    "buyAfterAll": "À acheter finalement",
+    "haveIt": "J'en ai déjà",
+    "partlyHome": "{quantity} déjà dans votre garde-manger",
+    "homeToStock": "Ranger les articles cochés dans mon garde-manger",
+    "homeStockHint": "Ce qui est déjà dans votre garde-manger a été retiré des quantités."
   },
   "Stock": {
     "title": "Stocks",
@@ -1289,7 +1298,9 @@
     "minShort": "Seuil",
     "bestBeforeShort": "DLC",
     "lowCount": "{count, plural, one {# article sous le seuil} other {# articles sous le seuil}}",
-    "soonCount": "{count, plural, one {# article à consommer vite} other {# articles à consommer vite}}"
+    "soonCount": "{count, plural, one {# article à consommer vite} other {# articles à consommer vite}}",
+    "homeTitle": "Mon garde-manger",
+    "homeIntro": "Ce que vous avez déjà chez vous. Ces quantités sont retirées de vos prochaines listes de courses, et vous pouvez y ranger les articles achetés d'un geste."
   },
   "Import": {
     "title": "Importer une recette",

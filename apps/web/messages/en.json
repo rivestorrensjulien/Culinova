@@ -456,7 +456,8 @@
       "shopping": "Shopping",
       "stock": "Stock",
       "import": "Import",
-      "prices": "My prices"
+      "prices": "My prices",
+      "pantry": "My pantry"
     },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
@@ -1251,7 +1252,15 @@
     "allInStock": "Everything is already in your stock: no list was created.",
     "toStock": "Put checked items into stock",
     "stocked": "{count, plural, =0 {No item checked.} one {# item added to stock.} other {# items added to stock.}}",
-    "stockHint": "Your stock has been deducted from the quantities."
+    "stockHint": "Your stock has been deducted from the quantities.",
+    "staplesTitle": "Probably already in your cupboards",
+    "staplesHint": "Salt, oil, spices… check before you go.",
+    "homeTitle": "Already at home",
+    "buyAfterAll": "Buy after all",
+    "haveIt": "I already have it",
+    "partlyHome": "{quantity} already in your pantry",
+    "homeToStock": "Put checked items in my pantry",
+    "homeStockHint": "What is already in your pantry has been taken off the quantities."
   },
   "Stock": {
     "title": "Stock",
@@ -1289,7 +1298,9 @@
     "minShort": "Threshold",
     "bestBeforeShort": "Use by",
     "lowCount": "{count, plural, one {# item below threshold} other {# items below threshold}}",
-    "soonCount": "{count, plural, one {# item to use soon} other {# items to use soon}}"
+    "soonCount": "{count, plural, one {# item to use soon} other {# items to use soon}}",
+    "homeTitle": "My pantry",
+    "homeIntro": "What you already have at home. These quantities are taken off your next shopping lists, and bought items can be put away in one tap."
   },
   "Import": {
     "title": "Import a recipe",

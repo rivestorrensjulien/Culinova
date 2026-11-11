@@ -6,6 +6,8 @@
 import {
   type BaseQuantity,
   type CostLine,
+  isPantryStaple,
+  isTapWater,
   materialCost,
   mergeShoppingItems,
   parsePrice,
@@ -157,8 +159,15 @@ export async function createShoppingList(
   userId: string,
   input: { name: string; source: "recipes" | "menu"; entries: readonly ShoppingEntry[] },
 ): Promise<string | null> {
-  const needs = await deductStock(db, userId, await buildShoppingNeeds(db, userId, input.entries));
+  const needs = await buildShoppingNeeds(db, userId, input.entries);
   if (needs.length === 0) return null;
+  // Ce que le garde-manger couvre reste dans la liste, rangé à part (« déjà chez vous »).
+  const stock = await availableStock(
+    db,
+    userId,
+    needs.map((n) => n.ingredientId),
+  );
+  const round = (value: number) => Math.round(value * 1000) / 1000;
   return db.transaction(async (tx) => {
     const [list] = await tx
       .insert(s.shoppingLists)
@@ -169,14 +178,24 @@ export async function createShoppingList(
       })
       .returning({ id: s.shoppingLists.id });
     await tx.insert(s.shoppingListItems).values(
-      needs.map((need) => ({
-        shoppingListId: list!.id,
-        ingredientId: need.ingredientId,
-        quantityG: need.quantity.dimension === "mass" ? need.quantity.value.toFixed(3) : null,
-        quantityMl: need.quantity.dimension === "volume" ? need.quantity.value.toFixed(3) : null,
-        quantityPiece: need.quantity.dimension === "count" ? need.quantity.value.toFixed(2) : null,
-        sources: need.sources,
-      })),
+      needs.map((need) => {
+        const available = stock.get(stockKey(need.ingredientId, need.quantity.dimension)) ?? 0;
+        const covered = round(Math.min(Math.max(available, 0), need.quantity.value));
+        const toBuy = round(need.quantity.value - covered);
+        const inPantry = toBuy <= 0;
+        // Tout est déjà là : on garde la quantité nécessaire ; sinon, ce qu'il reste à acheter.
+        const value = inPantry ? need.quantity.value : toBuy;
+        return {
+          shoppingListId: list!.id,
+          ingredientId: need.ingredientId,
+          quantityG: need.quantity.dimension === "mass" ? value.toFixed(3) : null,
+          quantityMl: need.quantity.dimension === "volume" ? value.toFixed(3) : null,
+          quantityPiece: need.quantity.dimension === "count" ? value.toFixed(2) : null,
+          inPantry,
+          pantryQuantity: covered > 0 ? covered.toFixed(3) : null,
+          sources: need.sources,
+        };
+      }),
     );
     return list!.id;
   });
@@ -221,6 +240,12 @@ export interface ShoppingListItemView {
   costCents: number | null;
   estimated: boolean;
   recipes: string[];
+  /** Déjà chez soi : rien à acheter, hors du total. */
+  inPantry: boolean;
+  /** Quantité prise au garde-manger (même unité que `quantity`), ou null. */
+  pantryQuantity: BaseQuantity | null;
+  /** Basique du placard (sel, huile, épices…). */
+  staple: boolean;
 }
 
 export interface ShoppingListView {
@@ -253,6 +278,8 @@ export async function loadShoppingList(
       ml: s.shoppingListItems.quantityMl,
       piece: s.shoppingListItems.quantityPiece,
       checked: s.shoppingListItems.checked,
+      inPantry: s.shoppingListItems.inPantry,
+      pantryQuantity: s.shoppingListItems.pantryQuantity,
       sources: s.shoppingListItems.sources,
       canonicalName: s.ingredients.canonicalName,
       translated: s.ingredientTranslations.name,
@@ -301,6 +328,9 @@ export async function loadShoppingList(
   let totalCents = 0;
   let unpricedCount = 0;
   for (const row of rows) {
+    const name = row.translated ?? row.canonicalName;
+    // L'eau du robinet n'est jamais à acheter.
+    if (isTapWater(name) || isTapWater(row.canonicalName)) continue;
     const quantity: BaseQuantity =
       row.g !== null
         ? { dimension: "mass", value: Number(row.g) }
@@ -322,14 +352,22 @@ export async function loadShoppingList(
         costCents = null;
       }
     }
-    if (costCents === null) unpricedCount += 1;
-    else totalCents += costCents;
+    if (!row.inPantry) {
+      if (costCents === null) unpricedCount += 1;
+      else totalCents += costCents;
+    }
     const item: ShoppingListItemView = {
       id: row.id,
       ingredientId: row.ingredientId,
-      name: row.translated ?? row.canonicalName,
+      name,
       quantity,
       checked: row.checked,
+      inPantry: row.inPantry,
+      pantryQuantity:
+        row.pantryQuantity !== null
+          ? { dimension: quantity.dimension, value: Number(row.pantryQuantity) }
+          : null,
+      staple: isPantryStaple(name) || isPantryStaple(row.canonicalName),
       costCents,
       estimated: price?.estimated ?? false,
       recipes: (row.sources ?? []).flatMap((src) => names.find((n) => n.id === src.recipeId)?.name ?? []),
@@ -367,6 +405,26 @@ export async function setShoppingItemChecked(
     .where(and(eq(s.shoppingListItems.id, itemId), eq(s.shoppingLists.ownerId, userId)));
   if (!item) return false;
   await db.update(s.shoppingListItems).set({ checked }).where(eq(s.shoppingListItems.id, itemId));
+  return true;
+}
+
+/** « J'en ai déjà » (ou l'inverse) : l'article passe dans « Déjà chez vous ». */
+export async function setShoppingItemInPantry(
+  db: Database,
+  userId: string,
+  itemId: string,
+  inPantry: boolean,
+): Promise<boolean> {
+  const [item] = await db
+    .select({ id: s.shoppingListItems.id })
+    .from(s.shoppingListItems)
+    .innerJoin(s.shoppingLists, eq(s.shoppingLists.id, s.shoppingListItems.shoppingListId))
+    .where(and(eq(s.shoppingListItems.id, itemId), eq(s.shoppingLists.ownerId, userId)));
+  if (!item) return false;
+  await db
+    .update(s.shoppingListItems)
+    .set({ inPantry, updatedAt: new Date() })
+    .where(eq(s.shoppingListItems.id, itemId));
   return true;
 }
 

@@ -22,7 +22,7 @@ const input = {
 describe("prompt photo", () => {
   it("transmet le dressage et impose un cadrage recadrable", () => {
     const { system, user } = buildImagePrompt(input);
-    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@8");
+    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@9");
     expect(system).toContain("Authenticity first");
     expect(system).toContain("never straight overhead");
     expect(system).toContain("cropped to square, 4:5, 9:16 and 16:9");
@@ -31,6 +31,8 @@ describe("prompt photo", () => {
     expect(system).toContain("Vietnamese bánh mì");
     expect(system).toContain("never a muffin or a cupcake");
     expect(system).toContain("smaller than poppy seeds");
+    expect(system).toContain("never seeds, pepper or black dots sprinkled on top of the cream");
+    expect(system).toContain("no holes, craters or sponge texture on the surface");
     expect(system).not.toContain("already bitten");
     expect(user).toContain("Barquette en bambou");
   });

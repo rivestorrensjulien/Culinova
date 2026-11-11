@@ -27,7 +27,16 @@ import {
 import type { StartResult } from "@/server/generation/start";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
 
-export function RecipePageClient({ initial, targetG }: { initial: RecipeData; targetG?: number }) {
+export function RecipePageClient({
+  initial,
+  targetG,
+  proMode = false,
+}: {
+  initial: RecipeData;
+  targetG?: number;
+  /** Mode pro : fiche technique, prix de vente et marges (particulier par défaut). */
+  proMode?: boolean;
+}) {
   const t = useTranslations("Wizard");
   const tr = useTranslations("Recipe");
   const format = useFormatter();
@@ -257,7 +266,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
           >
             {tr("cookingMode")}
           </Link>
-          {isBase ? null : (
+          {isBase || !proMode ? null : (
             <Link
               href={`/app/recettes/${recipe.recipeId}/fiche`}
               className={buttonClasses("secondary", "sm")}
@@ -290,6 +299,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
         key={`view-${recipe.versionId}`}
         recipe={displayed}
         initialTargetG={targetG}
+        proMode={proMode}
         pendingLineIds={new Set(pendingBases.keys())}
         {...(viewingOld || isBase ? {} : { onMakeHomemade: makeHomemade })}
         photo={<PhotoCard recipe={recipe} onChanged={reload} canGenerate={!viewingOld} />}
@@ -338,7 +348,7 @@ export function RecipePageClient({ initial, targetG }: { initial: RecipeData; ta
           )
         }
       />
-      {viewingOld || isBase ? null : (
+      {viewingOld || isBase || !proMode ? null : (
         <PricingCard
           key={`pricing-${recipe.versionId}`}
           recipe={recipe}

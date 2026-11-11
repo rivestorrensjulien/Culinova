@@ -4,6 +4,7 @@ import { cx } from "@culinova/ui";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { appPages, pageLabel } from "@/lib/app-nav";
 import { normalize } from "@/lib/library-search";
 import { commandIndexAction } from "@/server/actions/library";
 
@@ -14,23 +15,8 @@ interface Item {
   href: string;
 }
 
-const PAGES = [
-  { key: "dashboard", href: "/app" },
-  { key: "create", href: "/app/creer" },
-  { key: "recipes", href: "/app/recettes" },
-  { key: "bases", href: "/app/bases" },
-  { key: "menus", href: "/app/menus" },
-  { key: "shopping", href: "/app/courses" },
-  { key: "stock", href: "/app/stocks" },
-  { key: "import", href: "/app/importer" },
-  { key: "ingredients", href: "/app/ingredients" },
-  { key: "settings", href: "/app/reglages" },
-  { key: "account", href: "/app/compte" },
-  { key: "security", href: "/app/compte/securite" },
-] as const;
-
 /** Recherche rapide (Ctrl+K ou ⌘K) : recettes, bases et pages de l'application. */
-export function CommandPalette() {
+export function CommandPalette({ proMode = false }: { proMode?: boolean }) {
   const t = useTranslations("Command");
   const nav = useTranslations("App.nav");
   const router = useRouter();
@@ -79,12 +65,17 @@ export function CommandPalette() {
         hint: r.kind === "base" ? t("base") : t("recipe"),
         href: `/app/recettes/${r.id}`,
       })),
-      ...PAGES.map((p) => ({ key: p.key, label: nav(p.key), hint: t("page"), href: p.href })),
+      ...appPages(proMode, "search").map((p) => ({
+        key: p.key,
+        label: nav(pageLabel(p.key, proMode) as "dashboard"),
+        hint: t("page"),
+        href: p.href,
+      })),
     ];
     const words = normalize(query).split(" ").filter(Boolean);
     if (words.length === 0) return all.slice(0, 12);
     return all.filter((item) => words.every((w) => normalize(item.label).includes(w))).slice(0, 12);
-  }, [recipes, query, nav, t]);
+  }, [recipes, query, nav, t, proMode]);
 
   if (!open) return null;
 

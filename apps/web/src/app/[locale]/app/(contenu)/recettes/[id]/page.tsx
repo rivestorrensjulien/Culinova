@@ -39,7 +39,7 @@ export default async function RecipePage({
           ← {t("back")}
         </Link>
       )}
-      <RecipePageClient initial={recipe} targetG={targetG} />
+      <RecipePageClient initial={recipe} targetG={targetG} proMode={session.user.proMode} />
     </div>
   );
 }

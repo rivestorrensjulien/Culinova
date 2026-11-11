@@ -49,6 +49,19 @@ packages/ui         Système de design (clair / sombre)
 - Calculs de coûts et quotas couverts par des tests unitaires.
 - Identité visuelle originale : premium, gastronomique, chaleureuse, épurée, photos au centre. Ne pas imiter GetCherry ni FoodCraft.
 
+## Cible : les particuliers (décision de Julien du 11/11)
+
+Promesse : « Des recettes de chef, au gramme près, et ce qu'elles vous coûtent vraiment. » L'existant pro devient une future offre Pro ; l'agent de publication et les vidéos restent réservés à l'administrateur.
+
+- [x] **P1 · Mode particulier par défaut** : `users.pro_mode` (migration 0017, faux par défaut, vrai pour les comptes ouverts avant le 11/11), lu par la session (`session.user.proMode`) ; choix « À la maison » / « En professionnel » dans « Mon compte » (`setProModeAction`, journal d'audit). En particulier : menu et recherche rapide sans Menus, Stocks ni Réglages (`lib/app-nav.ts`), « Ingrédients » devient « Mes prix » (sans bouton factures), encart coût « Ce que coûte ce repas » (« Budget du repas », « Coût par part »), pas d'encart « Prix de vente et marges » ni de bouton « Fiche technique ». Rien n'est supprimé : les pages pro restent accessibles.
+- [ ] P2 · Assistant de création court (frigo, personnes, budget par personne, temps, niveau, matériel).
+- [ ] P3 · Mesures de cuisine à côté des grammes partout (existe déjà : `displayQuantity`).
+- [ ] P4 · Portions et liste de courses : manque ce qui est déjà au garde-manger.
+- [ ] P5 · Mobile d'abord (chaque écran à 380 px ; PWA déjà en place).
+- [ ] P6 · Badge « recette relue par Chef Ju » et astuces de pro.
+- [ ] P7 · Première recette sans inscription depuis les pages publiques.
+- [ ] P8 · Scan du ticket de caisse (base existante : scan de factures `invoice.scan@1`), « Mes prix », prix moyens de référence, photo effacée après lecture.
+
 ## Jalons (V1)
 
 - [x] **J0 · Socle technique** : monorepo, CI GitHub Actions (lint, types, tests, build), `.env.example`, système de design (thèmes clair et sombre, typographie, composants de base), page vitrine du design.

@@ -25,6 +25,8 @@ export interface CurrentSession {
     name: string;
     role: "user" | "admin";
     locale: string;
+    /** Mode pro (fiche technique, prix de vente, menus, stocks) ; particulier par défaut. */
+    proMode: boolean;
   };
 }
 
@@ -43,6 +45,7 @@ export const getCurrentSession = cache(async (): Promise<CurrentSession | null> 
       name: users.name,
       role: users.role,
       locale: users.locale,
+      proMode: users.proMode,
       banned: users.banned,
     })
     .from(sessions)
@@ -53,7 +56,14 @@ export const getCurrentSession = cache(async (): Promise<CurrentSession | null> 
     sessionId: row.sessionId,
     twoFactorVerifiedAt: row.twoFactorVerifiedAt,
     impersonatedBy: row.impersonatedBy,
-    user: { id: row.id, email: row.email, name: row.name, role: row.role, locale: row.locale },
+    user: {
+      id: row.id,
+      email: row.email,
+      name: row.name,
+      role: row.role,
+      locale: row.locale,
+      proMode: row.proMode,
+    },
   };
 });
 

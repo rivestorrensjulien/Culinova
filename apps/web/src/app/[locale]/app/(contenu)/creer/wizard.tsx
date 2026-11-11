@@ -48,6 +48,8 @@ export interface WizardProps {
     recipeId: string | null;
   };
   reference: CulinaryReference;
+  /** Mode pro du compte (libellés du coût). */
+  proMode?: boolean;
   favorites: string[];
   recents: string[];
   usage: { used: number; limit: number | null };
@@ -88,6 +90,7 @@ export function Wizard({
   recents,
   usage,
   initialRecipe,
+  proMode = false,
 }: WizardProps) {
   const t = useTranslations("Wizard");
   const locale = useLocale();
@@ -522,6 +525,7 @@ export function Wizard({
         {key === "result" && recipe && (
           <RecipeView
             recipe={recipe}
+            proMode={proMode}
             actions={
               <Card>
                 <CardBody className="flex flex-col gap-3">

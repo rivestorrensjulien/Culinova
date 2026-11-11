@@ -31,12 +31,14 @@ export default async function IngredientsPage({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-4xl">{t("title")}</h1>
-          <Link href="/app/ingredients/factures" className={buttonClasses("secondary")}>
-            {(await getTranslations("Invoices"))("link")}
-          </Link>
+          <h1 className="font-display text-4xl">{session.user.proMode ? t("title") : t("homeTitle")}</h1>
+          {session.user.proMode ? (
+            <Link href="/app/ingredients/factures" className={buttonClasses("secondary")}>
+              {(await getTranslations("Invoices"))("link")}
+            </Link>
+          ) : null}
         </div>
-        <p className="max-w-3xl text-muted">{t("intro")}</p>
+        <p className="max-w-3xl text-muted">{session.user.proMode ? t("intro") : t("homeIntro")}</p>
         {recipeId ? (
           <p className="text-sm">
             {t("filteredBy", { name: recipeName ?? "" })}{" "}

@@ -39,6 +39,11 @@ export const users = pgTable(
     locale: text("locale").notNull().default("fr"),
     unitSystem: text("unit_system").$type<"metric" | "imperial">().notNull().default("metric"),
     theme: text("theme").$type<"light" | "dark" | "system">().notNull().default("system"),
+    /**
+     * Mode pro (fiche technique, prix de vente, marges, menus, stocks…). Par défaut, l'application
+     * s'adresse aux particuliers (décision de Julien du 11/11) ; activable dans « Mon compte ».
+     */
+    proMode: boolean("pro_mode").notNull().default(false),
     avatarKey: text("avatar_key"),
     /** Exceptions de quotas propres à la personne (ex. { "recipes": 10 }). */
     quotaOverrides: jsonb("quota_overrides").$type<Record<string, number | null>>(),

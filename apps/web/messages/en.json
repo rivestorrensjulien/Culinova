@@ -455,7 +455,8 @@
       "menus": "Menus",
       "shopping": "Shopping",
       "stock": "Stock",
-      "import": "Import"
+      "import": "Import",
+      "prices": "My prices"
     },
     "welcome": "Welcome to Culinova!",
     "hello": "Hello {name}",
@@ -752,7 +753,10 @@
     "costCheckPrices": "Check prices",
     "costEstimating": "AI is estimating missing prices…",
     "cookingMode": "Cooking mode",
-    "technicalSheet": "Technical sheet (PDF)"
+    "technicalSheet": "Technical sheet (PDF)",
+    "homeCost": "What this meal costs",
+    "homeBudget": "Meal budget ({count, plural, one {# person} other {# people}})",
+    "homePerServing": "Cost per serving"
   },
   "Ingredients": {
     "title": "My ingredients",
@@ -797,7 +801,9 @@
       "medium": "to check",
       "low": "highly variable"
     },
-    "estimatedPrice": "Estimated by AI · save to confirm"
+    "estimatedPrice": "Estimated by AI · save to confirm",
+    "homeTitle": "My prices",
+    "homeIntro": "Ingredient prices are used to work out what each recipe costs. The AI estimates one for each new ingredient: correct it with your shop's price whenever you know it."
   },
   "Pricing": {
     "title": "Selling price and margins",
@@ -1063,7 +1069,13 @@
     "deleteMismatch": "The address you typed does not match this account.",
     "deleteLastAdmin": "You are the only administrator: appoint another one before deleting this account.",
     "deleteImpersonating": "Not possible during an “act as” session.",
-    "deleteFailed": "Deletion failed. Please try again in a moment."
+    "deleteFailed": "Deletion failed. Please try again in a moment.",
+    "modeTitle": "How do you use Culinova?",
+    "modeText": "This only changes what is shown: your recipes and prices stay the same. You can switch at any time.",
+    "modeHomeTitle": "At home",
+    "modeHomeText": "Recipes weighed to the gram, cost per serving and meal budget, shopping list.",
+    "modeProTitle": "As a professional",
+    "modeProText": "Plus: technical sheet, selling price and margins, menus, stock, invoices and costing settings."
   },
   "Sheet": {
     "title": "Technical sheet",

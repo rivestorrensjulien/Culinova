@@ -1,10 +1,16 @@
 "use client";
 
-import { Field, Input, Notice } from "@culinova/ui";
+import { cx, Field, Input, Notice } from "@culinova/ui";
 import { useTranslations } from "next-intl";
-import { useActionState } from "react";
+import { useActionState, useTransition } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { SubmitButton } from "@/components/submit-button";
-import { type AccountFormState, deleteAccountAction, updateProfileAction } from "@/server/actions/account";
+import {
+  type AccountFormState,
+  deleteAccountAction,
+  setProModeAction,
+  updateProfileAction,
+} from "@/server/actions/account";
 
 const ERRORS = {
   name: "nameHint",
@@ -50,5 +56,53 @@ export function DeleteAccountForm({ email }: { email: string }) {
         <SubmitButton variant="danger">{t("deleteButton")}</SubmitButton>
       </div>
     </form>
+  );
+}
+
+/** Choix du mode : particulier (par défaut) ou professionnel. */
+export function ModeChoice({ proMode }: { proMode: boolean }) {
+  const t = useTranslations("Account");
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  const choose = (value: boolean) => {
+    if (value === proMode || pending) return;
+    start(async () => {
+      await setProModeAction(value);
+      router.refresh();
+    });
+  };
+  const options = [
+    { value: false, title: t("modeHomeTitle"), text: t("modeHomeText") },
+    { value: true, title: t("modeProTitle"), text: t("modeProText") },
+  ];
+  return (
+    <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={t("modeTitle")}>
+      {options.map((option) => {
+        const selected = option.value === proMode;
+        return (
+          <button
+            key={String(option.value)}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            disabled={pending}
+            onClick={() => choose(option.value)}
+            data-testid={option.value ? "mode-pro" : "mode-home"}
+            className={cx(
+              "flex cursor-pointer flex-col gap-1 rounded-2xl border p-4 text-left transition",
+              selected
+                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                : "border-border hover:border-primary/60",
+            )}
+          >
+            <span className="font-medium">
+              {selected ? "● " : "○ "}
+              {option.title}
+            </span>
+            <span className="text-sm text-muted">{option.text}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }

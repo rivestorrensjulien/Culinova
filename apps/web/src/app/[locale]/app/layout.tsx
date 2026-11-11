@@ -5,6 +5,7 @@ import { CommandButton, CommandPalette } from "@/components/command-palette";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
+import { appPages, pageLabel } from "@/lib/app-nav";
 import { stopImpersonatingAction } from "@/server/actions/admin";
 import { signOutAction } from "@/server/actions/auth";
 import { requireUser } from "@/server/session";
@@ -23,6 +24,7 @@ export default async function AppLayout({
   const session = await requireUser(locale);
   const t = await getTranslations("App");
   const common = await getTranslations("Common");
+  const proMode = session.user.proMode;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -39,36 +41,11 @@ export default async function AppLayout({
       <div className="print:hidden">
         <SiteHeader homeHref="/app">
           <nav className="flex flex-wrap items-center gap-1 text-sm">
-            <Link href="/app" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.dashboard")}
-            </Link>
-            <Link href="/app/creer" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.create")}
-            </Link>
-            <Link href="/app/recettes" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.recipes")}
-            </Link>
-            <Link href="/app/bases" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.bases")}
-            </Link>
-            <Link href="/app/menus" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.menus")}
-            </Link>
-            <Link href="/app/courses" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.shopping")}
-            </Link>
-            <Link href="/app/stocks" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.stock")}
-            </Link>
-            <Link href="/app/ingredients" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.ingredients")}
-            </Link>
-            <Link href="/app/reglages" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.settings")}
-            </Link>
-            <Link href="/app/compte" className="rounded-full px-3 py-1.5 hover:bg-raised">
-              {t("nav.account")}
-            </Link>
+            {appPages(proMode, "menu").map((page) => (
+              <Link key={page.key} href={page.href} className="rounded-full px-3 py-1.5 hover:bg-raised">
+                {t(`nav.${pageLabel(page.key, proMode)}` as "nav.dashboard")}
+              </Link>
+            ))}
             {session.user.role === "admin" && !session.impersonatedBy ? (
               <Link href="/admin" className="rounded-full px-3 py-1.5 hover:bg-raised">
                 {t("nav.admin")}
@@ -89,7 +66,7 @@ export default async function AppLayout({
       <div className="print:hidden">
         <SiteFooter />
       </div>
-      <CommandPalette />
+      <CommandPalette proMode={proMode} />
     </div>
   );
 }

@@ -455,7 +455,8 @@
       "menus": "Menus",
       "shopping": "Courses",
       "stock": "Stocks",
-      "import": "Importer"
+      "import": "Importer",
+      "prices": "Mes prix"
     },
     "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
@@ -752,7 +753,10 @@
     "costCheckPrices": "Vérifier les prix",
     "costEstimating": "Estimation par l'IA des prix manquants…",
     "cookingMode": "Mode préparation",
-    "technicalSheet": "Fiche technique (PDF)"
+    "technicalSheet": "Fiche technique (PDF)",
+    "homeCost": "Ce que coûte ce repas",
+    "homeBudget": "Budget du repas ({count, plural, one {# personne} other {# personnes}})",
+    "homePerServing": "Coût par part"
   },
   "Ingredients": {
     "title": "Mes ingrédients",
@@ -797,7 +801,9 @@
       "medium": "à vérifier",
       "low": "très variable"
     },
-    "estimatedPrice": "Estimé par l'IA · enregistrez pour confirmer"
+    "estimatedPrice": "Estimé par l'IA · enregistrez pour confirmer",
+    "homeTitle": "Mes prix",
+    "homeIntro": "Le prix de vos ingrédients sert à calculer ce que coûte chaque recette. L'IA en estime un pour chaque nouvel ingrédient : corrigez-le avec le prix de votre magasin quand vous le connaissez."
   },
   "Pricing": {
     "title": "Prix de vente et marges",
@@ -1063,7 +1069,13 @@
     "deleteMismatch": "L’adresse saisie ne correspond pas à celle du compte.",
     "deleteLastAdmin": "Vous êtes le seul administrateur : nommez-en un autre avant de supprimer ce compte.",
     "deleteImpersonating": "Impossible pendant une session « en tant que ».",
-    "deleteFailed": "La suppression n’a pas abouti. Réessayez dans un instant."
+    "deleteFailed": "La suppression n’a pas abouti. Réessayez dans un instant.",
+    "modeTitle": "Comment utilisez-vous Culinova ?",
+    "modeText": "Change seulement ce qui est affiché : vos recettes et vos prix restent les mêmes. Vous pouvez changer à tout moment.",
+    "modeHomeTitle": "À la maison",
+    "modeHomeText": "Recettes pesées au gramme, coût par part et budget du repas, liste de courses.",
+    "modeProTitle": "En professionnel",
+    "modeProText": "En plus : fiche technique, prix de vente et marges, menus, stocks, factures et réglages de chiffrage."
   },
   "Sheet": {
     "title": "Fiche technique",

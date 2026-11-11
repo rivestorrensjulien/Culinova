@@ -42,6 +42,26 @@ export async function updateProfileAction(
   return { status: "saved" };
 }
 
+/**
+ * Particulier (par défaut) ou professionnel : change seulement ce qui est affiché (prix de vente,
+ * marges, fiche technique, menus, stocks). Aucune donnée n'est effacée.
+ */
+export async function setProModeAction(proMode: boolean): Promise<void> {
+  const session = await requireUser(await getLocale());
+  const value = z.boolean().parse(proMode);
+  const db = getDb();
+  await db.update(users).set({ proMode: value }).where(eq(users.id, session.user.id));
+  await audit(db, {
+    actorId: session.impersonatedBy ?? session.user.id,
+    impersonatorId: session.impersonatedBy,
+    action: "account.mode.update",
+    entity: "user",
+    entityId: session.user.id,
+    after: { proMode: value },
+  });
+  revalidatePath("/", "layout");
+}
+
 function storageOrNull(): ImageStorage | null {
   try {
     return createImageStorage();

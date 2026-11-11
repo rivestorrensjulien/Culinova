@@ -58,6 +58,7 @@ export default async function CreatePage({ params }: { params: Promise<{ locale:
         recipeId: draft.recipeId,
       }}
       reference={reference}
+      proMode={session.user.proMode}
       favorites={prefs.filter((p) => p.kind === "favorite").map((p) => p.code)}
       recents={prefs
         .filter((p) => p.kind === "recent")

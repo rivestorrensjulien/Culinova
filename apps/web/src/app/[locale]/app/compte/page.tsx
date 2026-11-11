@@ -2,7 +2,7 @@ import { consentRecords, legalDocuments, users } from "@culinova/db/schema";
 import { buttonClasses, Card, CardBody, CardDescription, CardTitle } from "@culinova/ui";
 import { desc, eq } from "drizzle-orm";
 import { getFormatter, getTranslations, setRequestLocale } from "next-intl/server";
-import { DeleteAccountForm, ProfileForm } from "@/components/account/account-forms";
+import { DeleteAccountForm, ModeChoice, ProfileForm } from "@/components/account/account-forms";
 import { Link } from "@/i18n/navigation";
 import { getDb } from "@/server/db";
 import { requireUser } from "@/server/session";
@@ -51,6 +51,16 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
             </CardDescription>
           </div>
           <ProfileForm name={user.name} />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody className="flex flex-col gap-4">
+          <div>
+            <CardTitle>{t("modeTitle")}</CardTitle>
+            <CardDescription>{t("modeText")}</CardDescription>
+          </div>
+          <ModeChoice proMode={session.user.proMode} />
         </CardBody>
       </Card>
 

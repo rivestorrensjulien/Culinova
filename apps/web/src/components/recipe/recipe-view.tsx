@@ -17,6 +17,7 @@ export function RecipeView({
   initialTargetG,
   photo,
   titleAction,
+  proMode = false,
 }: {
   recipe: RecipeData;
   actions?: ReactNode;
@@ -30,6 +31,8 @@ export function RecipeView({
   photo?: ReactNode;
   /** Action à droite du titre (favori). */
   titleAction?: ReactNode;
+  /** Mode pro : « coût matière » ; sinon « budget du repas » et « coût par part ». */
+  proMode?: boolean;
 }) {
   const t = useTranslations("Recipe");
   const format = useFormatter();
@@ -258,7 +261,7 @@ export function RecipeView({
 
           <Card data-testid="cost">
             <CardBody className="flex flex-col gap-3 text-sm">
-              <h3 className="font-display text-xl">{t("cost")}</h3>
+              <h3 className="font-display text-xl">{proMode ? t("cost") : t("homeCost")}</h3>
               {recipe.cost.pricedCount === 0 ? (
                 <p className="text-muted">{t("costEmpty")}</p>
               ) : baseInfo ? (
@@ -279,13 +282,15 @@ export function RecipeView({
               ) : (
                 <dl className="grid grid-cols-2 gap-3">
                   <div>
-                    <dt className="text-muted">{t("costTotal", { count: servings })}</dt>
+                    <dt className="text-muted">
+                      {proMode ? t("costTotal", { count: servings }) : t("homeBudget", { count: servings })}
+                    </dt>
                     <dd className="font-display text-2xl" data-testid="cost-total">
                       {euros((recipe.cost.totalCents * servings) / recipe.servings)}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted">{t("costPerPortion")}</dt>
+                    <dt className="text-muted">{proMode ? t("costPerPortion") : t("homePerServing")}</dt>
                     <dd className="font-display text-2xl" data-testid="cost-portion">
                       {euros(recipe.cost.perPortionCents)}
                     </dd>

@@ -62,7 +62,7 @@ describe.skipIf(!hasTestDb)("modification par instruction", () => {
     expect((await loadRecipeView(db, recipeId, user.id))!.pendingGenerationId).toBe(edit.generationId);
     expect(await runGeneration(db, ai, edit.generationId)).toBe("succeeded");
 
-    const call = ai.calls.find((c) => c.promptId === "recipe.edit@1")!;
+    const call = ai.calls.find((c) => c.promptId === "recipe.edit@2")!;
     expect(call.user).toContain("Remplace le saumon par du tofu");
     expect(call.user).toContain("{{i1}}");
     const after = (await loadRecipeView(db, recipeId, user.id))!;

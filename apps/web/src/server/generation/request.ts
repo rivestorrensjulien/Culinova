@@ -1,9 +1,20 @@
 /** Transforme l'état du wizard en paramètres complets pour le moteur de recette. */
 import type { RecipeRequest } from "@culinova/ai";
-import type { WizardState } from "@/lib/wizard";
+import type { KitchenEquipment, WizardState } from "@/lib/wizard";
 import type { CulinaryReference } from "./reference";
 
 export class InvalidWizardStateError extends Error {}
+
+/** Libellés des appareils transmis au moteur (en français, langue des consignes). */
+const EQUIPMENT_LABELS: Record<KitchenEquipment, string> = {
+  hob: "plaques de cuisson",
+  oven: "four",
+  microwave: "micro-ondes",
+  air_fryer: "air fryer (friteuse sans huile)",
+  multicooker: "robot cuiseur multifonction (type Thermomix, Cookeo)",
+  blender: "mixeur ou blender",
+  stand_mixer: "batteur ou robot pâtissier",
+};
 
 export function buildRecipeRequest(
   state: WizardState,
@@ -53,5 +64,16 @@ export function buildRecipeRequest(
     input: state.input,
     servings: state.servings,
     constraints: profile,
+    // Parcours court des particuliers : seul lui renseigne le matériel.
+    ...(state.equipment
+      ? {
+          household: {
+            budgetPerServingCents: state.budgetPerServingCents,
+            maxMinutes: state.maxMinutes,
+            level: state.level,
+            equipment: state.equipment.map((code) => EQUIPMENT_LABELS[code]),
+          },
+        }
+      : {}),
   };
 }

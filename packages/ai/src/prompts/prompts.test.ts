@@ -38,7 +38,7 @@ const request: RecipeRequest = {
 describe("prompt de recette", () => {
   it("transmet tous les paramètres de création au moteur", () => {
     const { system, user } = buildRecipePrompt(request);
-    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@11");
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@12");
     expect(system).toContain("fusionLabel");
     // Contenant de service adapté au moment de consommation, sans assiette ronde par défaut.
     expect(system).toContain("street food → barquette");
@@ -91,6 +91,32 @@ describe("prompt de recette", () => {
     expect(user).not.toContain("Pays :");
   });
 
+  it("transmet budget, temps, niveau et matériel d'un particulier (recipe.generate@12)", () => {
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@12");
+    const { system, user } = buildRecipePrompt({
+      ...request,
+      household: {
+        budgetPerServingCents: 300,
+        maxMinutes: 30,
+        level: "beginner",
+        equipment: ["Plaques", "Micro-ondes"],
+      },
+    });
+    expect(user).toContain("Budget : 3,00 € par personne au plus");
+    expect(user).toContain("Temps disponible : 30 minutes au plus");
+    expect(user).toContain("Niveau : débutant");
+    expect(user).toContain("Appareils disponibles : Plaques, Micro-ondes");
+    expect(system).toContain("sans four, rien au four");
+    const loose = buildRecipePrompt({
+      ...request,
+      household: { budgetPerServingCents: null, maxMinutes: null, level: null, equipment: ["Plaques"] },
+    }).user;
+    expect(loose).toContain("Budget : sans limite");
+    expect(loose).toContain("Temps disponible : pas pressé");
+    // Parcours pro : rien de tout cela.
+    expect(buildRecipePrompt(request).user).not.toContain("Cuisine à la maison");
+  });
+
   it("régénère avec ou sans consigne", () => {
     const previous = { name: "Saumon laqué", description: "…" };
     expect(buildRegenerationPrompt(request, previous).user).toContain("nettement différente");
@@ -102,7 +128,7 @@ describe("prompt de recette", () => {
   it("modifie la recette actuelle selon la consigne, sans repartir de zéro", () => {
     const current = fakeRecipe("Nombre de personnes : 6");
     const { user } = buildEditPrompt(request, current, "  Remplace le saumon par du tofu ");
-    expect(RECIPE_EDIT_PROMPT_VERSION).toBe("recipe.edit@1");
+    expect(RECIPE_EDIT_PROMPT_VERSION).toBe("recipe.edit@2");
     expect(user).toContain('"""\nRemplace le saumon par du tofu\n"""');
     expect(user).toContain(JSON.stringify(current));
     expect(user).toContain("servings = 6");

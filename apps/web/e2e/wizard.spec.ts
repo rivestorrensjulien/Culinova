@@ -5,7 +5,7 @@
  * (IA factice : le contenu exact est déterministe ; la qualité réelle se juge avec Claude.)
  */
 import { createDb } from "@culinova/db";
-import { usageCounters, users } from "@culinova/db/schema";
+import { recipeDrafts, usageCounters, users } from "@culinova/db/schema";
 import { expect, type Page, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
 import { ADMIN_EMAIL, COOK_EMAIL, signIn } from "./helpers";
@@ -386,4 +386,59 @@ test("sauvegarde hors ligne : rien n'est perdu pendant une coupure réseau", asy
     "aria-pressed",
     "true",
   );
+});
+
+test("particulier : mode « À la maison » et assistant court en trois questions", async ({ page }) => {
+  const db = createDb(process.env.DATABASE_URL_E2E);
+  const [cook] = await db.select({ id: users.id }).from(users).where(eq(users.email, COOK_EMAIL));
+  // Brouillon neuf pour ce parcours.
+  await db.update(recipeDrafts).set({ status: "archived" }).where(eq(recipeDrafts.userId, cook!.id));
+  try {
+    await signIn(page, COOK_EMAIL);
+    await page.goto("/app/compte");
+    await page.getByTestId("mode-home").click();
+    await expect(page.getByTestId("mode-home")).toHaveAttribute("aria-checked", "true");
+    const menu = page.getByRole("navigation").first();
+    await expect(menu.getByRole("link", { name: "Mes prix" })).toBeVisible();
+    await expect(menu.getByRole("link", { name: "Stocks" })).toHaveCount(0);
+
+    await page.goto("/app/creer");
+    await expect(page.getByRole("heading", { name: "Qu'est-ce qu'on cuisine ?" })).toBeVisible();
+    await expect(page.getByText("Étape 1 sur 6")).toBeVisible();
+    await page.getByRole("button", { name: /Avec ce que j'ai/ }).click();
+    await page.getByTestId("home-input").fill("2 courgettes, 4 œufs, un reste de feta");
+    await page.getByRole("button", { name: "Plat", exact: true }).click();
+    await page.getByRole("button", { name: "Continuer" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Pour combien, avec quel budget et combien de temps ?" }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "2", exact: true }).click();
+    await page.getByRole("button", { name: "3 € / pers." }).click();
+    await page.getByRole("button", { name: "30 min" }).click();
+    await page.getByRole("button", { name: "Continuer" }).click();
+
+    await expect(page.getByRole("heading", { name: "Votre cuisine" })).toBeVisible();
+    await page.getByRole("button", { name: /Débutant/ }).click();
+    await page.getByRole("button", { name: "Four", exact: true }).click();
+    await page.getByRole("button", { name: "Micro-ondes", exact: true }).click();
+    await page.getByRole("button", { name: "Continuer" }).click();
+
+    await expect(page.getByRole("heading", { name: "Tout est prêt" })).toBeVisible();
+    const summary = page.getByTestId("summary");
+    for (const text of [
+      "2 courgettes",
+      "Plat",
+      "3 € / pers.",
+      "30 min",
+      "Débutant",
+      "Plaques, Micro-ondes",
+    ]) {
+      await expect(summary).toContainText(text);
+    }
+    await expect(page.getByRole("button", { name: "Générer la recette" })).toBeEnabled();
+  } finally {
+    await db.update(users).set({ proMode: true }).where(eq(users.id, cook!.id));
+    await db.$client.end();
+  }
 });

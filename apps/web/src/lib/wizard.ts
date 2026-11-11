@@ -21,7 +21,38 @@ export const WIZARD_STEPS = [
   "social",
   "saved",
 ] as const;
-export type WizardStepKey = (typeof WIZARD_STEPS)[number];
+/**
+ * Parcours court des particuliers (décision de Julien du 11/11) : ce qu'on cuisine (frigo ou
+ * idée), puis personnes, budget et temps, puis niveau et matériel. Influence « aucune » et style
+ * « traditionnel » sont choisis d'office ; pas d'étape « réseaux sociaux ».
+ */
+export const HOME_WIZARD_STEPS = ["wish", "practical", "kitchen", "generation", "result", "saved"] as const;
+
+export type WizardStepKey = (typeof WIZARD_STEPS)[number] | (typeof HOME_WIZARD_STEPS)[number];
+
+/** Étapes du parcours selon le mode du compte. */
+export function wizardSteps(proMode: boolean): readonly WizardStepKey[] {
+  return proMode ? WIZARD_STEPS : HOME_WIZARD_STEPS;
+}
+
+/** Appareils proposés (plaques et four cochés par défaut). */
+export const KITCHEN_EQUIPMENT = [
+  "hob",
+  "oven",
+  "microwave",
+  "air_fryer",
+  "multicooker",
+  "blender",
+  "stand_mixer",
+] as const;
+export type KitchenEquipment = (typeof KITCHEN_EQUIPMENT)[number];
+export const DEFAULT_EQUIPMENT: KitchenEquipment[] = ["hob", "oven"];
+export const COOKING_LEVELS = ["beginner", "comfortable", "confident"] as const;
+export type CookingLevel = (typeof COOKING_LEVELS)[number];
+/** Budgets proposés par personne, en centimes. */
+export const BUDGET_PRESETS_CENTS = [200, 300, 500, 800] as const;
+/** Temps disponibles proposés, en minutes. */
+export const TIME_PRESETS_MINUTES = [15, 30, 45, 60] as const;
 
 /** Nombre maximal de cuisines pour une fusion. */
 export const MAX_FUSION_CUISINES = 3;
@@ -41,6 +72,13 @@ export const wizardStateSchema = z.object({
   mode: z.enum(["ingredients", "name", "idea"]).nullable().catch(null),
   input: z.string().max(MAX_INPUT_LENGTH).catch(""),
   servings: z.number().int().min(1).max(200).catch(DEFAULT_SERVINGS),
+  /** Budget par personne en centimes (null = sans limite). */
+  budgetPerServingCents: z.number().int().min(50).max(10_000).nullable().catch(null),
+  /** Temps disponible (préparation + cuisson) en minutes (null = pas pressé). */
+  maxMinutes: z.number().int().min(5).max(600).nullable().catch(null),
+  level: z.enum(COOKING_LEVELS).nullable().catch(null),
+  /** Appareils disponibles (null = pas demandé : parcours pro). */
+  equipment: z.array(z.enum(KITCHEN_EQUIPMENT)).max(KITCHEN_EQUIPMENT.length).nullable().catch(null),
 });
 
 export type WizardState = z.infer<typeof wizardStateSchema>;
@@ -58,6 +96,24 @@ export function emptyWizardState(language: "fr" | "en" = "fr"): WizardState {
     mode: null,
     input: "",
     servings: DEFAULT_SERVINGS,
+    budgetPerServingCents: null,
+    maxMinutes: null,
+    level: null,
+    equipment: null,
+  };
+}
+
+/**
+ * Choix faits d'office pour le parcours court : aucune influence, style traditionnel, plaques et
+ * four. N'écrase jamais un choix déjà fait.
+ */
+export function withHomeDefaults(state: WizardState): WizardState {
+  return {
+    ...state,
+    influenceCode: state.influenceCode ?? "none",
+    styleCode: state.styleCode ?? "traditional",
+    mode: state.mode === "name" ? "idea" : state.mode,
+    equipment: state.equipment ?? DEFAULT_EQUIPMENT,
   };
 }
 

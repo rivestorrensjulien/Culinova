@@ -13,7 +13,8 @@ export default async function globalSetup(): Promise<void> {
   await seed(db);
   await ensureAdmin(db, ADMIN_EMAIL);
   // Une personne déjà inscrite (le parcours d'invitation est testé à part).
-  await db.insert(users).values({ email: COOK_EMAIL, name: "Camille", emailVerified: true });
+  // Le parcours principal teste les outils pro (prix de vente, fiche technique) : compte en mode pro.
+  await db.insert(users).values({ email: COOK_EMAIL, name: "Camille", emailVerified: true, proMode: true });
   await db.$client.end();
   await rm(process.env.EMAIL_OUTBOX_DIR!, { recursive: true, force: true });
 }

@@ -5,9 +5,9 @@
 import type { GeneratedRecipe } from "../schemas";
 import { isFusion, type RecipeRequest } from "./request";
 
-export const RECIPE_PROMPT_VERSION = "recipe.generate@11";
-export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@10";
-export const RECIPE_EDIT_PROMPT_VERSION = "recipe.edit@1";
+export const RECIPE_PROMPT_VERSION = "recipe.generate@12";
+export const RECIPE_REGENERATE_PROMPT_VERSION = "recipe.regenerate@11";
+export const RECIPE_EDIT_PROMPT_VERSION = "recipe.edit@2";
 
 const LANGUAGE_NAMES = { fr: "français", en: "anglais (English)" } as const;
 
@@ -30,6 +30,7 @@ Exigences :
 - Matériel cohérent : la liste equipment reprend exactement les noms utilisés dans les étapes et dans le dressage, sans synonymes ni contradictions. Le contenant de service du dressage y figure sous le même nom. Ne désigne jamais un ustensile de préparation par le nom du contenant de service (pour préparer, dis bol, plat creux, saladier, cul-de-poule…).
 - Durées en secondes, températures en °C. Indique les allergènes parmi les 14 allergènes réglementaires, les régimes compatibles (vegan, vegetarian, gluten_free, lactose_free, halal, kosher, keto…) et la saison.
 - Respecte strictement les contraintes de régime, d'allergies et d'ingrédients non désirés.
+- Cuisine à la maison (quand les paramètres donnent un budget, un temps, un niveau ou du matériel) : ce sont des contraintes, pas des suggestions. Budget par personne : le coût des ingrédients au prix moyen d'un supermarché en France, divisé par le nombre de personnes, ne le dépasse pas ; préfère des produits de saison et courants. Temps disponible : prepTimeSeconds + cookTimeSeconds ne le dépassent pas, et aucun repos de plus de 30 minutes sauf s'il se fait la veille et que tu le signales. Niveau débutant : gestes simples expliqués pas à pas, aucune technique délicate (pâte levée, tempérage, sauce émulsionnée chaude, découpe de volaille crue…) ; « à l'aise » : techniques courantes ; « confirmé » : tu peux proposer des techniques plus fines. Matériel : n'utilise que les appareils listés ; sans four, rien au four ; sans robot ni mixeur, rien à mixer (écraser à la fourchette, hacher au couteau). Le petit matériel de base (casseroles, poêle, couteaux, planche, bols, fouet, passoire) est toujours disponible.
 - Rédige tous les textes dans la langue demandée, avec un vocabulaire culinaire juste (traduction culinaire, pas littérale).
 - En français, emploie les noms d'ingrédients et de produits utilisés couramment en France, pas les noms étrangers : « biscuits boudoirs » et non « savoiardi », « pâte feuilletée » et non « puff pastry ». Garde le nom d'origine seulement pour un produit sans équivalent français courant (mascarpone, parmesan, miso…).
 - Ne compte une étape de cuisson que si la recette la demande réellement : un produit acheté prêt à l'emploi (biscuits boudoirs, pâte achetée…) ne se cuit pas.
@@ -79,6 +80,19 @@ export function describeRequest(request: RecipeRequest): string {
   if (diets.length) lines.push(`Régimes à respecter : ${list(diets)}`);
   if (allergens.length) lines.push(`Allergènes à exclure : ${list(allergens)}`);
   if (dislikedIngredients.length) lines.push(`Ingrédients à éviter : ${list(dislikedIngredients)}`);
+  const home = request.household;
+  if (home) {
+    lines.push("Cuisine à la maison :");
+    lines.push(
+      `- Budget : ${home.budgetPerServingCents ? `${(home.budgetPerServingCents / 100).toFixed(2).replace(".", ",")} € par personne au plus` : "sans limite"}`,
+    );
+    lines.push(
+      `- Temps disponible : ${home.maxMinutes ? `${home.maxMinutes} minutes au plus (préparation + cuisson)` : "pas pressé"}`,
+    );
+    const levels = { beginner: "débutant", comfortable: "à l'aise", confident: "confirmé" } as const;
+    lines.push(`- Niveau : ${home.level ? levels[home.level] : "à l'aise"}`);
+    lines.push(`- Appareils disponibles : ${list(home.equipment)}`);
+  }
   return lines.join("\n");
 }
 

@@ -504,7 +504,10 @@
       "generation": "Generation",
       "result": "Result",
       "social": "Social media",
-      "saved": "Saved"
+      "saved": "Saved",
+      "wish": "Craving",
+      "practical": "People, budget, time",
+      "kitchen": "Your kitchen"
     },
     "stepOf": "Step {current} of {total}",
     "questions": {
@@ -518,7 +521,10 @@
       "generation": "All set",
       "result": "Your recipe",
       "social": "Social media content",
-      "saved": "Your recipe is saved"
+      "saved": "Your recipe is saved",
+      "wish": "What are we cooking?",
+      "practical": "For how many, on what budget, in how much time?",
+      "kitchen": "Your kitchen"
     },
     "inputQuestion": {
       "ingredients": "Which ingredients do you have?",
@@ -579,7 +585,11 @@
       "mode": "Mode",
       "input": "Input",
       "servings": "Servings",
-      "edit": "Edit"
+      "edit": "Edit",
+      "budget": "Budget",
+      "time": "Time",
+      "level": "Level",
+      "equipment": "Appliances"
     },
     "generate": "Generate the recipe",
     "generating": "Creating your recipe…",
@@ -617,7 +627,57 @@
     "regenerating": "New version in progress…",
     "regenerateImage": "Regenerate the image",
     "imageSoon": "You can then create the photo from the recipe page.",
-    "noSocial": "Social media content could not be generated for this recipe."
+    "noSocial": "Social media content could not be generated for this recipe.",
+    "home": {
+      "modes": {
+        "ingredients": {
+          "title": "With what I have",
+          "hint": "What's left in the fridge and cupboards"
+        },
+        "idea": {
+          "title": "I have a craving",
+          "hint": "A dish, an idea, a season, an occasion"
+        }
+      },
+      "placeholder": {
+        "ingredients": "E.g. 2 courgettes, 4 eggs, some leftover feta, rice…",
+        "idea": "E.g. a comforting gratin, lasagne, a pear dessert…"
+      },
+      "moment": "For which moment?",
+      "servings": "How many people?",
+      "budget": "Budget per person",
+      "noLimit": "No limit",
+      "perPerson": "{amount} / person",
+      "time": "Time available (prep and cooking)",
+      "noRush": "No rush",
+      "minutes": "{count} min",
+      "level": "Your level",
+      "levels": {
+        "beginner": {
+          "title": "Beginner",
+          "hint": "Simple steps, explained one by one"
+        },
+        "comfortable": {
+          "title": "Comfortable",
+          "hint": "I cook regularly"
+        },
+        "confident": {
+          "title": "Confident",
+          "hint": "I enjoy finer techniques"
+        }
+      },
+      "equipment": "Your appliances",
+      "equipmentHint": "Pans, knives and bowls are always assumed. Your choices are kept for the next recipe.",
+      "appliances": {
+        "hob": "Hob",
+        "oven": "Oven",
+        "microwave": "Microwave",
+        "air_fryer": "Air fryer",
+        "multicooker": "Multicooker (Thermomix, Instant Pot…)",
+        "blender": "Blender",
+        "stand_mixer": "Mixer or stand mixer"
+      }
+    }
   },
   "Recipe": {
     "servings": "{count, plural, one {# person} other {# people}}",

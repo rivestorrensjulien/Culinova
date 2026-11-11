@@ -1,6 +1,6 @@
 import { FakeLlmAdapter } from "@culinova/ai";
 import { describe, expect, it } from "vitest";
-import { emptyWizardState } from "@/lib/wizard";
+import { emptyWizardState, withHomeDefaults } from "@/lib/wizard";
 import { createTestUser, hasTestDb, testDb } from "@/test/db";
 import { getOrCreateDraft, saveDraft, startNewDraft } from "./drafts";
 import { runGeneration } from "./run";
@@ -54,6 +54,43 @@ describe.skipIf(!hasTestDb)("brouillons du wizard", () => {
         clientUpdatedAt: new Date(),
       }),
     ).toEqual({ ok: false, reason: "not_found" });
+  });
+
+  it("parcours court : budget, temps, niveau et matériel vont au moteur ; niveau et matériel sont repris", async () => {
+    const db = testDb();
+    const user = await createTestUser();
+    const ai = new FakeLlmAdapter();
+    const draft = await getOrCreateDraft(db, user.id, "fr");
+    const state = withHomeDefaults({
+      ...emptyWizardState(),
+      momentCode: "main",
+      mode: "ingredients",
+      input: "2 courgettes, 4 œufs, feta",
+      servings: 2,
+      budgetPerServingCents: 300,
+      maxMinutes: 30,
+      level: "beginner",
+      equipment: ["hob", "microwave"],
+    });
+    expect(state).toMatchObject({ influenceCode: "none", styleCode: "traditional" });
+    await saveDraft(db, { userId: user.id, draftId: draft.id, state, clientUpdatedAt: new Date() });
+    const started = await startRecipeGeneration(db, { userId: user.id, draftId: draft.id });
+    if (!started.ok) throw new Error(`refusé : ${started.reason}`);
+    await runGeneration(db, ai, started.generationId);
+    const prompt = ai.calls.find((c) => c.promptId.startsWith("recipe.generate"))!.user;
+    expect(prompt).toContain("Budget : 3,00 € par personne au plus");
+    expect(prompt).toContain("Appareils disponibles : plaques de cuisson, micro-ondes");
+    expect(prompt).toContain("Niveau : débutant");
+
+    // Nouvelle recette : niveau et matériel déjà remplis, le reste repart de zéro.
+    const next = await startNewDraft(db, user.id, "fr");
+    expect(next.state).toMatchObject({
+      level: "beginner",
+      equipment: ["hob", "microwave"],
+      momentCode: null,
+      input: "",
+      budgetPerServingCents: null,
+    });
   });
 
   it("ouvre un nouveau brouillon et affiche la recette générée", async () => {

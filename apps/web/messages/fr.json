@@ -504,7 +504,10 @@
       "generation": "Génération",
       "result": "Résultat",
       "social": "Réseaux sociaux",
-      "saved": "Enregistrée"
+      "saved": "Enregistrée",
+      "wish": "Envie",
+      "practical": "Personnes, budget, temps",
+      "kitchen": "Votre cuisine"
     },
     "stepOf": "Étape {current} sur {total}",
     "questions": {
@@ -518,7 +521,10 @@
       "generation": "Tout est prêt",
       "result": "Votre recette",
       "social": "Contenu pour les réseaux sociaux",
-      "saved": "Votre recette est enregistrée"
+      "saved": "Votre recette est enregistrée",
+      "wish": "Qu'est-ce qu'on cuisine ?",
+      "practical": "Pour combien, avec quel budget et combien de temps ?",
+      "kitchen": "Votre cuisine"
     },
     "inputQuestion": {
       "ingredients": "Quels ingrédients avez-vous ?",
@@ -579,7 +585,11 @@
       "mode": "Mode",
       "input": "Saisie",
       "servings": "Personnes",
-      "edit": "Modifier"
+      "edit": "Modifier",
+      "budget": "Budget",
+      "time": "Temps",
+      "level": "Niveau",
+      "equipment": "Appareils"
     },
     "generate": "Générer la recette",
     "generating": "Création de votre recette…",
@@ -617,7 +627,57 @@
     "regenerating": "Nouvelle version en cours…",
     "regenerateImage": "Régénérer l'image",
     "imageSoon": "La photo se crée ensuite depuis la page de la recette.",
-    "noSocial": "Le contenu pour les réseaux sociaux n'a pas pu être généré pour cette recette."
+    "noSocial": "Le contenu pour les réseaux sociaux n'a pas pu être généré pour cette recette.",
+    "home": {
+      "modes": {
+        "ingredients": {
+          "title": "Avec ce que j'ai",
+          "hint": "Ce qu'il reste dans le frigo et les placards"
+        },
+        "idea": {
+          "title": "J'ai une envie",
+          "hint": "Un plat, une idée, une saison, une occasion"
+        }
+      },
+      "placeholder": {
+        "ingredients": "Ex. : 2 courgettes, 4 œufs, un reste de feta, riz…",
+        "idea": "Ex. : un gratin réconfortant, des lasagnes, un dessert à la poire…"
+      },
+      "moment": "Pour quel moment ?",
+      "servings": "Pour combien de personnes ?",
+      "budget": "Budget par personne",
+      "noLimit": "Sans limite",
+      "perPerson": "{amount} / pers.",
+      "time": "Temps disponible (préparation et cuisson)",
+      "noRush": "Pas pressé",
+      "minutes": "{count} min",
+      "level": "Votre niveau",
+      "levels": {
+        "beginner": {
+          "title": "Débutant",
+          "hint": "Des gestes simples, expliqués pas à pas"
+        },
+        "comfortable": {
+          "title": "À l'aise",
+          "hint": "Je cuisine régulièrement"
+        },
+        "confident": {
+          "title": "Confirmé",
+          "hint": "J'aime les techniques plus fines"
+        }
+      },
+      "equipment": "Vos appareils",
+      "equipmentHint": "Casseroles, poêle, couteaux et bols sont toujours comptés. Vos choix sont gardés pour la prochaine recette.",
+      "appliances": {
+        "hob": "Plaques",
+        "oven": "Four",
+        "microwave": "Micro-ondes",
+        "air_fryer": "Air fryer",
+        "multicooker": "Robot cuiseur (Thermomix, Cookeo…)",
+        "blender": "Mixeur ou blender",
+        "stand_mixer": "Batteur ou robot pâtissier"
+      }
+    }
   },
   "Recipe": {
     "servings": "{count, plural, one {# personne} other {# personnes}}",

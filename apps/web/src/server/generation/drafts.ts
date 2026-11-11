@@ -20,10 +20,20 @@ export async function getOrCreateDraft(
     .orderBy(desc(s.recipeDrafts.updatedAt))
     .limit(1);
   if (open) return open;
-  const [created] = await db
-    .insert(s.recipeDrafts)
-    .values({ userId, state: emptyWizardState(language), wizardStep: 1 })
-    .returning();
+  // Niveau et matériel ne changent pas d'une recette à l'autre : repris du dernier brouillon.
+  const [last] = await db
+    .select({ state: s.recipeDrafts.state })
+    .from(s.recipeDrafts)
+    .where(eq(s.recipeDrafts.userId, userId))
+    .orderBy(desc(s.recipeDrafts.updatedAt))
+    .limit(1);
+  const previous = last ? parseWizardState(last.state, language) : null;
+  const state = {
+    ...emptyWizardState(language),
+    level: previous?.level ?? null,
+    equipment: previous?.equipment ?? null,
+  };
+  const [created] = await db.insert(s.recipeDrafts).values({ userId, state, wizardStep: 1 }).returning();
   return created!;
 }
 

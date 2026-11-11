@@ -33,6 +33,17 @@ export interface RecipeRequest {
   input: string;
   servings: number;
   constraints: { diets: string[]; allergens: string[]; dislikedIngredients: string[] };
+  /**
+   * Contraintes d'un particulier (parcours court) : budget par personne, temps disponible,
+   * niveau et appareils. Absent pour le parcours pro.
+   */
+  household?: {
+    budgetPerServingCents: number | null;
+    maxMinutes: number | null;
+    level: "beginner" | "comfortable" | "confident" | null;
+    /** Libellés des appareils disponibles (plaques, four…). */
+    equipment: string[];
+  };
 }
 
 /** Une recette est une fusion dès que plusieurs cuisines sont choisies. */

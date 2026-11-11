@@ -20,7 +20,18 @@ import { RecipeView } from "@/components/recipe/recipe-view";
 import { SocialContentView } from "@/components/recipe/social-content";
 import { Link, useRouter } from "@/i18n/navigation";
 import { formatResetDate } from "@/lib/dates";
-import { MAX_INPUT_LENGTH, missingFields, WIZARD_STEPS, type WizardState } from "@/lib/wizard";
+import {
+  BUDGET_PRESETS_CENTS,
+  COOKING_LEVELS,
+  KITCHEN_EQUIPMENT,
+  MAX_INPUT_LENGTH,
+  missingFields,
+  TIME_PRESETS_MINUTES,
+  type WizardState,
+  type WizardStepKey,
+  withHomeDefaults,
+  wizardSteps,
+} from "@/lib/wizard";
 import {
   draftStatusAction,
   generationFailureAction,
@@ -60,8 +71,6 @@ type Problem =
   { kind: "start"; result: Exclude<StartResult, { ok: true }> } | { kind: "failed"; code: string };
 
 const POLL_MS = 2000;
-const GENERATION_STEP = 9;
-const RESULT_STEP = 10;
 
 function SaveIndicator({ status }: { status: SaveStatus }) {
   const t = useTranslations("Wizard.save");
@@ -112,9 +121,16 @@ export function Wizard({
   const [instruction, setInstruction] = useState("");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
+  // Parcours pro (12 étapes) ou parcours court des particuliers.
+  const steps = wizardSteps(proMode);
+  const at = (name: WizardStepKey) => steps.indexOf(name) + 1;
+  const GENERATION_STEP = at("generation");
+  const RESULT_STEP = at("result");
+
   const update = useCallback(
-    (patch: Partial<WizardState>) => setState((s) => ({ ...s, ...patch })),
-    [setState],
+    (patch: Partial<WizardState>) =>
+      setState((s) => (proMode ? { ...s, ...patch } : withHomeDefaults({ ...s, ...patch }))),
+    [setState, proMode],
   );
   const goTo = useCallback(
     (step: number) => {
@@ -150,7 +166,7 @@ export function Wizard({
       stopped = true;
       clearInterval(id);
     };
-  }, [generating, draft.id, update, router]);
+  }, [generating, draft.id, update, router, RESULT_STEP]);
 
   // Suivi d'une régénération.
   useEffect(() => {
@@ -226,22 +242,30 @@ export function Wizard({
 
   const hasRecipe = Boolean(recipe);
   const step = hasRecipe ? Math.max(state.step, RESULT_STEP) : Math.min(state.step, GENERATION_STEP);
-  const key = WIZARD_STEPS[step - 1]!;
+  const key = steps[step - 1]!;
   const fusion = state.cuisineCodes.length > 1;
   const remaining = usage.limit === null ? null : Math.max(0, usage.limit - used);
 
-  const canContinue: Record<number, boolean> = {
-    1: Boolean(state.momentCode),
-    2: Boolean(state.influenceCode),
-    3: true,
-    4: Boolean(state.styleCode),
-    5: true,
-    6: Boolean(state.mode),
-    7: state.input.trim().length >= 2,
-    8: state.servings >= 1,
-    10: true,
-    11: true,
+  const canContinue: Partial<Record<WizardStepKey, boolean>> = {
+    moment: Boolean(state.momentCode),
+    influence: Boolean(state.influenceCode),
+    precision: true,
+    style: Boolean(state.styleCode),
+    language: true,
+    mode: Boolean(state.mode),
+    input: state.input.trim().length >= 2,
+    servings: state.servings >= 1,
+    result: true,
+    social: true,
+    wish: Boolean(state.momentCode && state.mode) && state.input.trim().length >= 2,
+    practical: state.servings >= 1,
+    kitchen: (state.equipment?.length ?? 0) > 0,
   };
+  const euros = (cents: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(
+      cents / 100,
+    );
+  const equipment = state.equipment ?? [];
 
   const label = {
     moment: reference.moments.find((m) => m.code === state.momentCode)?.label,
@@ -267,11 +291,11 @@ export function Wizard({
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-muted">{t("stepOf", { current: step, total: WIZARD_STEPS.length })}</p>
+          <p className="text-sm text-muted">{t("stepOf", { current: step, total: steps.length })}</p>
           <h1 ref={headingRef} tabIndex={-1} className="font-display text-4xl outline-none">
             {key === "input" && state.mode
               ? t(`inputQuestion.${state.mode}`)
-              : t(`questions.${key === "input" ? "mode" : key}`)}
+              : t(`questions.${key === "input" ? "mode" : key}` as "questions.mode")}
           </h1>
         </div>
         <div className="flex items-center gap-3">
@@ -287,11 +311,11 @@ export function Wizard({
       <nav aria-label={t("title")} className="flex flex-col gap-2">
         <Progress
           value={step}
-          max={WIZARD_STEPS.length}
-          label={t("stepOf", { current: step, total: WIZARD_STEPS.length })}
+          max={steps.length}
+          label={t("stepOf", { current: step, total: steps.length })}
         />
         <ol className="hidden flex-wrap gap-x-3 gap-y-1 text-xs text-muted md:flex">
-          {WIZARD_STEPS.map((name, index) => {
+          {steps.map((name, index) => {
             const n = index + 1;
             const reachable = hasRecipe ? n >= RESULT_STEP : n <= GENERATION_STEP && n <= state.step;
             return (
@@ -310,7 +334,7 @@ export function Wizard({
                         : "opacity-50",
                   )}
                 >
-                  {n}. {t(`steps.${name}`)}
+                  {n}. {t(`steps.${name}` as "steps.moment")}
                 </button>
               </li>
             );
@@ -321,6 +345,140 @@ export function Wizard({
       {problem ? <Notice tone="danger">{problemText(problem)}</Notice> : null}
 
       <section className="min-h-64">
+        {key === "wish" && (
+          <div className="flex flex-col gap-6">
+            <div className="grid gap-3 sm:grid-cols-2">
+              {(["ingredients", "idea"] as const).map((m) => (
+                <SelectCard
+                  key={m}
+                  title={t(`home.modes.${m}.title`)}
+                  hint={t(`home.modes.${m}.hint`)}
+                  selected={state.mode === m}
+                  onSelect={() => update({ mode: m })}
+                />
+              ))}
+            </div>
+            {state.mode ? (
+              <Textarea
+                value={state.input}
+                maxLength={MAX_INPUT_LENGTH}
+                rows={5}
+                aria-label={t(`inputQuestion.${state.mode}`)}
+                placeholder={t(`home.placeholder.${state.mode === "ingredients" ? "ingredients" : "idea"}`)}
+                onChange={(e) => update({ input: e.target.value })}
+                className="text-base"
+                data-testid="home-input"
+              />
+            ) : null}
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">{t("home.moment")}</legend>
+              <div className="flex flex-wrap gap-2">
+                {reference.moments.map((m) => (
+                  <Chip
+                    key={m.code}
+                    selected={state.momentCode === m.code}
+                    onClick={() => update({ momentCode: m.code })}
+                  >
+                    {m.label}
+                  </Chip>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        )}
+
+        {key === "practical" && (
+          <div className="flex flex-col gap-6">
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">{t("home.servings")}</legend>
+              <div className="flex flex-wrap items-center gap-2">
+                {SERVINGS_PRESETS.map((n) => (
+                  <Chip key={n} selected={state.servings === n} onClick={() => update({ servings: n })}>
+                    {n}
+                  </Chip>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">{t("home.budget")}</legend>
+              <div className="flex flex-wrap gap-2">
+                <Chip
+                  selected={state.budgetPerServingCents === null}
+                  onClick={() => update({ budgetPerServingCents: null })}
+                >
+                  {t("home.noLimit")}
+                </Chip>
+                {BUDGET_PRESETS_CENTS.map((cents) => (
+                  <Chip
+                    key={cents}
+                    selected={state.budgetPerServingCents === cents}
+                    onClick={() => update({ budgetPerServingCents: cents })}
+                  >
+                    {t("home.perPerson", { amount: euros(cents) })}
+                  </Chip>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">{t("home.time")}</legend>
+              <div className="flex flex-wrap gap-2">
+                <Chip selected={state.maxMinutes === null} onClick={() => update({ maxMinutes: null })}>
+                  {t("home.noRush")}
+                </Chip>
+                {TIME_PRESETS_MINUTES.map((minutes) => (
+                  <Chip
+                    key={minutes}
+                    selected={state.maxMinutes === minutes}
+                    onClick={() => update({ maxMinutes: minutes })}
+                  >
+                    {t("home.minutes", { count: minutes })}
+                  </Chip>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        )}
+
+        {key === "kitchen" && (
+          <div className="flex flex-col gap-6">
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">{t("home.level")}</legend>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {COOKING_LEVELS.map((level) => (
+                  <SelectCard
+                    key={level}
+                    title={t(`home.levels.${level}.title`)}
+                    hint={t(`home.levels.${level}.hint`)}
+                    selected={(state.level ?? "comfortable") === level}
+                    onSelect={() => update({ level })}
+                  />
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="flex flex-col gap-2">
+              <legend className="mb-2 text-sm font-medium">{t("home.equipment")}</legend>
+              <div className="flex flex-wrap gap-2">
+                {KITCHEN_EQUIPMENT.map((code) => (
+                  <Chip
+                    key={code}
+                    selected={equipment.includes(code)}
+                    onClick={() =>
+                      update({
+                        equipment: equipment.includes(code)
+                          ? equipment.filter((c) => c !== code)
+                          : [...equipment, code],
+                      })
+                    }
+                  >
+                    {t(`home.appliances.${code}`)}
+                  </Chip>
+                ))}
+              </div>
+              <p className="text-sm text-muted">{t("home.equipmentHint")}</p>
+            </fieldset>
+          </div>
+        )}
+
         {key === "moment" && (
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {reference.moments.map((m) => (
@@ -462,20 +620,45 @@ export function Wizard({
                   className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr_auto]"
                   data-testid="summary"
                 >
-                  {(
-                    [
-                      ["moment", label.moment, 1],
-                      ["influence", label.influence, 2],
-                      ["precision", label.precision, 3],
-                      ["style", label.style, 4],
-                      ["language", label.language, 5],
-                      ["mode", label.mode, 6],
-                      ["input", state.input, 7],
-                      ["servings", String(state.servings), 8],
-                    ] as const
+                  {(proMode
+                    ? ([
+                        ["moment", label.moment, 1],
+                        ["influence", label.influence, 2],
+                        ["precision", label.precision, 3],
+                        ["style", label.style, 4],
+                        ["language", label.language, 5],
+                        ["mode", label.mode, 6],
+                        ["input", state.input, 7],
+                        ["servings", String(state.servings), 8],
+                      ] as const)
+                    : ([
+                        ["input", state.input, at("wish")],
+                        ["moment", label.moment, at("wish")],
+                        ["servings", String(state.servings), at("practical")],
+                        [
+                          "budget",
+                          state.budgetPerServingCents
+                            ? t("home.perPerson", { amount: euros(state.budgetPerServingCents) })
+                            : t("home.noLimit"),
+                          at("practical"),
+                        ],
+                        [
+                          "time",
+                          state.maxMinutes
+                            ? t("home.minutes", { count: state.maxMinutes })
+                            : t("home.noRush"),
+                          at("practical"),
+                        ],
+                        ["level", t(`home.levels.${state.level ?? "comfortable"}.title`), at("kitchen")],
+                        [
+                          "equipment",
+                          equipment.map((code) => t(`home.appliances.${code}`)).join(", "),
+                          at("kitchen"),
+                        ],
+                      ] as const)
                   ).map(([name, value, target]) => (
                     <div key={name} className="contents">
-                      <dt className="text-muted">{t(`summary.${name}`)}</dt>
+                      <dt className="text-muted">{t(`summary.${name}` as "summary.moment")}</dt>
                       <dd className="whitespace-pre-line">{value || "—"}</dd>
                       <dd>
                         {!generating ? (
@@ -601,7 +784,7 @@ export function Wizard({
           >
             {t("back")}
           </Button>
-          <Button onClick={() => goTo(step + 1)} disabled={!canContinue[step]}>
+          <Button onClick={() => goTo(step + 1)} disabled={!canContinue[key]}>
             {t("next")}
           </Button>
         </div>

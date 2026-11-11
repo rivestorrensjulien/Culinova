@@ -19,7 +19,7 @@ concurrency:
 jobs:
   programmation:
     name: Lancer les publications à l'heure
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright et Remotion ne prennent pas encore en charge Ubuntu 26.04 (11/11)
     timeout-minutes: 5
     env:
       CULINOVA_URL: ${{ vars.CULINOVA_URL || 'https://culinova.fr' }}

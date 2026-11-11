@@ -12,7 +12,7 @@ concurrency:
 jobs:
   verifications:
     name: Lint, types, tests, build, bout en bout
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright et Remotion ne prennent pas encore en charge Ubuntu 26.04 (11/11)
     timeout-minutes: 25
 
     services:

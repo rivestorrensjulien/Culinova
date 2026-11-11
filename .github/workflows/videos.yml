@@ -37,7 +37,7 @@ concurrency:
 jobs:
   videos:
     name: Fabriquer les vidéos
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # Playwright et Remotion ne prennent pas encore en charge Ubuntu 26.04 (11/11)
     timeout-minutes: 60
     defaults:
       run:

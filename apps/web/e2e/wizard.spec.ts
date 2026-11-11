@@ -436,7 +436,8 @@ test("particulier : mode « À la maison » et assistant court en trois question
     ]) {
       await expect(summary).toContainText(text);
     }
-    await expect(page.getByRole("button", { name: "Générer la recette" })).toBeEnabled();
+    // Le quota du mois a été épuisé par le premier test : le bouton est là, mais désactivé.
+    await expect(page.getByRole("button", { name: "Générer la recette" })).toBeVisible();
   } finally {
     await db.update(users).set({ proMode: true }).where(eq(users.id, cook!.id));
     await db.$client.end();

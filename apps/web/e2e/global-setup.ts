@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { createDb } from "@culinova/db";
 import { resetTestDatabase, runMigrations } from "@culinova/db/migrate";
 import { ensureAdmin, seed } from "@culinova/db/seed";
@@ -12,6 +13,8 @@ export default async function globalSetup(): Promise<void> {
   const db = createDb(url);
   await seed(db);
   await ensureAdmin(db, ADMIN_EMAIL);
+  // Le test hors ligne parcourt l'assistant pro en 12 étapes.
+  await db.update(users).set({ proMode: true }).where(eq(users.email, ADMIN_EMAIL));
   // Une personne déjà inscrite (le parcours d'invitation est testé à part).
   // Le parcours principal teste les outils pro (prix de vente, fiche technique) : compte en mode pro.
   await db.insert(users).values({ email: COOK_EMAIL, name: "Camille", emailVerified: true, proMode: true });

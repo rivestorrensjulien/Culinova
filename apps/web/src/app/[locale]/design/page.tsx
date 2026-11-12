@@ -183,7 +183,7 @@ export default function DesignPage() {
         title="Cartes de recettes"
         description="La photo occupe la place principale. Coût par portion calculé automatiquement."
       >
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {recipes.map((r) => (
             <Card key={r.title} className="group transition-shadow hover:shadow-lifted">
               <div

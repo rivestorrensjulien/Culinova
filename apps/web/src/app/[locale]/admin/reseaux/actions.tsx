@@ -71,7 +71,7 @@ export function AnalysisView({ analysis }: { analysis: InsightsAnalysis }) {
   return (
     <div className="flex flex-col gap-5 text-sm" data-testid="social-analysis">
       <p className="text-base">{analysis.summary}</p>
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <h3 className="mb-2 font-medium">Ce qui marche</h3>
           <ul className="list-disc space-y-1 pl-5">

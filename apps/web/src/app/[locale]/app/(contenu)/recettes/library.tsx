@@ -161,7 +161,7 @@ export function Library({ cards: initial }: { cards: LibraryCard[] }) {
       {shown.length === 0 ? (
         <p className="text-muted">{t("noMatch")}</p>
       ) : (
-        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" data-testid="library">
+        <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" data-testid="library">
           {shown.map((card) => (
             <li key={card.id} className="relative" data-testid="library-card">
               <Link href={`/app/recettes/${card.id}`} className="block h-full">

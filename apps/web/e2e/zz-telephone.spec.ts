@@ -22,6 +22,7 @@ async function overflowing(page: Page): Promise<string[]> {
     for (const el of Array.from(document.body.querySelectorAll<HTMLElement>("*"))) {
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.right <= width + 1) continue;
+      if (!el.checkVisibility()) continue;
       // Un ancêtre qui défile horizontalement contient le débordement : pas de souci.
       let parent = el.parentElement;
       let clipped = false;

@@ -39,7 +39,7 @@ export default async function ShoppingListsPage({
       {lists.length === 0 ? (
         <p className="text-muted">{t("empty")}</p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="shopping-lists">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="shopping-lists">
           {lists.map((list) => (
             <li key={list.id}>
               <Link href={`/app/courses/${list.id}`} className="block h-full">

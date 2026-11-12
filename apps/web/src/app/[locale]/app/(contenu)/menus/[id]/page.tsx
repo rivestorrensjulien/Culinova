@@ -56,7 +56,7 @@ export default async function MenuPage({ params }: { params: Promise<{ locale: s
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">
           <Card>
             <CardBody className="flex flex-col gap-4">

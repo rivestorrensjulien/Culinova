@@ -30,7 +30,7 @@ export function MobileMenu({ children }: { children: ReactNode }) {
         </svg>
         {t("menu")}
       </summary>
-      <div className="absolute inset-x-0 top-full z-40 flex flex-col gap-4 border-b border-border bg-background px-4 pt-2 pb-6 shadow-lg">
+      <div className="absolute inset-x-0 top-full z-40 hidden flex-col gap-4 group-open:flex border-b border-border bg-background px-4 pt-2 pb-6 shadow-lg">
         {children}
       </div>
     </details>

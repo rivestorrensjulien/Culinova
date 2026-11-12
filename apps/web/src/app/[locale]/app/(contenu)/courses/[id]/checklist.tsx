@@ -153,7 +153,7 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-5">
           {toBuy.map((group) => (
             <section key={group.code ?? "other"} className="flex flex-col gap-2 break-inside-avoid">

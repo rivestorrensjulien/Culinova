@@ -24,7 +24,7 @@ export function CreateInvitationForm() {
           {state.emailed ? <p className="mt-1">Invitation envoyée à {state.email}.</p> : null}
         </Notice>
       ) : null}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Libellé (facultatif)" hint="Ex. : Chef Martin, testeur Lyon">
           {(a11y) => <Input name="label" maxLength={120} {...a11y} />}
         </Field>

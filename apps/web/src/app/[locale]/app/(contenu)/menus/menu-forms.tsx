@@ -21,7 +21,7 @@ export function MenuForm({
       {menu ? <input type="hidden" name="id" value={menu.id} /> : null}
       {state.status === "error" ? <Notice tone="danger">{t("invalid")}</Notice> : null}
       {state.status === "saved" ? <Notice tone="success">{t("saved")}</Notice> : null}
-      <div className="grid gap-4 sm:grid-cols-[2fr_1fr_1fr]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-[2fr_1fr_1fr]">
         <Field label={t("name")}>
           {(a11y) => (
             <Input

@@ -38,7 +38,7 @@ export function HomeDemo({ examples }: { examples: DemoExample[] }) {
   const euros = (cents: number) => format.number(cents / 100, { style: "currency", currency: "EUR" });
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-start">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_1.2fr] lg:items-start">
       <div className="flex flex-col gap-6">
         <div role="radiogroup" aria-label={t("choose")} className="flex flex-wrap gap-2">
           {examples.map((item, i) => (
@@ -88,7 +88,7 @@ export function HomeDemo({ examples }: { examples: DemoExample[] }) {
         <p className="mt-1 text-sm text-muted">
           {example.meta} · {t("people", { count: servings })}
         </p>
-        <ul className="mt-5 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+        <ul className="mt-5 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
           {example.ingredients.map((ingredient) => {
             const grams = roundGrams(ingredient.g * ratio);
             const pieces = ingredient.piece ? Math.round((grams / ingredient.piece.g) * 2) / 2 : null;

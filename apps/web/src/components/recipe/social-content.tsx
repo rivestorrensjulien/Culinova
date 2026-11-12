@@ -10,7 +10,7 @@ export function SocialContentView({ social }: { social: RecipeView["social"] }) 
   const tw = useTranslations("Wizard");
   if (social.length === 0) return <Notice>{tw("noSocial")}</Notice>;
   return (
-    <div className="grid gap-4 md:grid-cols-2" data-testid="social">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-testid="social">
       {social.map((item) => {
         const text = [
           item.title,

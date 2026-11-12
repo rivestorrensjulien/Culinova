@@ -81,7 +81,7 @@ export default async function PublicRecipePage({
 
       <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-4 py-10 sm:px-8 sm:py-14">
         <article className="flex flex-col gap-12" data-testid="public-recipe">
-          <header className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14">
+          <header className="grid grid-cols-1 items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:gap-14">
             {photo ? (
               // eslint-disable-next-line @next/next/no-img-element -- photo servie par l'API, déjà recadrée
               <img
@@ -129,7 +129,7 @@ export default async function PublicRecipePage({
             </div>
           </header>
 
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] lg:gap-12">
             <div>
               <Card className="lg:sticky lg:top-6">
                 <CardBody className="flex flex-col gap-4">
@@ -187,7 +187,7 @@ export default async function PublicRecipePage({
                 </Card>
               ) : null}
 
-              <div className="grid gap-6 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 {recipe.equipment.length ? (
                   <div>
                     <h3 className="mb-1 text-sm font-medium">{tr("equipment")}</h3>
@@ -227,7 +227,7 @@ export default async function PublicRecipePage({
           className="scroll-mt-8 overflow-hidden rounded-[2rem] bg-primary text-primary-foreground"
           data-testid="public-cta"
         >
-          <div className="grid items-center gap-6 p-8 sm:p-12 md:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="grid grid-cols-1 items-center gap-6 p-8 sm:p-12 md:grid-cols-[minmax(0,1fr)_auto]">
             <div className="flex flex-col gap-4">
               <h2 className="font-display text-3xl leading-tight text-balance sm:text-4xl">
                 {t("ctaTitle")}

@@ -76,7 +76,7 @@ export function ModeChoice({ proMode }: { proMode: boolean }) {
     { value: true, title: t("modeProTitle"), text: t("modeProText") },
   ];
   return (
-    <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label={t("modeTitle")}>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2" role="radiogroup" aria-label={t("modeTitle")}>
       {options.map((option) => {
         const selected = option.value === proMode;
         return (

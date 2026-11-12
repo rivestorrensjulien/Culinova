@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <h1 className="font-display text-4xl">Tableau de bord</h1>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((card) => (
           <Card key={card.label}>
             <CardBody>

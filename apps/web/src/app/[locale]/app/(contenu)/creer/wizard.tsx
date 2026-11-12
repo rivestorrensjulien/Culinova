@@ -347,7 +347,7 @@ export function Wizard({
       <section className="min-h-64">
         {key === "wish" && (
           <div className="flex flex-col gap-6">
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {(["ingredients", "idea"] as const).map((m) => (
                 <SelectCard
                   key={m}
@@ -443,7 +443,7 @@ export function Wizard({
           <div className="flex flex-col gap-6">
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-2 text-sm font-medium">{t("home.level")}</legend>
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {COOKING_LEVELS.map((level) => (
                   <SelectCard
                     key={level}
@@ -534,7 +534,7 @@ export function Wizard({
         {key === "style" && (
           <div className="flex flex-col gap-3">
             {fusion ? <Notice>{t("traditionalDisabled")}</Notice> : null}
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {reference.styles.map((s) => (
                 <SelectCard
                   key={s.code}
@@ -550,7 +550,7 @@ export function Wizard({
         )}
 
         {key === "language" && (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {(["fr", "en"] as const).map((l) => (
               <SelectCard
                 key={l}
@@ -563,7 +563,7 @@ export function Wizard({
         )}
 
         {key === "mode" && (
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {(["ingredients", "name", "idea"] as const).map((m) => (
               <SelectCard
                 key={m}
@@ -617,7 +617,7 @@ export function Wizard({
             <Card>
               <CardBody>
                 <dl
-                  className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr_auto]"
+                  className="grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr_auto]"
                   data-testid="summary"
                 >
                   {(proMode

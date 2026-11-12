@@ -45,7 +45,7 @@ export default async function DashboardPage({
 
       <section className="flex flex-col gap-4">
         <h2 className="font-display text-2xl">{t("quotaTitle")}</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {meters.map(({ key, label }) => {
             const used = usage.used[key];
             const limit = usage.limits[key];

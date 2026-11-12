@@ -161,7 +161,7 @@ export function PricingCard({
           </Notice>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <section className="flex flex-col gap-2">
             <h4 className="font-medium">{t("costTitle")}</h4>
             <dl className="flex flex-col divide-y divide-border">
@@ -293,7 +293,7 @@ export function PricingCard({
             void save();
           }}
         >
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Field label={t("coefficient")} hint={t("coefficientHint")}>
               {(control) => (
                 <Input
@@ -340,7 +340,7 @@ export function PricingCard({
           {appliances.length > 0 ? (
             <div className="flex flex-col gap-2">
               <p className="font-medium">{t("energyTitle")}</p>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {appliances.map((appliance) => (
                   <Field
                     key={appliance.id}

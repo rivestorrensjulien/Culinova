@@ -168,7 +168,7 @@ export default async function HomePage({
 
       <main className="flex-1">
         {/* ─── Accroche ─── */}
-        <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 py-14 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:py-24">
+        <section className="mx-auto grid grid-cols-1 w-full max-w-6xl items-center gap-12 px-4 py-14 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:py-24">
           <div className="flex flex-col items-start gap-6">
             <p className="rounded-full border border-border px-3 py-1 text-xs font-medium tracking-wide text-muted">
               {t("hero.eyebrow")}
@@ -216,7 +216,7 @@ export default async function HomePage({
                 <h2 className="font-display text-4xl leading-tight text-balance">{t("story.title")}</h2>
                 <p className="mt-2 text-muted">{t("story.lead")}</p>
               </Reveal>
-              <div className="mt-12 grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+              <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr]">
                 <div className="lg:sticky lg:top-8 lg:self-start">
                   <Reveal>
                     <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-raised shadow-xl">
@@ -248,7 +248,7 @@ export default async function HomePage({
                   <li>
                     <Reveal className="rounded-2xl border border-border bg-surface p-6">
                       <StoryLabel index={2}>{t("story.recipe")}</StoryLabel>
-                      <ul className="mt-4 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
+                      <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
                         {story.ingredients.slice(0, 6).map((ingredient) => (
                           <li
                             key={ingredient.label}
@@ -361,7 +361,7 @@ export default async function HomePage({
           <section id="comment" className="scroll-mt-8 border-t border-border">
             <Reveal className="mx-auto w-full max-w-6xl px-4 py-20 sm:px-8">
               <h2 className="font-display text-4xl">{t("how.title")}</h2>
-              <ol className="mt-10 grid gap-8 md:grid-cols-3">
+              <ol className="mt-10 grid grid-cols-1 gap-8 md:grid-cols-3">
                 {steps.map((step, index) => (
                   <li key={step.title} className="flex flex-col gap-3 border-t-2 border-primary pt-5">
                     <span className="text-xs font-medium tracking-[0.2em] text-primary uppercase">
@@ -378,7 +378,7 @@ export default async function HomePage({
 
         {/* ─── Piliers ─── */}
         <section id="fonctionnalites" className="scroll-mt-8 border-t border-border">
-          <Reveal className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[1fr_1.6fr]">
+          <Reveal className="mx-auto grid grid-cols-1 w-full max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[1fr_1.6fr]">
             <div className="lg:sticky lg:top-10 lg:self-start">
               <h2 className="font-display text-4xl leading-tight text-balance">{t("pillars.title")}</h2>
               <p className="mt-3 max-w-sm text-muted">{t("pillars.lead")}</p>
@@ -461,7 +461,7 @@ export default async function HomePage({
 
         {/* ─── Demande d'invitation ─── */}
         <section id="invitation" className="scroll-mt-8 border-t border-border">
-          <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[1fr_1.3fr]">
+          <div className="mx-auto grid grid-cols-1 w-full max-w-6xl gap-10 px-4 py-20 sm:px-8 lg:grid-cols-[1fr_1.3fr]">
             <div className="flex flex-col gap-4">
               <h2 className="font-display text-4xl">{t("request.title")}</h2>
               <p className="text-muted">{t("request.lead")}</p>

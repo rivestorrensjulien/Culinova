@@ -38,7 +38,7 @@ export default async function MenusPage({ params }: { params: Promise<{ locale: 
       {menus.length === 0 ? (
         <p className="text-muted">{t("empty")}</p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="menus">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="menus">
           {menus.map((menu) => (
             <li key={menu.id}>
               <Link href={`/app/menus/${menu.id}`} className="block h-full">

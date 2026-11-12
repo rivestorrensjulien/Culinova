@@ -137,7 +137,7 @@ export function RecipeView({
         ) : null}
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
         <div className="flex flex-col gap-6">
           {photo}
           <Card>
@@ -401,7 +401,7 @@ export function RecipeView({
             </Card>
           ) : null}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {recipe.equipment.length ? (
               <div>
                 <h4 className="mb-1 text-sm font-medium">{t("equipment")}</h4>

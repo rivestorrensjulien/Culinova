@@ -30,7 +30,7 @@ export function RequestForm({ origin }: { origin?: RequestSource }) {
   return (
     <form action={action} className="flex flex-col gap-4" data-testid="request-form" noValidate>
       {error === "rate" || error === "server" ? <Notice tone="danger">{t(`errors.${error}`)}</Notice> : null}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label={t("name")} error={error === "name" ? t("errors.name") : undefined}>
           {(a11y) => (
             <Input

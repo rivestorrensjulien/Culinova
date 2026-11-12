@@ -31,7 +31,7 @@ export function DefaultQuotasForm({ values }: { values: QuotaLimits }) {
   return (
     <form action={action} className="flex flex-col gap-4">
       <Result state={state} />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {FIELDS.map((f) => (
           <Field key={f.name} label={f.label} hint="Vide = sans limite.">
             {(a11y) => (
@@ -67,7 +67,7 @@ export function UserQuotasForm({
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="id" value={userId} />
       <Result state={state} />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         {FIELDS.map((f) => {
           const fallback = defaults[f.name];
           return (
@@ -126,7 +126,7 @@ export function LegalIdentityForm({ values }: { values: LegalIdentity }) {
   return (
     <form action={action} className="flex flex-col gap-4">
       <Result state={state} />
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {LEGAL_IDENTITY_FIELDS.map((f) => (
           <Field key={f.key} label={f.label} hint={f.hint}>
             {(a11y) => <Input name={f.key} maxLength={300} defaultValue={values[f.key] ?? ""} {...a11y} />}

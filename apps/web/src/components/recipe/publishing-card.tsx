@@ -641,7 +641,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             <p className="text-muted">{queued ? t("carousel.pending") : t("carousel.none")}</p>
           )}
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {(["instagram", "tiktok", "pinterest"] as const).map((platform) => (
             <label key={platform} className="flex flex-col gap-1">
               <span className="font-medium">{t("caption", { platform: t(`platforms.${platform}`) })}</span>

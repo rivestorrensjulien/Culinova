@@ -136,7 +136,7 @@ export default async function SocialPage({
         </Notice>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {(["instagram", "tiktok", "pinterest"] as const).map((platform) => {
           const account = accounts.find((a) => a.platform === platform);
           const trend = overview.accounts.find((a) => a.platform === platform);

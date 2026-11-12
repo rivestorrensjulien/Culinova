@@ -35,7 +35,7 @@ export function SettingsForm({
   const [applianceError, setApplianceError] = useState<string | null>(null);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <Card>
         <CardBody>
           <form
@@ -161,7 +161,7 @@ export function SettingsForm({
             {t("addCommon")}
           </Button>
           <form
-            className="grid gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end"
+            className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end"
             onSubmit={async (event) => {
               event.preventDefault();
               setApplianceError(null);

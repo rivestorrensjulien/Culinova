@@ -77,7 +77,7 @@ export default async function AdminUserPage({ params }: { params: Promise<{ loca
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { title: `${usage.used.recipes} / ${limit(usage.limits.recipes)}`, label: "Recettes ce mois-ci" },
           { title: `${usage.used.images} / ${limit(usage.limits.images)}`, label: "Images ce mois-ci" },

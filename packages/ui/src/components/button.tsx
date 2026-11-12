@@ -15,10 +15,12 @@ const variants: Record<ButtonVariant, string> = {
   danger: "bg-danger text-danger-foreground hover:opacity-90",
 };
 
+// Hauteur minimale plutôt que fixe : sur téléphone, un libellé long passe à la ligne sans
+// déborder du bouton.
 const sizes: Record<ButtonSize, string> = {
-  sm: "h-8 px-3.5 text-sm",
-  md: "h-10 px-5 text-sm",
-  lg: "h-12 px-7 text-base",
+  sm: "min-h-8 px-3.5 py-1 text-sm text-center",
+  md: "min-h-10 px-5 py-1.5 text-sm text-center",
+  lg: "min-h-12 px-7 py-2 text-base text-center",
 };
 
 export function buttonClasses(variant: ButtonVariant = "primary", size: ButtonSize = "md"): string {

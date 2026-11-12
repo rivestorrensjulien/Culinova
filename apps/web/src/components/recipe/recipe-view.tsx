@@ -80,7 +80,10 @@ export function RecipeView({
           {baseInfo ? <Badge tone="sage">{t("baseBadge")}</Badge> : null}
         </div>
         <div className="flex items-start justify-between gap-4">
-          <h2 className="font-display text-4xl leading-tight text-balance" data-testid="recipe-name">
+          <h2
+            className="font-display text-3xl leading-tight sm:text-4xl text-balance"
+            data-testid="recipe-name"
+          >
             {recipe.name}
           </h2>
           {titleAction}

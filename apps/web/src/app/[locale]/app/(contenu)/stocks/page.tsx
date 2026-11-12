@@ -22,6 +22,7 @@ export default async function StockPage({ params }: { params: Promise<{ locale: 
   const { locale } = await params;
   setRequestLocale(locale);
   const session = await requireUser(locale);
+  const home = !session.user.proMode;
   const t = await getTranslations("Stock");
   const tr = await getTranslations("Recipe");
   const format = await getFormatter();
@@ -50,11 +51,14 @@ export default async function StockPage({ params }: { params: Promise<{ locale: 
       ) : null}
       <Card>
         <CardBody className="flex flex-col gap-4">
-          <h2 className="font-display text-2xl">{t("addTitle")}</h2>
+          <h2 className="font-display text-2xl">{t(home ? "homeAddTitle" : "addTitle")}</h2>
           {ingredients.length === 0 ? (
             <p className="text-muted">{t("noIngredient")}</p>
           ) : (
-            <AddStockForm ingredients={ingredients.map((i) => ({ id: i.id, name: i.name, unit: i.unit }))} />
+            <AddStockForm
+              ingredients={ingredients.map((i) => ({ id: i.id, name: i.name, unit: i.unit }))}
+              proMode={!home}
+            />
           )}
         </CardBody>
       </Card>
@@ -98,18 +102,29 @@ export default async function StockPage({ params }: { params: Promise<{ locale: 
                       />
                       <span className="text-muted">{t(`baseUnit.${item.quantity.dimension}`)}</span>
                     </label>
-                    <label className="flex items-center gap-1.5">
-                      <span className="text-muted">{t("minShort")}</span>
+                    {/* Le seuil d'alerte est un outil pro : gardé tel quel, sans champ, pour un particulier. */}
+                    {home ? (
                       <input
+                        type="hidden"
                         name="min"
-                        inputMode="decimal"
                         defaultValue={item.min === null ? "" : String(item.min).replace(".", ",")}
-                        aria-label={`${t("minShort")} · ${item.name}`}
-                        className={`w-20 ${inputClass}`}
                       />
-                    </label>
+                    ) : (
+                      <label className="flex items-center gap-1.5">
+                        <span className="text-muted">{t("minShort")}</span>
+                        <input
+                          name="min"
+                          inputMode="decimal"
+                          defaultValue={item.min === null ? "" : String(item.min).replace(".", ",")}
+                          aria-label={`${t("minShort")} · ${item.name}`}
+                          className={`w-20 ${inputClass}`}
+                        />
+                      </label>
+                    )}
                     <label className="flex items-center gap-1.5">
-                      <span className="text-muted">{t("bestBeforeShort")}</span>
+                      <span className="text-muted">
+                        {t(home ? "homeBestBeforeShort" : "bestBeforeShort")}
+                      </span>
                       <input
                         name="bestBefore"
                         type="date"

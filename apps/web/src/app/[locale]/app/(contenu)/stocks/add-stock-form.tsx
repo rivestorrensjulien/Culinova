@@ -11,8 +11,11 @@ const UNITS_FOR = { kg: ["g", "kg"], l: ["ml", "cl", "l"], piece: ["piece"] } as
 /** Ajout d'un ingrédient au stock ; les unités proposées suivent l'ingrédient choisi. */
 export function AddStockForm({
   ingredients,
+  proMode = true,
 }: {
   ingredients: Array<{ id: string; name: string; unit: "kg" | "l" | "piece" }>;
+  /** Le seuil d'alerte n'est proposé qu'en mode pro. */
+  proMode?: boolean;
 }) {
   const t = useTranslations("Stock");
   const [state, action] = useActionState(addStockAction, { status: "idle" } as StockFormState);
@@ -20,7 +23,7 @@ export function AddStockForm({
   const units = UNITS_FOR[ingredients.find((i) => i.id === ingredientId)?.unit ?? "kg"];
   return (
     <form action={action} className="flex flex-col gap-4">
-      {state.status === "saved" ? <Notice tone="success">{t("added")}</Notice> : null}
+      {state.status === "saved" ? <Notice tone="success">{t(proMode ? "added" : "homeAdded")}</Notice> : null}
       {state.status === "error" ? <Notice tone="danger">{t("invalid")}</Notice> : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr]">
         <Field label={t("ingredient")}>
@@ -55,9 +58,11 @@ export function AddStockForm({
           )}
         </Field>
         <Field label={t("bestBefore")}>{(a11y) => <Input name="bestBefore" type="date" {...a11y} />}</Field>
-        <Field label={t("min")} hint={t("minHint")}>
-          {(a11y) => <Input name="min" inputMode="decimal" {...a11y} />}
-        </Field>
+        {proMode ? (
+          <Field label={t("min")} hint={t("minHint")}>
+            {(a11y) => <Input name="min" inputMode="decimal" {...a11y} />}
+          </Field>
+        ) : null}
       </div>
       <div>
         <SubmitButton>{t("add")}</SubmitButton>

@@ -194,7 +194,8 @@ export function RecipePageClient({
       {recipe.versions.length > 1 ? (
         <section className="flex flex-col gap-3" aria-label={tr("versionsTitle")} data-testid="versions">
           <h2 className="text-sm font-medium text-muted">{tr("versionsTitle")}</h2>
-          <div className="flex flex-wrap gap-2">
+          {/* Sur téléphone, les versions défilent sur une ligne au lieu de pousser la recette vers le bas. */}
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {recipe.versions.map((v) => (
               <button
                 key={v.versionNo}
@@ -204,7 +205,7 @@ export function RecipePageClient({
                 aria-pressed={v.versionNo === recipe.versionNo}
                 title={v.changeNote ?? v.name}
                 className={cx(
-                  "flex cursor-pointer flex-col items-start rounded-lg border px-3 py-2 text-left text-sm",
+                  "flex shrink-0 cursor-pointer flex-col items-start rounded-lg border px-3 py-2 text-left text-sm",
                   v.versionNo === recipe.versionNo
                     ? "border-foreground bg-raised"
                     : "border-border text-muted hover:text-foreground",
@@ -359,7 +360,8 @@ export function RecipePageClient({
       {viewingOld || !recipe.publishing ? null : (
         <PublishingCard key={`publishing-${recipe.versionId}`} recipe={recipe} />
       )}
-      {isBase ? null : (
+      {/* Textes pour les réseaux : réservés au mode pro (les particuliers n'en ont pas l'usage). */}
+      {isBase || !proMode ? null : (
         <section className="flex flex-col gap-4">
           <h2 className="font-display text-3xl">{t("questions.social")}</h2>
           <SocialContentView social={recipe.social} />

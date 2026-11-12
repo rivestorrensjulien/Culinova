@@ -473,7 +473,16 @@
     "impersonating": "You are signed in as {email} (administration).",
     "stopImpersonating": "Back to administration",
     "createCta": "Create a recipe",
-    "recentRecipes": "Your latest recipes"
+    "recentRecipes": "Your latest recipes",
+    "menu": "Menu",
+    "tabs": {
+      "dashboard": "Home",
+      "create": "Create",
+      "recipes": "Recipes",
+      "shopping": "Shopping",
+      "stock": "Stock",
+      "pantry": "Pantry"
+    }
   },
   "Security": {
     "title": "Security",
@@ -1300,7 +1309,10 @@
     "lowCount": "{count, plural, one {# item below threshold} other {# items below threshold}}",
     "soonCount": "{count, plural, one {# item to use soon} other {# items to use soon}}",
     "homeTitle": "My pantry",
-    "homeIntro": "What you already have at home. These quantities are taken off your next shopping lists, and bought items can be put away in one tap."
+    "homeIntro": "What you already have at home. These quantities are taken off your next shopping lists, and bought items can be put away in one tap.",
+    "homeAddTitle": "Add to my pantry",
+    "homeBestBeforeShort": "Use by",
+    "homeAdded": "Added to your pantry."
   },
   "Import": {
     "title": "Import a recipe",

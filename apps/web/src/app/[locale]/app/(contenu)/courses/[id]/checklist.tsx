@@ -30,6 +30,8 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
   );
   const allItems = list.groups.flatMap((g) => g.items);
   const isStaple = (item: ShoppingListItemView) => !proMode && item.staple;
+  // « Pour : … » n'apporte rien quand la liste ne vient que d'une recette.
+  const severalRecipes = new Set(allItems.flatMap((i) => i.recipes)).size > 1;
   const toBuy = list.groups
     .map((g) => ({ ...g, items: g.items.filter((i) => !atHome.has(i.id) && !isStaple(i)) }))
     .filter((g) => g.items.length > 0);
@@ -91,7 +93,7 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
             )}
           >
             <span>{item.name}</span>
-            {item.recipes.length > 0 ? (
+            {severalRecipes && item.recipes.length > 0 ? (
               <span className="text-xs text-muted no-underline">
                 {t("from", { list: item.recipes.join(", ") })}
               </span>

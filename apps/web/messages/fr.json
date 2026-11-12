@@ -131,7 +131,7 @@
       "privacy": "politique de confidentialité",
       "submit": "Envoyer ma demande",
       "sending": "Envoi…",
-      "sent": "Merci ! Votre demande est bien arrivée. Un e-mail de confirmation vient de vous être envoyé ; nous revenons vers vous dès qu'une place se libère.",
+      "sent": "Merci ! Votre demande est bien arrivée. Un e-mail de confirmation vient de vous être envoyé ; nous revenons vers vous dès qu'une place se libère.",
       "errors": {
         "name": "Indiquez votre prénom et votre nom.",
         "email": "Cette adresse e-mail ne semble pas valide.",
@@ -139,7 +139,7 @@
         "rate": "Trop de demandes depuis cette connexion. Réessayez un peu plus tard.",
         "server": "La demande n'a pas pu être envoyée. Réessayez dans un instant."
       },
-      "already": "Vous avez déjà un code ?"
+      "already": "Vous avez déjà un code ?"
     },
     "faq": {
       "title": "Questions fréquentes",
@@ -171,7 +171,7 @@
       ]
     },
     "closing": {
-      "title": "Prêt à passer en cuisine ?",
+      "title": "Prêt à passer en cuisine ?",
       "cta": "Demander une invitation"
     },
     "demo": {
@@ -367,7 +367,7 @@
     "submit": "Recevoir mon lien",
     "sending": "Envoi…",
     "sent": "Si un compte existe pour {email}, un lien de connexion vient de lui être envoyé. Pensez à vérifier les indésirables.",
-    "noAccount": "Pas encore de compte ? L'accès se fait sur invitation.",
+    "noAccount": "Pas encore de compte ? L'accès se fait sur invitation.",
     "useCode": "J'ai un code d'invitation",
     "errors": {
       "email": "Adresse e-mail invalide.",
@@ -404,7 +404,7 @@
     "submit": "Créer mon compte",
     "sending": "Envoi…",
     "sent": "C'est presque fini : un lien d'activation vient d'être envoyé à {email}. Il est valable 15 minutes.",
-    "alreadyAccount": "Vous avez déjà un compte ?",
+    "alreadyAccount": "Vous avez déjà un compte ?",
     "signIn": "Se connecter",
     "problems": {
       "invalid": "Ce code d'invitation n'existe pas. Vérifiez sa saisie.",
@@ -459,7 +459,7 @@
       "prices": "Mes prix",
       "pantry": "Mon garde-manger"
     },
-    "welcome": "Bienvenue sur Culinova !",
+    "welcome": "Bienvenue sur Culinova !",
     "hello": "Bonjour {name}",
     "helloAnonymous": "Bonjour",
     "quotaTitle": "Votre solde du mois",
@@ -473,7 +473,16 @@
     "impersonating": "Vous êtes connecté·e en tant que {email} (administration).",
     "stopImpersonating": "Revenir à l’administration",
     "createCta": "Créer une recette",
-    "recentRecipes": "Vos dernières recettes"
+    "recentRecipes": "Vos dernières recettes",
+    "menu": "Menu",
+    "tabs": {
+      "dashboard": "Accueil",
+      "create": "Créer",
+      "recipes": "Recettes",
+      "shopping": "Courses",
+      "stock": "Stocks",
+      "pantry": "Placard"
+    }
   },
   "Security": {
     "title": "Sécurité",
@@ -512,25 +521,25 @@
     },
     "stepOf": "Étape {current} sur {total}",
     "questions": {
-      "moment": "Pour quel moment ?",
-      "influence": "Une influence culinaire ?",
+      "moment": "Pour quel moment ?",
+      "influence": "Une influence culinaire ?",
       "precision": "Précisez la région, le pays ou la cuisine",
-      "style": "Quel style ?",
-      "language": "Dans quelle langue ?",
-      "mode": "Comment voulez-vous créer ?",
-      "servings": "Pour combien de personnes ?",
+      "style": "Quel style ?",
+      "language": "Dans quelle langue ?",
+      "mode": "Comment voulez-vous créer ?",
+      "servings": "Pour combien de personnes ?",
       "generation": "Tout est prêt",
       "result": "Votre recette",
       "social": "Contenu pour les réseaux sociaux",
       "saved": "Votre recette est enregistrée",
-      "wish": "Qu'est-ce qu'on cuisine ?",
-      "practical": "Pour combien, avec quel budget et combien de temps ?",
+      "wish": "Qu'est-ce qu'on cuisine ?",
+      "practical": "Pour combien, avec quel budget et combien de temps ?",
       "kitchen": "Votre cuisine"
     },
     "inputQuestion": {
-      "ingredients": "Quels ingrédients avez-vous ?",
-      "name": "Quelle recette voulez-vous réaliser ?",
-      "idea": "Quelle est votre idée ?"
+      "ingredients": "Quels ingrédients avez-vous ?",
+      "name": "Quelle recette voulez-vous réaliser ?",
+      "idea": "Quelle est votre idée ?"
     },
     "inputPlaceholder": {
       "ingredients": "Un ingrédient par ligne, avec la quantité disponible si vous la connaissez.\nEx. : 400 g de saumon\n1 citron vert\nriz",
@@ -644,8 +653,8 @@
         "ingredients": "Ex. : 2 courgettes, 4 œufs, un reste de feta, riz…",
         "idea": "Ex. : un gratin réconfortant, des lasagnes, un dessert à la poire…"
       },
-      "moment": "Pour quel moment ?",
-      "servings": "Pour combien de personnes ?",
+      "moment": "Pour quel moment ?",
+      "servings": "Pour combien de personnes ?",
       "budget": "Budget par personne",
       "noLimit": "Sans limite",
       "perPerson": "{amount} / pers.",
@@ -782,7 +791,7 @@
       "linkedin": "LinkedIn"
     },
     "copy": "Copier",
-    "copied": "Copié !",
+    "copied": "Copié !",
     "empty": "Vous n'avez pas encore de recette.",
     "listTitle": "Mes recettes",
     "createdOn": "Créée le {date}",
@@ -1131,7 +1140,7 @@
     "deleteLastAdmin": "Vous êtes le seul administrateur : nommez-en un autre avant de supprimer ce compte.",
     "deleteImpersonating": "Impossible pendant une session « en tant que ».",
     "deleteFailed": "La suppression n’a pas abouti. Réessayez dans un instant.",
-    "modeTitle": "Comment utilisez-vous Culinova ?",
+    "modeTitle": "Comment utilisez-vous Culinova ?",
     "modeText": "Change seulement ce qui est affiché : vos recettes et vos prix restent les mêmes. Vous pouvez changer à tout moment.",
     "modeHomeTitle": "À la maison",
     "modeHomeText": "Recettes pesées au gramme, coût par part et budget du repas, liste de courses.",
@@ -1187,10 +1196,10 @@
     "pause": "Pause",
     "resume": "Reprendre",
     "reset": "Remettre à zéro",
-    "timerDone": "Terminé !",
+    "timerDone": "Terminé !",
     "timers": "Minuteurs en cours",
     "keepAwake": "L’écran reste allumé pendant la préparation. Flèches ← → pour changer d’étape.",
-    "done": "C’est prêt. Bon service !",
+    "done": "C’est prêt. Bon service !",
     "consume": "Retirer les ingrédients de mon stock",
     "consumed": "{count, plural, =0 {Aucun de ces ingrédients n’est dans votre stock.} one {Stock mis à jour (# article).} other {Stock mis à jour (# articles).}}"
   },
@@ -1300,7 +1309,10 @@
     "lowCount": "{count, plural, one {# article sous le seuil} other {# articles sous le seuil}}",
     "soonCount": "{count, plural, one {# article à consommer vite} other {# articles à consommer vite}}",
     "homeTitle": "Mon garde-manger",
-    "homeIntro": "Ce que vous avez déjà chez vous. Ces quantités sont retirées de vos prochaines listes de courses, et vous pouvez y ranger les articles achetés d'un geste."
+    "homeIntro": "Ce que vous avez déjà chez vous. Ces quantités sont retirées de vos prochaines listes de courses, et vous pouvez y ranger les articles achetés d'un geste.",
+    "homeAddTitle": "Ajouter au garde-manger",
+    "homeBestBeforeShort": "Avant le",
+    "homeAdded": "Ajouté au garde-manger."
   },
   "Import": {
     "title": "Importer une recette",
@@ -1409,7 +1421,7 @@
       "loading": "Lecture du compte TikTok…",
       "unavailable": "Compte TikTok injoignable : vérifiez la connexion dans l’administration.",
       "account": "Compte TikTok : {name}",
-      "privacy": "Qui peut voir la vidéo ?",
+      "privacy": "Qui peut voir la vidéo ?",
       "choose": "Choisir…",
       "privacyOptions": {
         "PUBLIC_TO_EVERYONE": "Tout le monde",
@@ -1534,7 +1546,7 @@
     "weighed": "Tout est pesé au gramme, avec la mesure de cuisine entre parenthèses.",
     "homemade": "fait maison",
     "topCta": "Créer mes recettes",
-    "ctaTitle": "Tu veux générer tes propres recettes ?",
+    "ctaTitle": "Tu veux générer tes propres recettes ?",
     "ctaText": "On t'attend sur Culinova 👨‍🍳✨ Décris une envie : l'IA rédige ta recette pesée au gramme, chiffrée et illustrée en quelques secondes.",
     "ctaButton": "Demander mon invitation",
     "moreRecipes": "Voir d'autres recettes",

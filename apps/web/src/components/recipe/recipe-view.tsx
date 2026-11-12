@@ -377,7 +377,7 @@ export function RecipeView({
                     {index + 1}
                   </span>
                   <div className="flex flex-col gap-1.5 pt-1">
-                    <p>{stepText(step.action)}</p>
+                    <p>{stepText(step.action, step)}</p>
                     {step.expectedResult ? (
                       <p className="text-sm text-muted">
                         {t("expected")} : {step.expectedResult}

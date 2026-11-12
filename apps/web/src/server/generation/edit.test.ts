@@ -43,7 +43,7 @@ describe.skipIf(!hasTestDb)("modification par instruction", () => {
     // La recette enregistrée se remet au format de l'IA sans rien perdre (jetons, références).
     const current = (await loadGeneratedRecipe(db, before.versionId))!;
     expect(recipeProblems(current, 4)).toEqual([]);
-    expect(current.steps[1]!.action).toBe("Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux.");
+    expect(current.steps[1]!.action).toBe("Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux pendant 12 minutes.");
     expect(current.ingredients.find((i) => i.name === "Yuzu kosho")!.storeBought).toBe(true);
 
     expect(
@@ -62,7 +62,7 @@ describe.skipIf(!hasTestDb)("modification par instruction", () => {
     expect((await loadRecipeView(db, recipeId, user.id))!.pendingGenerationId).toBe(edit.generationId);
     expect(await runGeneration(db, ai, edit.generationId)).toBe("succeeded");
 
-    const call = ai.calls.find((c) => c.promptId === "recipe.edit@2")!;
+    const call = ai.calls.find((c) => c.promptId === "recipe.edit@3")!;
     expect(call.user).toContain("Remplace le saumon par du tofu");
     expect(call.user).toContain("{{i1}}");
     const after = (await loadRecipeView(db, recipeId, user.id))!;

@@ -3,6 +3,7 @@
  * métier) avant d'entrer en base. Les champs facultatifs sont « nullables »
  * plutôt qu'absents, pour rester compatibles avec les sorties structurées.
  */
+import { isTimedStep, mentionsDuration } from "@culinova/core";
 import { z } from "zod";
 
 export const ALLERGEN_CODES = [
@@ -138,6 +139,11 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
     }
     if (step.durationSeconds !== null && step.durationSeconds < 0) {
       problems.push(`Durée négative à l'étape ${index + 1}.`);
+    }
+    if (isTimedStep(step) && !mentionsDuration(step.action)) {
+      problems.push(
+        `L'étape ${index + 1} est chronométrée (${Math.round(step.durationSeconds! / 60)} min) mais sa consigne ne dit pas combien de temps : écris la durée dans la phrase (« cuire 9 minutes dans l'eau frémissante »).`,
+      );
     }
   });
   // Chaque ingrédient doit servir dans au moins une étape (sinon la recette est incomplète).

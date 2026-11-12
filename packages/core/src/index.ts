@@ -12,3 +12,4 @@ export * from "./quotas";
 export * from "./shopping-list";
 export * from "./step-quantities";
 export * from "./units";
+export * from "./step-timing";

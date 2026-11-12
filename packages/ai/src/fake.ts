@@ -160,8 +160,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       {
         phase: "cooking",
         action: english
-          ? "Cook the rice {{i1}} with the water {{i2}}, covered, over low heat."
-          : "Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux.",
+          ? "Cook the rice {{i1}} with the water {{i2}}, covered, over low heat for 12 minutes."
+          : "Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux pendant 12 minutes.",
         ingredientRefs: ["i1", "i2"],
         temperatureC: null,
         durationSeconds: 720,
@@ -172,8 +172,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       {
         phase: "cooking",
         action: english
-          ? "Fold in the rice vinegar {{i3}} and let the rice rest."
-          : "Incorporer le vinaigre de riz {{i3}} et laisser reposer le riz.",
+          ? "Fold in the rice vinegar {{i3}} and let the rice rest for 10 minutes."
+          : "Incorporer le vinaigre de riz {{i3}} et laisser reposer le riz 10 minutes.",
         ingredientRefs: ["i3"],
         temperatureC: null,
         durationSeconds: 600,
@@ -184,8 +184,8 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
       {
         phase: "cooking",
         action: english
-          ? "Torch the salmon on all sides."
-          : "Saisir le saumon au chalumeau sur toutes les faces.",
+          ? "Torch the salmon on all sides for about 1 minute."
+          : "Saisir le saumon au chalumeau sur toutes les faces, environ 1 minute.",
         ingredientRefs: ["i4"],
         temperatureC: null,
         durationSeconds: 60,
@@ -296,7 +296,7 @@ export function fakeBase(user: string): GeneratedBase {
     action,
     ingredientRefs: refs,
     temperatureC: null,
-    durationSeconds: 300,
+    durationSeconds: null,
     expectedResult,
   });
   return {

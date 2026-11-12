@@ -227,7 +227,7 @@ export function TechnicalSheet({ recipe, photoId }: { recipe: RecipeData; photoI
               <li key={step.id} className="flex gap-3 break-inside-avoid">
                 <span className="w-5 shrink-0 font-display text-base">{index + 1}.</span>
                 <div className="flex flex-col gap-0.5">
-                  <p>{stepText(step.action)}</p>
+                  <p>{stepText(step.action, step)}</p>
                   {step.temperatureC || step.durationS ? (
                     <p className="text-xs text-muted">
                       {[

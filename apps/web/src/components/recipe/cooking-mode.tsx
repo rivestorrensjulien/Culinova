@@ -268,7 +268,7 @@ export function CookingMode({ recipe }: { recipe: RecipeData }) {
                 className="font-display text-3xl leading-snug text-balance sm:text-4xl"
                 data-testid="prep-step"
               >
-                {stepText(step.action)}
+                {stepText(step.action, step)}
               </p>
               {step.temperatureC || step.equipment.length > 0 ? (
                 <div className="flex flex-wrap gap-2 text-sm">

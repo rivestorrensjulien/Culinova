@@ -1,12 +1,14 @@
 "use client";
 
-import { splitStepText } from "@culinova/core";
+import { isTimedStep, mentionsDuration, splitStepText } from "@culinova/core";
 import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useCallback } from "react";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
-import { ingredientAmount } from "./format";
+import { formatDuration, ingredientAmount } from "./format";
 
 type Ingredient = RecipeData["ingredients"][number];
+/** Ce qu'il faut d'une étape pour retrouver sa durée. */
+type StepTiming = Pick<RecipeData["steps"][number], "durationS" | "timer" | "temperatureC" | "phase">;
 
 /**
  * Textes d'une recette recalculés pour un autre nombre de personnes (ou un autre poids,
@@ -43,9 +45,14 @@ export function useRecipeText(recipe: RecipeData, scaleFrom: number, scaleTo: nu
    * plus anciennes écrivaient « {{i3}} de mascarpone » : le poids reste alors sans parenthèses.
    */
   const stepText = useCallback(
-    (action: string): ReactNode[] => {
+    (action: string, step?: StepTiming): ReactNode[] => {
       const byId = new Map(recipe.ingredients.map((i) => [i.id, i]));
-      return splitStepText(action).map((segment, i, all) => {
+      // Anciennes recettes : durée connue mais absente de la phrase → ajoutée à la fin.
+      const missing =
+        step && isTimedStep({ ...step, durationSeconds: step.durationS }) && !mentionsDuration(action)
+          ? ` (${formatDuration(step.durationS!)})`
+          : "";
+      const parts = splitStepText(action).map((segment, i, all) => {
         if (segment.kind === "text") return segment.text;
         const ingredient = byId.get(segment.ref);
         if (!ingredient) return "";
@@ -63,6 +70,18 @@ export function useRecipeText(recipe: RecipeData, scaleFrom: number, scaleTo: nu
           </span>
         );
       });
+      if (!missing) return parts;
+      const last = parts.length - 1;
+      const tail = typeof parts[last] === "string" ? (parts[last] as string) : "";
+      const stop = tail.match(/[.!…]\s*$/)?.[0] ?? "";
+      if (stop) parts[last] = tail.slice(0, -stop.length);
+      return [
+        ...parts,
+        <span key="duration" className="font-medium">
+          {missing}
+        </span>,
+        stop,
+      ];
     },
     [recipe.ingredients, amountText, measure],
   );

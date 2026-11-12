@@ -43,7 +43,9 @@ describe.skipIf(!hasTestDb)("modification par instruction", () => {
     // La recette enregistrée se remet au format de l'IA sans rien perdre (jetons, références).
     const current = (await loadGeneratedRecipe(db, before.versionId))!;
     expect(recipeProblems(current, 4)).toEqual([]);
-    expect(current.steps[1]!.action).toBe("Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux pendant 12 minutes.");
+    expect(current.steps[1]!.action).toBe(
+      "Cuire le riz {{i1}} avec l'eau {{i2}}, à couvert, à feu doux pendant 12 minutes.",
+    );
     expect(current.ingredients.find((i) => i.name === "Yuzu kosho")!.storeBought).toBe(true);
 
     expect(

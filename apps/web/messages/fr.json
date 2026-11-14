@@ -52,7 +52,8 @@
       "samplePrice": "Prix conseillé TTC",
       "sampleCostValue": "3,45 €",
       "samplePriceValue": "14,50 €",
-      "realLabel": "Recette créée avec Culinova"
+      "realLabel": "Recette créée avec Culinova",
+      "trial": "Essayer sans inscription"
     },
     "pillars": {
       "title": "Tout le chemin, de l'idée à l'assiette",
@@ -1561,6 +1562,52 @@
     "listIntro": "Toutes les recettes partagées sur nos réseaux, pesées au gramme. Choisis-en une pour la recette complète.",
     "listEmpty": "Les premières recettes arrivent très vite.",
     "follow": "Suivre Culinova",
-    "chefReviewed": "Relue par Chef Ju"
+    "chefReviewed": "Relue par Chef Ju",
+    "trialButton": "Essayer : ma recette offerte"
+  },
+  "Trial": {
+    "metaTitle": "Votre première recette offerte · Culinova",
+    "kicker": "Essai gratuit, sans inscription",
+    "title": "Votre première recette de chef, tout de suite",
+    "intro": "Dites-nous ce qui vous fait envie ou ce qu'il reste dans votre frigo : Chef Ju vous prépare une recette pesée au gramme, en une minute environ.",
+    "modeLegend": "Point de départ",
+    "ideaLabel": "Qu'est-ce qui vous ferait plaisir ?",
+    "ingredientsLabel": "Qu'avez-vous sous la main ?",
+    "servings": "Pour combien",
+    "people": "{count, plural, one {# personne} other {# personnes}}",
+    "time": "Temps disponible",
+    "submit": "Créer ma recette",
+    "starting": "Chef Ju se met aux fourneaux…",
+    "notice": "Gratuit, sans compte. Ne saisissez aucune donnée personnelle : votre demande est envoyée à l'IA qui rédige la recette. Deux essais par jour au plus.",
+    "closed": "Les essais sans inscription sont fermés pour le moment. Demandez votre invitation pour créer vos recettes.",
+    "requestButton": "Demander une invitation",
+    "promises": {
+      "weighed": "Tout est pesé au gramme, avec la mesure parlante (œufs, cuillères…).",
+      "steps": "Un pas à pas clair, avec les temps de cuisson dans chaque étape.",
+      "tips": "Les astuces du chef pour réussir du premier coup."
+    },
+    "errors": {
+      "input": "Décrivez en quelques mots ce que vous voulez cuisiner (2 caractères au moins).",
+      "closed": "Les essais sans inscription sont fermés pour le moment.",
+      "rate": "Vous avez déjà fait vos essais du jour. Revenez demain, ou demandez votre invitation pour en créer d'autres.",
+      "full": "Beaucoup de monde aux fourneaux aujourd'hui : les essais du jour sont tous partis. Revenez demain, ou demandez votre invitation.",
+      "budget": "Les essais sont en pause pour le moment. Demandez votre invitation, vous serez prévenu par e-mail.",
+      "server": "Un souci est survenu. Réessayez dans un instant."
+    },
+    "pendingTitle": "Chef Ju prépare votre recette…",
+    "pendingText": "Il pèse chaque ingrédient et rédige le pas à pas. Cela prend environ une minute : la page s'affichera toute seule.",
+    "failed": "La recette n'a pas pu être préparée cette fois-ci.",
+    "retry": "Réessayer",
+    "yourRecipe": "Votre recette, préparée par Chef Ju",
+    "keepTitle": "Gardez cette recette, et créez toutes les autres",
+    "keep": {
+      "save": "Retrouvez-la dans votre espace dès l'ouverture de votre compte",
+      "cost": "Découvrez ce qu'elle vous coûte vraiment, au centime près",
+      "photo": "Ajoutez sa photo, adaptez-la, faites votre liste de courses",
+      "more": "Des recettes de chef pour tous vos repas, au gramme près"
+    },
+    "keepButton": "Garder ma recette et demander une invitation",
+    "keepNotice": "Culinova est ouvert sur invitation. Vous recevez la réponse par e-mail ; votre recette d'essai vous attend 30 jours.",
+    "claimed": "Cette recette a rejoint un compte Culinova."
   }
 }

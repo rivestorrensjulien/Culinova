@@ -59,6 +59,42 @@ export const invitations = pgTable(
   (t) => [index("invitations_reserved_email_idx").on(sql`lower(${t.reservedEmail})`)],
 );
 
+/**
+ * Recettes d'essai, sans compte (P7, décision de Julien du 11/11) : une première recette générée
+ * depuis les pages publiques. Lue par un jeton secret dans l'adresse (/essai/<jeton>), rattachée
+ * au compte créé ensuite avec l'invitation, effacée au bout de 30 jours.
+ */
+export const recipeTrials = pgTable(
+  "recipe_trials",
+  {
+    id: id(),
+    /** Jeton aléatoire de l'adresse de la recette d'essai (jamais devinable). */
+    token: text("token").notNull().unique(),
+    generationId: uuid("generation_id"),
+    status: text("status").$type<"queued" | "running" | "succeeded" | "failed">().notNull().default("queued"),
+    /** Ce que la personne a demandé : mode, texte, moment, personnes, temps, langue. */
+    input: jsonb("input")
+      .$type<{
+        mode: "ingredients" | "idea";
+        input: string;
+        momentCode: string;
+        servings: number;
+        maxMinutes: number | null;
+        language: "fr" | "en";
+      }>()
+      .notNull(),
+    /** Recette obtenue (GeneratedRecipe), null tant qu'elle n'est pas prête. */
+    recipe: jsonb("recipe"),
+    error: text("error"),
+    /** Page publique d'où vient la personne (slug), pour savoir quelles recettes donnent envie. */
+    sourceRecipe: text("source_recipe"),
+    claimedBy: uuid("claimed_by").references(() => users.id, { onDelete: "set null" }),
+    claimedAt: tz("claimed_at"),
+    ...timestamps,
+  },
+  (t) => [index("recipe_trials_created_idx").on(t.createdAt)],
+);
+
 /** Demandes d'invitation reçues depuis la page d'accueil (J8). */
 export const invitationRequests = pgTable(
   "invitation_requests",
@@ -86,6 +122,8 @@ export const invitationRequests = pgTable(
     invitationId: uuid("invitation_id").references(() => invitations.id, { onDelete: "set null" }),
     decidedAt: tz("decided_at"),
     decidedBy: uuid("decided_by").references(() => users.id, { onDelete: "set null" }),
+    /** Recette d'essai faite avant la demande : elle rejoint le compte créé avec l'invitation. */
+    trialId: uuid("trial_id").references(() => recipeTrials.id, { onDelete: "set null" }),
     ...timestamps,
   },
   (t) => [

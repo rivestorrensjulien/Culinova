@@ -77,6 +77,7 @@ test("téléphone : aucune page ne déborde en largeur (380 px)", async ({ page 
   await check("accueil", "/");
   await check("connexion", "/connexion");
   await check("recettes-publiques", "/recettes");
+  await check("essai", "/essai");
   await check("cgu", "/legal/cgu");
 
   try {

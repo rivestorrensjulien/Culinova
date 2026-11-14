@@ -1,7 +1,6 @@
 /** Scan de factures : lecture, rapprochement, validation ligne par ligne. */
 import { FakeLlmAdapter } from "@culinova/ai";
 import * as s from "@culinova/db/schema";
-import { eq } from "drizzle-orm";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

@@ -12,6 +12,7 @@ import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
 import { sourceQuery } from "@/lib/request-source";
 import { getDb } from "@/server/db";
+import { trialsOpen } from "@/server/trials";
 import { listPublicRecipes, PUBLIC_RECIPE_PATH } from "@/server/public-recipes";
 import { visitSource } from "@/server/request";
 
@@ -45,7 +46,7 @@ export default async function PublicRecipesPage({
   const query = sourceQuery(await visitSource(await searchParams));
   setRequestLocale(locale);
   const t = await getTranslations("PublicRecipe");
-  const recipes = await listPublicRecipes(getDb());
+  const [recipes, trial] = await Promise.all([listPublicRecipes(getDb()), trialsOpen(getDb())]);
 
   return (
     <div className="flex min-h-dvh flex-col pb-20 md:pb-0">
@@ -122,6 +123,15 @@ export default async function PublicRecipesPage({
           >
             {t("ctaButton")}
           </Link>
+          {trial ? (
+            <Link
+              href={{ pathname: "/essai", query }}
+              className="text-sm font-medium underline-offset-4 opacity-90 hover:underline"
+              data-testid="list-trial"
+            >
+              {t("trialButton")}
+            </Link>
+          ) : null}
         </section>
       </main>
       <MobileCta label={t("topCta")} />

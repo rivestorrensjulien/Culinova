@@ -27,6 +27,27 @@ test("demande d'invitation depuis la page d'accueil", async ({ page }) => {
   await expect(page.getByTestId("request-sent")).toBeVisible();
 });
 
+test("recette d'essai sans inscription, puis demande d'invitation pour la garder", async ({ page }) => {
+  await page.goto("/");
+  await page.getByTestId("hero-trial").click();
+  await expect(page).toHaveURL(/\/essai/);
+  await page.getByTestId("trial-input").fill("Un plat de saumon");
+  await page.getByTestId("trial-submit").click();
+  await expect(page).toHaveURL(/\/essai\/[\w-]{20,}/);
+  // Préparée en arrière-plan : la page se met à jour d'elle-même.
+  await expect(page.getByTestId("trial-name")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("trial-ingredients").locator("li").first()).toContainText("g");
+  await expect(page.getByTestId("trial-steps")).not.toContainText("{{");
+  await expect(page.getByTestId("chef-tips")).toBeVisible();
+
+  const keep = page.getByTestId("trial-keep");
+  await keep.getByLabel("Prénom et nom").fill("Camille Essai");
+  await keep.getByLabel("Adresse e-mail").fill("camille.essai@e2e.test");
+  await keep.getByRole("checkbox").check();
+  await keep.getByRole("button", { name: /Garder ma recette/ }).click();
+  await expect(page.getByTestId("request-sent")).toBeVisible();
+});
+
 test("l'application est installable", async ({ request }) => {
   const manifest = await (await request.get("/manifest.webmanifest")).json();
   expect(manifest).toMatchObject({ name: "Culinova", start_url: "/app", display: "standalone" });

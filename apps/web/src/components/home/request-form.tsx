@@ -11,7 +11,16 @@ import { type InvitationRequestState, requestInvitationAction } from "@/server/a
 const PROFILES = ["chef", "caterer", "creator", "enthusiast", "other"] as const;
 
 /** Formulaire de demande d'invitation de la page d'accueil (`origin` : provenance de la visite). */
-export function RequestForm({ origin }: { origin?: RequestSource }) {
+export function RequestForm({
+  origin,
+  trialToken,
+  submitLabel,
+}: {
+  origin?: RequestSource;
+  /** Recette d'essai à garder : elle rejoindra le compte créé avec l'invitation. */
+  trialToken?: string;
+  submitLabel?: string;
+}) {
   const t = useTranslations("Home.request");
   const [state, action] = useActionState<InvitationRequestState, FormData>(requestInvitationAction, {
     status: "idle",
@@ -89,6 +98,7 @@ export function RequestForm({ origin }: { origin?: RequestSource }) {
           <input type="hidden" name="src_referrer" value={origin.referrer ?? ""} />
         </>
       ) : null}
+      {trialToken ? <input type="hidden" name="trial" value={trialToken} /> : null}
       {/* Champ piège : invisible pour les personnes, rempli par les robots. */}
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>
@@ -115,7 +125,7 @@ export function RequestForm({ origin }: { origin?: RequestSource }) {
       {error === "consent" ? <p className="-mt-2 text-xs text-danger">{t("errors.consent")}</p> : null}
       <div className="flex flex-wrap items-center gap-4">
         <SubmitButton size="lg" pendingLabel={t("sending")}>
-          {t("submit")}
+          {submitLabel ?? t("submit")}
         </SubmitButton>
         <Link href="/invitation" className="text-sm text-muted hover:text-foreground">
           {t("already")}

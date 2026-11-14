@@ -78,13 +78,14 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
   },
   {
     type: "privacy" as const,
-    version: "1.2",
+    version: "1.3",
     title: "Politique de confidentialité",
     bodyMd: `## Responsable du traitement
 {{editeur.nom}}, {{editeur.adresse}} — {{editeur.email}}.
 
 ## Données traitées
 - **Demande d'invitation** : nom, adresse e-mail, profil, message facultatif et langue saisis sur la page d'accueil, ainsi que sa provenance (réseau social ou nom du site d'où vous venez, publication, message ou recette qui vous a amené), lue dans l'adresse de la page, sans cookie ni traceur.
+- **Recette d'essai sans compte** : ce que vous demandez (idée ou ingrédients, moment, nombre de personnes, temps) et la recette obtenue, lue à une adresse secrète ; votre adresse IP sert seulement à limiter le nombre d'essais. Ne saisissez aucune donnée personnelle dans votre demande.
 - **Compte** : adresse e-mail, nom (facultatif), langue, code d'invitation utilisé, rôle.
 - **Sécurité** : dates de connexion, sessions ouvertes, adresse IP et navigateur, journal des actions sensibles.
 - **Contenus** : paramètres de création, recettes et leurs versions, traductions, photos, ingrédients, prix, fournisseurs, réglages de prix de vente, correspondances nutritionnelles, favoris.
@@ -96,6 +97,7 @@ Aucune donnée de paiement n'est collectée pendant la phase sur invitation.
 ## Finalités et bases légales
 - Étudier votre demande d'invitation et vous répondre — **mesures précontractuelles prises à votre demande**.
 - Savoir quels réseaux et quelles recettes font connaître Culinova (provenance des demandes) — **intérêt légitime**.
+- Vous faire essayer Culinova sans compte et, si vous demandez une invitation, rattacher la recette d'essai à votre futur compte — **mesures précontractuelles prises à votre demande** ; limiter le nombre d'essais — **intérêt légitime**.
 - Créer et gérer votre compte, vous connecter par lien magique — **exécution du contrat** (CGU).
 - Générer recettes, images, traductions et analyses — **exécution du contrat** (CGU).
 - Appliquer les quotas et maîtriser le budget d'intelligence artificielle — **intérêt légitime**.
@@ -114,6 +116,7 @@ Certains de ces prestataires sont établis aux États-Unis. Les transferts sont 
 
 ## Durées de conservation
 - **Demandes d'invitation** : 12 mois après la demande, puis effacement automatique (le compte créé avec l'invitation suit ensuite ses propres règles).
+- **Recettes d'essai** : 30 jours, puis effacement automatique (une recette gardée rejoint votre compte et suit ses règles).
 - **Compte et contenus** : tant que le compte existe. À la suppression du compte, ils sont effacés immédiatement, photos comprises.
 - **Compte suspendu** : données conservées jusqu'à sa réactivation ou sa suppression.
 - **Liens de connexion** : 15 minutes ; **sessions** : 30 jours au plus, ou jusqu'à leur fermeture.
@@ -191,6 +194,13 @@ export const PROCESSING_REGISTER = [
     dataCategories: ["ingrédients", "prix", "fournisseurs", "réglages"],
     retention: "Durée de vie du compte",
     processors: ["Supabase", "Anthropic"],
+  },
+  {
+    purpose: "Recettes d'essai sans compte",
+    legalBasis: "Mesures précontractuelles (essai) ; intérêt légitime (limitation des abus)",
+    dataCategories: ["demande saisie", "recette obtenue", "adresse IP (limitation)"],
+    retention: "30 jours ; adresse IP quelques jours",
+    processors: ["Supabase", "Vercel", "Anthropic"],
   },
   {
     purpose: "Quotas et maîtrise du budget IA",

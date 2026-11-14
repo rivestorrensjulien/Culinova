@@ -9,6 +9,7 @@ import {
   saveAiBudgetAction,
   saveDefaultQuotasAction,
   saveLegalIdentityAction,
+  saveTrialSettingsAction,
   saveUserQuotasAction,
 } from "@/server/actions/admin";
 import { LEGAL_IDENTITY_FIELDS, type LegalIdentity } from "@/lib/legal";
@@ -115,6 +116,43 @@ export function AiBudgetForm({ value }: { value: string }) {
       </div>
       <div>
         <SubmitButton pendingLabel="Enregistrement…">Enregistrer le plafond</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+/** Recettes d'essai sans compte (pages publiques). */
+export function TrialSettingsForm({ enabled, dailyLimit }: { enabled: boolean; dailyLimit: number }) {
+  const [state, action] = useActionState(saveTrialSettingsAction, { status: "idle" } as AdminFormState);
+  return (
+    <form action={action} className="flex flex-col gap-4">
+      <Result state={state} />
+      <label className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          name="enabled"
+          defaultChecked={enabled}
+          className="mt-0.5 size-4 accent-primary"
+        />
+        <span>
+          <span className="font-medium">Essais ouverts</span>
+          <span className="block text-sm text-muted">
+            Bouton « Essayer sans inscription » sur la page d’accueil et les pages publiques des recettes.
+          </span>
+        </span>
+      </label>
+      <div className="max-w-xs">
+        <Field
+          label="Essais au plus par 24 heures (tout le site)"
+          hint="Chaque essai coûte environ 0,10 $ d’IA. 2 essais au plus par jour et par connexion."
+        >
+          {(a11y) => (
+            <Input name="dailyLimit" inputMode="numeric" defaultValue={String(dailyLimit)} {...a11y} />
+          )}
+        </Field>
+      </div>
+      <div>
+        <SubmitButton pendingLabel="Enregistrement…">Enregistrer les essais</SubmitButton>
       </div>
     </form>
   );

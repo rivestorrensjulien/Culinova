@@ -4,12 +4,11 @@
  */
 import { splitStepText } from "@culinova/core";
 import { ingredientAmount } from "@/components/recipe/format";
-import type { RecipeView } from "./generation/view";
 
-export function amountText(
-  ingredient: RecipeView["ingredients"][number],
-  part: number | null = null,
-): string {
+/** Ce qu'il faut savoir d'un ingrédient pour écrire sa quantité (recette enregistrée ou d'essai). */
+type AmountIngredient = Parameters<typeof ingredientAmount>[0];
+
+export function amountText(ingredient: AmountIngredient, part: number | null = null): string {
   const amount = ingredientAmount(ingredient, part, 1, 1);
   const unit = amount.unit === "piece" ? "" : ` ${amount.unit}`;
   const main = `${amount.value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}${unit}`;
@@ -19,7 +18,10 @@ export function amountText(
 }
 
 /** Consigne lisible : les jetons de quantité deviennent « (300 g) » après le nom de l'ingrédient. */
-export function stepPlainText(view: RecipeView, action: string): string {
+export function stepPlainText(
+  view: { ingredients: Array<AmountIngredient & { id: string }> },
+  action: string,
+): string {
   const byId = new Map(view.ingredients.map((i) => [i.id, i]));
   return splitStepText(action)
     .map((segment, index, all) => {

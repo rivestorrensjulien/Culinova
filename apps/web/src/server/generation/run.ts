@@ -29,6 +29,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { autoEstimate } from "../costing/estimate";
 import { recordAiSpend, releaseQuota } from "../quotas";
 import { runImageGeneration } from "../images/generate";
+import { runTrialGeneration } from "../trials";
 import { runBaseGeneration } from "./base";
 import { loadGeneratedRecipe } from "./current-recipe";
 import { saveRecipeVersion, saveSocialContent } from "./persist";
@@ -61,6 +62,7 @@ export async function runGeneration(
   if (generation?.kind === "base") return runBaseGeneration(db, ai, generation, options);
   if (generation?.kind === "image") return runImageGeneration(db, ai, generation);
   if (generation?.kind === "import") return runImportGeneration(db, ai, generation, options);
+  if (generation?.kind === "trial") return runTrialGeneration(db, ai, generation);
   if (!generation || !["recipe", "regeneration", "edit"].includes(generation.kind)) return "skipped";
 
   const [params] = generation.generationParamsId

@@ -9,17 +9,20 @@ import { getDb } from "@/server/db";
 import { getAiBudgetCap, getAiSpend } from "@/server/quotas";
 import { formatUsdMicros } from "../format";
 import { Link } from "@/i18n/navigation";
-import { AiBudgetForm, DefaultQuotasForm, LegalIdentityForm } from "./forms";
+import { getTrialSettings, trialsLastDay } from "@/server/trials";
+import { AiBudgetForm, DefaultQuotasForm, LegalIdentityForm, TrialSettingsForm } from "./forms";
 
 export default async function AdminSettingsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const db = getDb();
-  const [defaults, cap, spent, identity] = await Promise.all([
+  const [defaults, cap, spent, identity, trials, trialCount] = await Promise.all([
     getDefaultQuotas(db),
     getAiBudgetCap(db),
     getAiSpend(db),
     getLegalIdentity(db),
+    getTrialSettings(db),
+    trialsLastDay(db),
   ]);
   const register = await db.select().from(processingRegister).orderBy(processingRegister.createdAt);
   const missing = missingLegalFields(identity).map(
@@ -54,6 +57,18 @@ export default async function AdminSettingsPage({ params }: { params: Promise<{ 
             </CardDescription>
           </div>
           <AiBudgetForm value={microsToInput(cap)} />
+        </CardBody>
+      </Card>
+      <Card>
+        <CardBody className="flex flex-col gap-4">
+          <div>
+            <CardTitle>Recettes d’essai sans compte</CardTitle>
+            <CardDescription>
+              Une première recette offerte, sans inscription ({trialCount} ces dernières 24 heures). Elle
+              rejoint le compte de la personne si elle demande une invitation puis l’accepte.
+            </CardDescription>
+          </div>
+          <TrialSettingsForm enabled={trials.enabled} dailyLimit={trials.dailyLimit} />
         </CardBody>
       </Card>
       <Card>

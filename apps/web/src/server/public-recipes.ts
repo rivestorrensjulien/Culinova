@@ -193,7 +193,6 @@ export interface PublicRecipeCard {
   chefReviewed: boolean;
 }
 
-/** Recettes publiques, de la plus récente à la plus ancienne (page « lien en bio »). */
 /**
  * « Recette relue par Chef Ju » : l'administrateur marque la version active de l'une de ses
  * recettes comme relue (ou retire la mention). Une nouvelle version efface le badge, puisque la
@@ -223,6 +222,7 @@ export async function setChefReviewed(
   return true;
 }
 
+/** Recettes publiques, de la plus récente à la plus ancienne (page « lien en bio »). */
 export async function listPublicRecipes(
   db: Database,
   limit = 30,

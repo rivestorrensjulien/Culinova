@@ -52,7 +52,8 @@
       "samplePrice": "Suggested price incl. VAT",
       "sampleCostValue": "€3.45",
       "samplePriceValue": "€14.50",
-      "realLabel": "Recipe made with Culinova"
+      "realLabel": "Recipe made with Culinova",
+      "trial": "Try without signing up"
     },
     "pillars": {
       "title": "The whole journey, from idea to plate",
@@ -1561,6 +1562,52 @@
     "listIntro": "Every recipe shared on our social accounts, weighed to the gram. Pick one for the full recipe.",
     "listEmpty": "The first recipes are coming very soon.",
     "follow": "Follow Culinova",
-    "chefReviewed": "Reviewed by Chef Ju"
+    "chefReviewed": "Reviewed by Chef Ju",
+    "trialButton": "Try it: my free recipe"
+  },
+  "Trial": {
+    "metaTitle": "Your first recipe, on us · Culinova",
+    "kicker": "Free trial, no sign-up",
+    "title": "Your first chef's recipe, right now",
+    "intro": "Tell us what you fancy or what's left in your fridge: Chef Ju prepares a recipe weighed to the gram, in about a minute.",
+    "modeLegend": "Starting point",
+    "ideaLabel": "What would you enjoy?",
+    "ingredientsLabel": "What do you have at hand?",
+    "servings": "For how many",
+    "people": "{count, plural, one {# person} other {# people}}",
+    "time": "Time available",
+    "submit": "Create my recipe",
+    "starting": "Chef Ju is getting cooking…",
+    "notice": "Free, no account. Don't enter any personal data: your request is sent to the AI that writes the recipe. Two trials a day at most.",
+    "closed": "Trials without sign-up are closed for now. Request your invitation to create your recipes.",
+    "requestButton": "Request an invitation",
+    "promises": {
+      "weighed": "Everything weighed to the gram, with handy measures (eggs, spoons…).",
+      "steps": "Clear steps, with cooking times in each one.",
+      "tips": "Chef's tips to get it right first time."
+    },
+    "errors": {
+      "input": "Describe in a few words what you'd like to cook (at least 2 characters).",
+      "closed": "Trials without sign-up are closed for now.",
+      "rate": "You've used today's trials. Come back tomorrow, or request your invitation to create more.",
+      "full": "Busy kitchen today: all of today's trials are gone. Come back tomorrow, or request your invitation.",
+      "budget": "Trials are paused for now. Request your invitation and we'll email you.",
+      "server": "Something went wrong. Please try again in a moment."
+    },
+    "pendingTitle": "Chef Ju is preparing your recipe…",
+    "pendingText": "He weighs every ingredient and writes the steps. It takes about a minute: the page will update by itself.",
+    "failed": "The recipe couldn't be prepared this time.",
+    "retry": "Try again",
+    "yourRecipe": "Your recipe, prepared by Chef Ju",
+    "keepTitle": "Keep this recipe, and create all the others",
+    "keep": {
+      "save": "Find it in your space as soon as your account opens",
+      "cost": "See what it really costs you, to the cent",
+      "photo": "Add its photo, adapt it, make your shopping list",
+      "more": "Chef's recipes for every meal, weighed to the gram"
+    },
+    "keepButton": "Keep my recipe and request an invitation",
+    "keepNotice": "Culinova is invitation-only. You'll get the answer by email; your trial recipe waits for you for 30 days.",
+    "claimed": "This recipe has joined a Culinova account."
   }
 }

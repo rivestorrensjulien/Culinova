@@ -6,7 +6,9 @@ import { getFormatter, getTranslations, setRequestLocale } from "next-intl/serve
 import { type DemoExample, HomeDemo } from "@/components/home/demo";
 import { MobileCta } from "@/components/home/mobile-cta";
 import { RequestForm } from "@/components/home/request-form";
+import { sourceQuery } from "@/lib/request-source";
 import { visitSource } from "@/server/request";
+import { trialsOpen } from "@/server/trials";
 import { Reveal } from "@/components/home/reveal";
 import { formatDuration } from "@/components/recipe/format";
 import { SiteFooter } from "@/components/site-footer";
@@ -76,7 +78,7 @@ export default async function HomePage({
   setRequestLocale(locale);
   const t = await getTranslations("Home");
   const common = await getTranslations("Common");
-  const [showcase, connected] = await Promise.all([loadShowcase(), signedIn()]);
+  const [showcase, connected, trial] = await Promise.all([loadShowcase(), signedIn(), trialsOpen(getDb())]);
   // La première photo de la vitrine est racontée de bout en bout ; l'accroche montre la suivante.
   const story = await loadStory(showcase[0]);
   const heroPhoto = showcase[1] ?? showcase[0];
@@ -181,6 +183,15 @@ export default async function HomePage({
               <a href="#invitation" className={buttonClasses("primary", "lg")} data-testid="hero-request">
                 {t("hero.request")}
               </a>
+              {trial && !connected ? (
+                <Link
+                  href={{ pathname: "/essai", query: sourceQuery(origin) }}
+                  className={buttonClasses("secondary", "lg")}
+                  data-testid="hero-trial"
+                >
+                  {t("hero.trial")}
+                </Link>
+              ) : null}
               <Link href="/invitation" className={buttonClasses("ghost", "lg")}>
                 {t("haveCode")}
               </Link>

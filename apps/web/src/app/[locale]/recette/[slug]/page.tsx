@@ -18,6 +18,7 @@ import { appUrl } from "@/server/auth";
 import { getDb } from "@/server/db";
 import { loadPublicRecipe, PUBLIC_LIST_PATH } from "@/server/public-recipes";
 import { visitSource } from "@/server/request";
+import { trialsOpen } from "@/server/trials";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,7 @@ export default async function PublicRecipePage({
 }) {
   const { locale, slug } = await params;
   setRequestLocale(locale);
-  const recipe = await loadPublicRecipe(getDb(), slug);
+  const [recipe, trial] = await Promise.all([loadPublicRecipe(getDb(), slug), trialsOpen(getDb())]);
   if (!recipe) notFound();
   // Provenance (réseau, message « RECETTE »…) et recette d'origine, jusqu'au formulaire.
   const query = sourceQuery(withRecipe(await visitSource(await searchParams), recipe.slug));
@@ -237,6 +238,15 @@ export default async function PublicRecipePage({
                 >
                   {t("ctaButton")}
                 </Link>
+                {trial ? (
+                  <Link
+                    href={{ pathname: "/essai", query }}
+                    className="inline-flex items-center rounded-full bg-background/15 px-6 py-3 font-medium ring-1 ring-current transition hover:bg-background/25"
+                    data-testid="public-trial"
+                  >
+                    {t("trialButton")}
+                  </Link>
+                ) : null}
                 <Link
                   href={{ pathname: PUBLIC_LIST_PATH, query }}
                   className="inline-flex items-center rounded-full border border-current px-6 py-3 font-medium opacity-90 transition hover:opacity-100"

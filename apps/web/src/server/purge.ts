@@ -8,6 +8,7 @@ import {
   verificationTokens,
 } from "@culinova/db/schema";
 import { lt } from "drizzle-orm";
+import { purgeTrials } from "./trials";
 
 /** Durées annoncées dans la politique de confidentialité. */
 export const RETENTION = {
@@ -42,5 +43,6 @@ export async function purgeExpiredData(db: Database, now = new Date()) {
     sessions: expiredSessions.length,
     verificationTokens: tokens.length,
     invitationRequests: requests.length,
+    recipeTrials: await purgeTrials(db, now),
   };
 }

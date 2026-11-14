@@ -40,7 +40,7 @@ export async function budgetAllows(db: Database): Promise<boolean> {
 }
 
 /** Identifiants des éléments choisis, pour la table generation_params. */
-async function resolveIds(db: Database, state: WizardState) {
+export async function resolveIds(db: Database, state: WizardState) {
   const one = async <T extends { id: string }>(rows: Promise<T[]>) => (await rows)[0]?.id ?? null;
   const [momentId, influenceId, regionId, countryId, cuisines, styles] = await Promise.all([
     state.momentCode

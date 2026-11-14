@@ -20,6 +20,7 @@ import { LEGAL_IDENTITY_FIELDS, parseLegalIdentity } from "@/lib/legal";
 import { saveAiBudgetCap, saveDefaultQuotas, saveUserQuotaOverrides } from "../admin-settings";
 import { saveLegalIdentity } from "../legal";
 import { getAuth, getCurrentSession, requireAdmin } from "../session";
+import { saveTrialSettings } from "../trials";
 
 async function adminContext(): Promise<ActorContext> {
   const session = await requireAdmin(await getLocale());
@@ -209,6 +210,20 @@ export async function saveAiBudgetAction(_prev: AdminFormState, formData: FormDa
   await saveAiBudgetCap(getDb(), read.value, ctx);
   revalidatePath("/admin", "layout");
   return { status: "saved", message: "Plafond de budget IA enregistré." };
+}
+
+/** Recettes d'essai sans compte : ouvertes ou fermées, nombre maximal par jour. */
+export async function saveTrialSettingsAction(
+  _prev: AdminFormState,
+  formData: FormData,
+): Promise<AdminFormState> {
+  const ctx = await adminContext();
+  const limit = Number(String(formData.get("dailyLimit") ?? "").trim());
+  if (!Number.isInteger(limit) || limit < 0 || limit > 1000)
+    return { status: "error", message: "Indiquez un nombre entier d'essais par jour, entre 0 et 1000." };
+  await saveTrialSettings(getDb(), { enabled: formData.get("enabled") === "on", dailyLimit: limit }, ctx);
+  revalidatePath("/admin", "layout");
+  return { status: "saved", message: "Réglages des essais enregistrés." };
 }
 
 export async function saveUserQuotasAction(

@@ -62,7 +62,7 @@ export async function requestInvitationAction(
     const locale = (await getLocale()) === "en" ? "en" : "fr";
     const result = await submitInvitationRequest(
       getDb(),
-      { ...parsed.data, locale, origin: sourceFromForm(formData) },
+      { ...parsed.data, locale, origin: sourceFromForm(formData), trialToken: text("trial") },
       await requestMeta(),
     );
     return result.ok ? { status: "sent" } : fail("rate");

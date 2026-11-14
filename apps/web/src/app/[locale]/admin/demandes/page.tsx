@@ -1,5 +1,6 @@
 import { Badge, type BadgeTone, Button, Input } from "@culinova/ui";
 import { listInvitationRequests, requestSourceStats, type RequestStatus } from "@/server/access/requests";
+import { trialStats } from "@/server/trials";
 import { acceptRequestAction, declineRequestAction } from "@/server/actions/admin";
 import { getDb } from "@/server/db";
 import { Link } from "@/i18n/navigation";
@@ -26,9 +27,10 @@ export default async function AdminRequestsPage({
 }) {
   const { statut } = await searchParams;
   const filter = FILTERS.find((f) => f.value === statut)?.value ?? "pending";
-  const [rows, stats] = await Promise.all([
+  const [rows, stats, trials] = await Promise.all([
     listInvitationRequests(getDb(), filter === "all" ? undefined : filter),
     requestSourceStats(getDb()),
+    trialStats(getDb()),
   ]);
   const total = stats.bySource.reduce((sum, s) => sum + s.requests, 0);
 
@@ -92,6 +94,16 @@ export default async function AdminRequestsPage({
           ) : null}
         </section>
       ) : null}
+      {trials.total > 0 ? (
+        <p className="text-sm text-muted" data-testid="trial-stats">
+          Recettes d’essai sans compte, 7 derniers jours :{" "}
+          <strong className="text-foreground">{trials.total}</strong> lancée{trials.total > 1 ? "s" : ""} (
+          {trials.succeeded} réussie{trials.succeeded > 1 ? "s" : ""}),{" "}
+          <strong className="text-foreground">{trials.requested}</strong> suivie
+          {trials.requested > 1 ? "s" : ""} d’une demande d’invitation, {trials.claimed} gardée
+          {trials.claimed > 1 ? "s" : ""} dans un compte.
+        </p>
+      ) : null}
       <nav className="flex flex-wrap gap-2" aria-label="Filtrer les demandes">
         {FILTERS.map((f) => (
           <Link
@@ -151,6 +163,9 @@ export default async function AdminRequestsPage({
                   ) : null}
                   {row.origin.referrer && row.origin.source === "site" ? (
                     <div className="text-xs text-muted">{row.origin.referrer}</div>
+                  ) : null}
+                  {row.trialRecipe ? (
+                    <div className="mt-1 text-xs text-primary">Essai : {row.trialRecipe}</div>
                   ) : null}
                 </td>
                 <td className={tdClass}>{formatDate(row.createdAt, true)}</td>

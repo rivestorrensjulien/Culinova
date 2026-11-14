@@ -10,12 +10,13 @@ import {
   renderInvitationRequestReceivedEmail,
   sendEmail,
 } from "@culinova/emails";
-import { invitationRequests, invitations, users } from "@culinova/db/schema";
+import { invitationRequests, invitations, recipeTrials, users } from "@culinova/db/schema";
 import { and, desc, eq, isNull, sql } from "drizzle-orm";
 import { DIRECT, type RequestSource, sourceDetail, sourceLabel } from "@/lib/request-source";
 import { audit } from "../audit";
 import { appUrl, localePrefix } from "../auth";
 import { isAllowed, RATE_RULES, recordAttempt } from "../rate-limit";
+import { trialIdForRequest } from "../trials";
 import { createInvitation, normalizeEmail } from "./invitations";
 import type { ActorContext } from "./users";
 
@@ -45,6 +46,8 @@ export interface NewInvitationRequest {
   locale: "fr" | "en";
   /** Provenance de la personne (réseau, canal, recette) ; accès direct par défaut. */
   origin?: RequestSource;
+  /** Jeton de la recette d'essai faite avant la demande (elle rejoindra le compte). */
+  trialToken?: string | null;
 }
 
 type SubmitRefused = { ok: false; reason: "rate_limited" };
@@ -75,7 +78,18 @@ export async function submitInvitationRequest(
     .select({ id: invitationRequests.id })
     .from(invitationRequests)
     .where(and(sql`lower(${invitationRequests.email}) = ${email}`, eq(invitationRequests.status, "pending")));
-  if (existingUser || pending) return { ok: true };
+  const trialId = await trialIdForRequest(db, input.trialToken);
+  if (existingUser) return { ok: true };
+  if (pending) {
+    // Déjà en attente : la recette d'essai est jointe à la demande existante.
+    if (trialId) {
+      await db
+        .update(invitationRequests)
+        .set({ trialId, updatedAt: new Date() })
+        .where(and(eq(invitationRequests.id, pending.id), isNull(invitationRequests.trialId)));
+    }
+    return { ok: true };
+  }
 
   const [request] = await db
     .insert(invitationRequests)
@@ -90,6 +104,7 @@ export async function submitInvitationRequest(
       sourceCampaign: input.origin?.campaign ?? null,
       sourceRecipe: input.origin?.recipe ?? null,
       sourceReferrer: input.origin?.referrer ?? null,
+      trialId,
       consentedAt: new Date(),
     })
     .returning();
@@ -168,6 +183,8 @@ export interface InvitationRequestView {
   locale: string;
   status: RequestStatus;
   origin: RequestOriginView;
+  /** Nom de la recette d'essai faite avant la demande (elle rejoindra le compte). */
+  trialRecipe: string | null;
   createdAt: Date;
   decidedAt: Date | null;
 }
@@ -176,13 +193,15 @@ export async function listInvitationRequests(
   db: Database,
   status?: RequestStatus,
 ): Promise<InvitationRequestView[]> {
-  const rows = await db
-    .select()
+  const joined = await db
+    .select({ row: invitationRequests, trialRecipe: sql<string | null>`${recipeTrials.recipe}->>'name'` })
     .from(invitationRequests)
+    .leftJoin(recipeTrials, eq(recipeTrials.id, invitationRequests.trialId))
     .where(status ? eq(invitationRequests.status, status) : undefined)
     .orderBy(desc(invitationRequests.createdAt))
     .limit(500);
-  return rows.map((row) => ({
+  return joined.map(({ row, trialRecipe }) => ({
+    trialRecipe,
     id: row.id,
     name: row.name,
     email: row.email,

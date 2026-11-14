@@ -24,6 +24,7 @@ import { nextCookies } from "better-auth/next-js";
 import { admin, magicLink } from "better-auth/plugins";
 import { eq, inArray } from "drizzle-orm";
 import { findReservationForEmail, redeemReservation } from "./access/invitations";
+import { claimTrialForInvitation } from "./trials";
 import { audit } from "./audit";
 
 /**
@@ -141,6 +142,14 @@ export function createAuth(db: Database, options: { nextCookies?: boolean } = {}
                   ip: consents.ip,
                   userAgent: consents.userAgent,
                 })),
+              );
+            }
+            // Recette d'essai faite avant la demande d'invitation : elle rejoint le nouveau compte.
+            if (invitation) {
+              await claimTrialForInvitation(db, user.id, invitation.id).catch((error: unknown) =>
+                console.error(
+                  `Recette d'essai non rattachée : ${error instanceof Error ? error.message : String(error)}`,
+                ),
               );
             }
             await audit(db, {

@@ -29,6 +29,8 @@ export const AI_GENERATION_KINDS = [
   "import",
   "social_analysis",
   "video_scenes",
+  /** Recette d'essai sans compte (P7). */
+  "trial",
 ] as const;
 export type AiGenerationKind = (typeof AI_GENERATION_KINDS)[number];
 

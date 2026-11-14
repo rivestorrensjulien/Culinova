@@ -134,6 +134,13 @@
       "when": 1794426685359,
       "tag": "0018_garde_manger",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794647462770,
+      "tag": "0019_relue_par_chef",
+      "breakpoints": true
     }
   ]
 }

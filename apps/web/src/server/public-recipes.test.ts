@@ -20,6 +20,7 @@ import {
   publicSlug,
   publicSlugFor,
   removePublicPage,
+  setChefReviewed,
 } from "./public-recipes";
 
 describe("adresse des pages publiques", () => {
@@ -111,6 +112,49 @@ describe.skipIf(!hasTestDb)("pages publiques des recettes", () => {
     expect(await publicSlugFor(db, recipeId)).toBeNull();
     expect(await loadPublicRecipe(db, slug)).toBeNull();
     expect(await publicImageKey(db, page.photo.portrait!)).toBeNull();
+  });
+
+  it("badge « Relue par Chef Ju » : version active seulement, administrateur seulement", async () => {
+    const db = testDb();
+    const admin = await createTestUser({ role: "admin" });
+    const cook = await createTestUser();
+    const recipeId = await illustratedRecipe(admin.id);
+    const otherRecipe = await illustratedRecipe(cook.id);
+    const slug = (await ensurePublicPage(db, admin.id, recipeId))!;
+
+    expect(await setChefReviewed(db, cook.id, otherRecipe, true)).toBe(false);
+    expect(await setChefReviewed(db, admin.id, otherRecipe, true)).toBe(false);
+    expect((await loadPublicRecipe(db, slug))!.chefReviewed).toBe(false);
+
+    expect(await setChefReviewed(db, admin.id, recipeId, true)).toBe(true);
+    expect((await loadPublicRecipe(db, slug))!.chefReviewed).toBe(true);
+    const selection = await listPublicRecipes(db, 50, { chefReviewedOnly: true });
+    expect(selection.find((r) => r.slug === slug)?.chefReviewed).toBe(true);
+
+    // Une nouvelle version remplace celle qui a été relue : le badge disparaît.
+    const [current] = await db.select().from(s.recipes).where(eq(s.recipes.id, recipeId));
+    const [version] = await db
+      .select()
+      .from(s.recipeVersions)
+      .where(eq(s.recipeVersions.id, current!.currentVersionId!));
+    const copy: Partial<typeof version> = { ...version };
+    delete copy.id;
+    delete copy.createdAt;
+    const [next] = await db
+      .insert(s.recipeVersions)
+      .values({ ...(copy as NonNullable<typeof version>), versionNo: version!.versionNo + 1 })
+      .returning();
+    await db.update(s.recipes).set({ currentVersionId: next!.id }).where(eq(s.recipes.id, recipeId));
+    expect((await loadPublicRecipe(db, slug))!.chefReviewed).toBe(false);
+    expect((await listPublicRecipes(db, 50, { chefReviewedOnly: true })).some((r) => r.slug === slug)).toBe(
+      false,
+    );
+
+    // Relue à nouveau, puis retirée.
+    await setChefReviewed(db, admin.id, recipeId, true);
+    expect((await loadPublicRecipe(db, slug))!.chefReviewed).toBe(true);
+    await setChefReviewed(db, admin.id, recipeId, false);
+    expect((await loadPublicRecipe(db, slug))!.chefReviewed).toBe(false);
   });
 
   it("refuse les adresses mal formées", async () => {

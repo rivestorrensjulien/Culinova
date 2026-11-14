@@ -116,6 +116,9 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
     "Cuire le riz (450 g) avec l'eau (540 g, 54 cl)",
   );
 
+  // Les astuces du chef sont mises en avant, sous le dressage.
+  await expect(page.getByTestId("chef-tips").locator("li")).toHaveCount(2);
+
   // La recette survit à un rafraîchissement.
   await waitSaved(page);
   await page.reload();

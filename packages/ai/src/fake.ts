@@ -236,7 +236,12 @@ export function fakeRecipe(user: string, variant = 0): GeneratedRecipe {
     },
     allergens: ["fish", "soy", "sesame", "gluten"],
     diets: ["lactose_free"],
-    tips: [english ? "Use very fresh fish." : "Utiliser un poisson d'une grande fraîcheur."],
+    tips: english
+      ? ["Use very fresh fish.", "Fan the rice while adding the vinegar so it turns glossy."]
+      : [
+          "Utiliser un poisson d'une grande fraîcheur.",
+          "Éventer le riz en ajoutant le vinaigre pour qu'il devienne brillant.",
+        ],
   };
 }
 

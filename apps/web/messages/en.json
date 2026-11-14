@@ -482,7 +482,9 @@
       "shopping": "Shopping",
       "stock": "Stock",
       "pantry": "Pantry"
-    }
+    },
+    "selectionTitle": "Chef Ju's selection",
+    "selectionText": "Recipes reviewed by our chef, to make at home."
   },
   "Security": {
     "title": "Security",
@@ -826,7 +828,9 @@
     "technicalSheet": "Technical sheet (PDF)",
     "homeCost": "What this meal costs",
     "homeBudget": "Meal budget ({count, plural, one {# person} other {# people}})",
-    "homePerServing": "Cost per serving"
+    "homePerServing": "Cost per serving",
+    "chefReviewed": "Reviewed by Chef Ju",
+    "chefTips": "Chef's tips"
   },
   "Ingredients": {
     "title": "My ingredients",
@@ -1529,7 +1533,9 @@
         "geste": "Gesture",
         "animee": "Animated (old format)"
       }
-    }
+    },
+    "chefReviewed": "Recipe reviewed by Chef Ju",
+    "chefReviewedHint": "Shows the “Reviewed by Chef Ju” badge on the recipe, its public page and the selection shown to everyone. It disappears if a new version replaces this one."
   },
   "Install": {
     "title": "Install Culinova on this device",
@@ -1554,6 +1560,7 @@
     "listTitle": "Chef Ju's recipes",
     "listIntro": "Every recipe shared on our social accounts, weighed to the gram. Pick one for the full recipe.",
     "listEmpty": "The first recipes are coming very soon.",
-    "follow": "Follow Culinova"
+    "follow": "Follow Culinova",
+    "chefReviewed": "Reviewed by Chef Ju"
   }
 }

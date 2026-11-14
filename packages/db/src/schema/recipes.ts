@@ -43,6 +43,14 @@ export const recipes = pgTable(
     visibility: text("visibility").$type<"private" | "org" | "public">().notNull().default("private"),
     status: text("status").$type<"draft" | "ready">().notNull().default("draft"),
     deletedAt: tz("deleted_at"),
+    /**
+     * « Recette relue par Chef Ju » (décision de Julien du 11/11) : la version relue par
+     * l'administrateur. Le badge ne s'affiche que tant qu'elle reste la version active.
+     */
+    chefReviewedVersionId: uuid("chef_reviewed_version_id").references((): AnyPgColumn => recipeVersions.id, {
+      onDelete: "set null",
+    }),
+    chefReviewedAt: tz("chef_reviewed_at"),
     ...timestamps,
   },
   (t) => [index("recipes_owner_idx").on(t.ownerId)],

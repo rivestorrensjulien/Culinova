@@ -4,7 +4,7 @@
  */
 import { RECIPE_SYSTEM_PROMPT } from "./recipe";
 
-export const RECIPE_IMPORT_PROMPT_VERSION = "recipe.import@1";
+export const RECIPE_IMPORT_PROMPT_VERSION = "recipe.import@2";
 
 /** Longueur maximale du texte source transmis au modèle. */
 export const IMPORT_MAX_CHARS = 20_000;
@@ -23,7 +23,7 @@ Réécris cette recette au format demandé, fidèlement :
 - Garde le plat, ses ingrédients, leurs quantités et l'ordre des étapes ; ne crée pas une autre recette. Ignore tout ce qui n'est pas la recette.
 - servings = le nombre de personnes ou de portions indiqué par la source (4 s'il n'est pas indiqué).
 - Convertis les quantités en grammes (tasses, cuillères, pièces, onces…), avec la mesure parlante entre parenthèses quand elle aide (œufs, cuillères, cl).
-- Complète ce qui manque de façon raisonnable et discrète : temps, matériel, résultat attendu de chaque étape, dressage, allergènes, régimes, astuces.
+- Complète ce qui manque de façon raisonnable et discrète : temps, matériel, résultat attendu de chaque étape, dressage, allergènes, régimes, et 2 à 4 astuces de chef quand la source n'en donne pas.
 - Toutes les règles de rédaction s'appliquent (jetons de quantité dans les étapes, dressage raconté, matériel cohérent, storeBought, vocabulaire utilisé en France).
 - Si le texte ne contient aucune recette exploitable, renvoie quand même une recette minimale cohérente avec le titre trouvé, en le signalant dans tips.`,
   };

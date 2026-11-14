@@ -13,7 +13,8 @@ import {
   reportPublication,
 } from "../publishing";
 import { requireUser } from "../session";
-import { ensurePublicPage, publicRecipeUrl, removePublicPage } from "../public-recipes";
+import { audit } from "../audit";
+import { ensurePublicPage, publicRecipeUrl, removePublicPage, setChefReviewed } from "../public-recipes";
 import { appUrl } from "../auth";
 import { setShowcase } from "../showcase";
 
@@ -86,6 +87,23 @@ export async function setShowcaseAction(recipeId: string, shown: boolean): Promi
  * Crée (ou retire) la page publique de la recette : la recette sans prix ni marges, pour les
  * liens des réseaux. Renvoie la nouvelle adresse (null = page retirée), ou undefined si refusé.
  */
+/** « Recette relue par Chef Ju » (administrateur, ses propres recettes). */
+export async function setChefReviewedAction(recipeId: string, reviewed: boolean): Promise<boolean> {
+  const session = await admin();
+  if (!session || !uuid.safeParse(recipeId).success) return false;
+  const db = getDb();
+  const ok = await setChefReviewed(db, session.user.id, recipeId, Boolean(reviewed));
+  if (ok) {
+    await audit(db, {
+      actorId: session.user.id,
+      action: reviewed ? "recipe.chef_review.set" : "recipe.chef_review.unset",
+      entity: "recipe",
+      entityId: recipeId,
+    });
+  }
+  return ok;
+}
+
 export async function setPublicPageAction(
   recipeId: string,
   shown: boolean,

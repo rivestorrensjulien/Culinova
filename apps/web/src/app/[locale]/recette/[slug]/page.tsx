@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { MobileCta } from "@/components/home/mobile-cta";
+import { ChefBadge, ChefTips } from "@/components/recipe/chef-badge";
 import { formatDuration } from "@/components/recipe/format";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -91,7 +92,10 @@ export default async function PublicRecipePage({
               />
             ) : null}
             <div className="flex flex-col gap-5">
-              <p className="text-xs font-medium tracking-[0.25em] text-primary uppercase">{t("by")}</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xs font-medium tracking-[0.25em] text-primary uppercase">{t("by")}</p>
+                {recipe.chefReviewed ? <ChefBadge label={t("chefReviewed")} /> : null}
+              </div>
               <h1 className="font-display text-4xl leading-tight text-balance sm:text-5xl">{recipe.name}</h1>
               {recipe.description ? <p className="text-lg text-muted">{recipe.description}</p> : null}
               <div className="flex flex-wrap gap-2">
@@ -208,16 +212,9 @@ export default async function PublicRecipePage({
                 ) : null}
               </div>
 
-              {recipe.tips.length ? (
-                <section className="flex flex-col gap-3 rounded-3xl bg-soft p-6" data-testid="public-tips">
-                  <h2 className="font-display text-2xl">💡 {tr("tips")}</h2>
-                  <ul className="flex list-disc flex-col gap-2 pl-5 text-muted">
-                    {recipe.tips.map((tip) => (
-                      <li key={tip}>{tip}</li>
-                    ))}
-                  </ul>
-                </section>
-              ) : null}
+              <div data-testid="public-tips">
+                <ChefTips title={tr("chefTips")} tips={recipe.tips} />
+              </div>
             </div>
           </div>
         </article>

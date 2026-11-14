@@ -6,6 +6,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import type { RecipeView as RecipeData } from "@/server/generation/view";
+import { ChefBadge, ChefTips } from "./chef-badge";
 import { formatDuration, platingText } from "./format";
 import { useRecipeText } from "./use-recipe-text";
 
@@ -78,6 +79,7 @@ export function RecipeView({
           {recipe.difficulty ? <Badge>{t(`difficulty.${recipe.difficulty}`)}</Badge> : null}
           {recipe.versionCount > 1 ? <Badge>{t("version", { number: recipe.versionNo })}</Badge> : null}
           {baseInfo ? <Badge tone="sage">{t("baseBadge")}</Badge> : null}
+          {recipe.chefReviewed ? <ChefBadge label={t("chefReviewed")} /> : null}
         </div>
         <div className="flex items-start justify-between gap-4">
           <h2
@@ -401,6 +403,8 @@ export function RecipeView({
             </Card>
           ) : null}
 
+          <ChefTips title={t("chefTips")} tips={recipe.tips} />
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {recipe.equipment.length ? (
               <div>
@@ -430,16 +434,6 @@ export function RecipeView({
                     </Badge>
                   ))}
                 </div>
-              </div>
-            ) : null}
-            {recipe.tips.length ? (
-              <div className="sm:col-span-2">
-                <h4 className="mb-1 text-sm font-medium">{t("tips")}</h4>
-                <ul className="list-disc pl-5 text-sm text-muted">
-                  {recipe.tips.map((tip) => (
-                    <li key={tip}>{tip}</li>
-                  ))}
-                </ul>
               </div>
             ) : null}
           </div>

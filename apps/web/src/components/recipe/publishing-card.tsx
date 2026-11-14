@@ -8,6 +8,7 @@ import {
   cancelPublicationAction,
   markPublishedAction,
   queuePublicationAction,
+  setChefReviewedAction,
   setPublicPageAction,
   setShowcaseAction,
 } from "@/server/actions/publishing";
@@ -288,6 +289,7 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
   const [showcase, setShowcase] = useState(recipe.publishing?.showcase ?? false);
   const [publicUrl, setPublicUrl] = useState<string | null>(recipe.publishing?.publicUrl ?? null);
   const [copied, setCopied] = useState(false);
+  const [reviewed, setReviewed] = useState(recipe.chefReviewed);
   /** Ligne TikTok dont le panneau des choix est ouvert (vidéo ou carrousel). */
   const [tiktokOpen, setTiktokOpen] = useState<Format | null>(null);
   const [schedule, setSchedule] = useState<ScheduledView[]>(recipe.publishing?.schedule ?? []);
@@ -483,6 +485,15 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
     const result = await setShowcaseAction(recipe.recipeId, shown).catch(() => null);
     if (result === null) setError(true);
     else setShowcase(result);
+    setBusy(false);
+  };
+
+  const toggleReviewed = async (value: boolean) => {
+    setBusy(true);
+    setError(false);
+    const ok = await setChefReviewedAction(recipe.recipeId, value).catch(() => false);
+    if (ok) setReviewed(value);
+    else setError(true);
     setBusy(false);
   };
 
@@ -921,6 +932,20 @@ export function PublishingCard({ recipe }: { recipe: RecipeData }) {
             <span className="block text-muted">
               {recipe.images.current ? t("showcaseHint") : t("needPhotoShowcase")}
             </span>
+          </span>
+        </label>
+        <label className="flex items-start gap-3 border-t border-border pt-4">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-primary"
+            checked={reviewed}
+            disabled={busy}
+            onChange={(e) => toggleReviewed(e.target.checked)}
+            data-testid="chef-review-toggle"
+          />
+          <span>
+            <span className="font-medium">{t("chefReviewed")}</span>
+            <span className="block text-muted">{t("chefReviewedHint")}</span>
           </span>
         </label>
         <div className="flex flex-col gap-2 border-t border-border pt-4" data-testid="public-page">

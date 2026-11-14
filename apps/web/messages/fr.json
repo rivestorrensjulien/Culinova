@@ -482,7 +482,9 @@
       "shopping": "Courses",
       "stock": "Stocks",
       "pantry": "Placard"
-    }
+    },
+    "selectionTitle": "La sélection de Chef Ju",
+    "selectionText": "Des recettes relues par notre chef, à refaire chez vous."
   },
   "Security": {
     "title": "Sécurité",
@@ -826,7 +828,9 @@
     "technicalSheet": "Fiche technique (PDF)",
     "homeCost": "Ce que coûte ce repas",
     "homeBudget": "Budget du repas ({count, plural, one {# personne} other {# personnes}})",
-    "homePerServing": "Coût par part"
+    "homePerServing": "Coût par part",
+    "chefReviewed": "Relue par Chef Ju",
+    "chefTips": "Les astuces du chef"
   },
   "Ingredients": {
     "title": "Mes ingrédients",
@@ -1529,7 +1533,9 @@
         "geste": "Geste",
         "animee": "Animée (ancien format)"
       }
-    }
+    },
+    "chefReviewed": "Recette relue par Chef Ju",
+    "chefReviewedHint": "Affiche le badge « Relue par Chef Ju » sur la recette, sa page publique et la sélection proposée à tous. Il disparaît si une nouvelle version remplace celle-ci."
   },
   "Install": {
     "title": "Installer Culinova sur cet appareil",
@@ -1554,6 +1560,7 @@
     "listTitle": "Les recettes de Chef Ju",
     "listIntro": "Toutes les recettes partagées sur nos réseaux, pesées au gramme. Choisis-en une pour la recette complète.",
     "listEmpty": "Les premières recettes arrivent très vite.",
-    "follow": "Suivre Culinova"
+    "follow": "Suivre Culinova",
+    "chefReviewed": "Relue par Chef Ju"
   }
 }

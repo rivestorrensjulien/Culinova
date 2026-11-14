@@ -162,12 +162,15 @@ Règles propres à cette préparation de base (le format de sortie est simplifi�
 /** Règles métier d'une base : celles d'une recette, plus le rendement attendu. */
 export function baseProblems(base: GeneratedBase, neededG: number): string[] {
   // Mêmes contrôles de complétude qu'une recette (étapes, jetons, ingrédients utilisés…).
-  const problems = recipeProblems(baseToRecipe(base), 1).map((problem) =>
-    problem.replace(
-      /plating\.description est vide : raconte le dressage/,
-      "storage est vide : décris la conservation",
-    ),
-  );
+  const problems = recipeProblems(baseToRecipe(base), 1)
+    // Une base n'a pas besoin de deux astuces : sa conservation suffit.
+    .filter((problem) => !problem.includes("astuces de chef"))
+    .map((problem) =>
+      problem.replace(
+        /plating\.description est vide : raconte le dressage/,
+        "storage est vide : décris la conservation",
+      ),
+    );
   if (!(base.yieldG >= neededG * 0.95)) {
     problems.push(`yieldG (${base.yieldG} g) ne couvre pas la quantité nécessaire (${neededG} g).`);
   } else if (base.yieldG > maxBaseYield(neededG)) {

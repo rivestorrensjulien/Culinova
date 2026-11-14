@@ -114,6 +114,9 @@ export function recipeProblems(recipe: GeneratedRecipe, expectedServings: number
   if (recipe.plating.description.trim().length < MIN_TEXT) {
     problems.push("plating.description est vide : raconte le dressage en une ou deux phrases.");
   }
+  if (recipe.tips.filter((tip) => tip.trim().length > 0).length < 2) {
+    problems.push("Il faut au moins 2 astuces de chef (tips) propres à cette recette.");
+  }
   const refs = new Set<string>();
   for (const ingredient of recipe.ingredients) {
     if (refs.has(ingredient.ref)) problems.push(`Référence d'ingrédient en double : ${ingredient.ref}.`);

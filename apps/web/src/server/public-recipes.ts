@@ -129,6 +129,8 @@ export interface PublicRecipe {
   tips: string[];
   /** Recadrages de la photo principale (servis par /api/vitrine). */
   photo: { portrait: string | null; landscape: string | null };
+  /** Relue par Chef Ju (version active). */
+  chefReviewed: boolean;
   updatedAt: string;
 }
 
@@ -157,6 +159,7 @@ export async function loadPublicRecipe(db: Database, slug: string): Promise<Publ
   return {
     slug: page.slug,
     name: view.name,
+    chefReviewed: view.chefReviewed,
     description: view.description,
     servings: view.servings,
     difficulty: view.difficulty,
@@ -187,27 +190,77 @@ export interface PublicRecipeCard {
   slug: string;
   name: string;
   imageId: string | null;
+  chefReviewed: boolean;
 }
 
 /** Recettes publiques, de la plus récente à la plus ancienne (page « lien en bio »). */
-export async function listPublicRecipes(db: Database, limit = 30): Promise<PublicRecipeCard[]> {
+/**
+ * « Recette relue par Chef Ju » : l'administrateur marque la version active de l'une de ses
+ * recettes comme relue (ou retire la mention). Une nouvelle version efface le badge, puisque la
+ * relecture portait sur l'ancienne.
+ */
+export async function setChefReviewed(
+  db: Database,
+  adminId: string,
+  recipeId: string,
+  reviewed: boolean,
+  now: Date = new Date(),
+): Promise<boolean> {
+  const recipe = await adminRecipe(db, adminId, recipeId);
+  if (!recipe) return false;
+  const [current] = await db
+    .select({ versionId: s.recipes.currentVersionId })
+    .from(s.recipes)
+    .where(eq(s.recipes.id, recipeId));
+  await db
+    .update(s.recipes)
+    .set(
+      reviewed
+        ? { chefReviewedVersionId: current?.versionId ?? null, chefReviewedAt: now }
+        : { chefReviewedVersionId: null, chefReviewedAt: null },
+    )
+    .where(eq(s.recipes.id, recipeId));
+  return true;
+}
+
+export async function listPublicRecipes(
+  db: Database,
+  limit = 30,
+  /** Seulement la « sélection de Chef Ju » (recettes relues). */
+  options: { chefReviewedOnly?: boolean } = {},
+): Promise<PublicRecipeCard[]> {
   const rows = await db
     .select({
       slug: s.recipePublicPages.slug,
       recipeId: s.recipes.id,
       name: s.recipeVersions.name,
       versionId: s.recipeVersions.id,
+      reviewedVersionId: s.recipes.chefReviewedVersionId,
     })
     .from(s.recipePublicPages)
     .innerJoin(s.recipes, eq(s.recipes.id, s.recipePublicPages.recipeId))
     .innerJoin(s.users, eq(s.users.id, s.recipes.ownerId))
     .innerJoin(s.recipeVersions, eq(s.recipeVersions.id, s.recipes.currentVersionId))
-    .where(and(eq(s.users.role, "admin"), isNull(s.recipes.deletedAt), eq(s.recipes.kind, "dish")))
+    .where(
+      and(
+        eq(s.users.role, "admin"),
+        isNull(s.recipes.deletedAt),
+        eq(s.recipes.kind, "dish"),
+        options.chefReviewedOnly
+          ? eq(s.recipes.chefReviewedVersionId, s.recipes.currentVersionId)
+          : undefined,
+      ),
+    )
     .orderBy(desc(s.recipePublicPages.createdAt))
     .limit(limit);
   const cards: PublicRecipeCard[] = [];
   for (const row of rows) {
-    cards.push({ slug: row.slug, name: row.name, imageId: await portraitOf(db, row.versionId) });
+    cards.push({
+      slug: row.slug,
+      name: row.name,
+      imageId: await portraitOf(db, row.versionId),
+      chefReviewed: row.reviewedVersionId === row.versionId,
+    });
   }
   return cards;
 }

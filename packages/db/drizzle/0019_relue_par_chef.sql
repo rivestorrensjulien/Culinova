@@ -1,0 +1,3 @@
+ALTER TABLE "recipes" ADD COLUMN "chef_reviewed_version_id" uuid;--> statement-breakpoint
+ALTER TABLE "recipes" ADD COLUMN "chef_reviewed_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "recipes" ADD CONSTRAINT "recipes_chef_reviewed_version_id_recipe_versions_id_fk" FOREIGN KEY ("chef_reviewed_version_id") REFERENCES "public"."recipe_versions"("id") ON DELETE set null ON UPDATE no action;

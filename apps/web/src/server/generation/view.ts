@@ -33,6 +33,8 @@ export interface HomemadeBase {
 
 export interface RecipeView {
   recipeId: string;
+  /** « Recette relue par Chef Ju » : la version active est celle que l'administrateur a relue. */
+  chefReviewed: boolean;
   /** « dish » pour un plat, « base » pour une préparation de « Mes bases ». */
   kind: "dish" | "base";
   /** Rendement et utilisations d'une base (null pour un plat). */
@@ -291,6 +293,7 @@ export async function loadRecipeView(
   const order = ["generic", "instagram", "tiktok", "pinterest", "linkedin"];
   return {
     recipeId: recipe.id,
+    chefReviewed: recipe.chefReviewedVersionId !== null && recipe.chefReviewedVersionId === current.id,
     kind: recipe.kind,
     baseInfo,
     versionId: version.id,

@@ -38,7 +38,7 @@ const request: RecipeRequest = {
 describe("prompt de recette", () => {
   it("transmet tous les paramètres de création au moteur", () => {
     const { system, user } = buildRecipePrompt(request);
-    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@13");
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@14");
     expect(system).toContain("fusionLabel");
     // Contenant de service adapté au moment de consommation, sans assiette ronde par défaut.
     expect(system).toContain("street food → barquette");
@@ -91,8 +91,8 @@ describe("prompt de recette", () => {
     expect(user).not.toContain("Pays :");
   });
 
-  it("transmet budget, temps, niveau et matériel d'un particulier (recipe.generate@13)", () => {
-    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@13");
+  it("transmet budget, temps, niveau et matériel d'un particulier (recipe.generate@14)", () => {
+    expect(RECIPE_PROMPT_VERSION).toBe("recipe.generate@14");
     const { system, user } = buildRecipePrompt({
       ...request,
       household: {
@@ -128,7 +128,7 @@ describe("prompt de recette", () => {
   it("modifie la recette actuelle selon la consigne, sans repartir de zéro", () => {
     const current = fakeRecipe("Nombre de personnes : 6");
     const { user } = buildEditPrompt(request, current, "  Remplace le saumon par du tofu ");
-    expect(RECIPE_EDIT_PROMPT_VERSION).toBe("recipe.edit@3");
+    expect(RECIPE_EDIT_PROMPT_VERSION).toBe("recipe.edit@4");
     expect(user).toContain('"""\nRemplace le saumon par du tofu\n"""');
     expect(user).toContain(JSON.stringify(current));
     expect(user).toContain("servings = 6");

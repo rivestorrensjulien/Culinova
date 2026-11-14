@@ -6,6 +6,7 @@ import { buttonClasses } from "@culinova/ui";
 import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { MobileCta } from "@/components/home/mobile-cta";
+import { ChefBadge } from "@/components/recipe/chef-badge";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Link } from "@/i18n/navigation";
@@ -102,6 +103,7 @@ export default async function PublicRecipesPage({
                   <span className="font-display text-lg leading-snug group-hover:text-primary">
                     {recipe.name}
                   </span>
+                  {recipe.chefReviewed ? <ChefBadge label={t("chefReviewed")} className="w-fit" /> : null}
                 </Link>
               </li>
             ))}

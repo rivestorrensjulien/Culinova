@@ -202,7 +202,8 @@ export const PROCESSING_REGISTER = [
     purpose: "Tickets de caisse et prix de référence",
     legalBasis: "Exécution du contrat (lecture des tickets) ; intérêt légitime (prix de référence anonymes)",
     dataCategories: ["articles alimentaires et prix", "magasin et date", "libellés validés"],
-    retention: "Photo : aucune conservation ; prix : durée du compte ; prix de référence : médiane d'au moins 3 personnes",
+    retention:
+      "Photo : aucune conservation ; prix : durée du compte ; prix de référence : médiane d'au moins 3 personnes",
     processors: ["Supabase", "Vercel", "Anthropic"],
   },
   {

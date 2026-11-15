@@ -338,7 +338,7 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(page.getByTestId("invoice-supplier")).toHaveText("Supermarché test", { timeout: 30_000 });
   await expect(page.getByTestId("invoice-line")).toHaveCount(3);
   await expect(page.getByTestId("promo-badge")).toHaveCount(1);
-  const eggs = page.getByTestId("invoice-line").filter({ hasText: "Œufs fermiers test" });
+  const eggs = page.getByTestId("invoice-line").filter({ hasText: "OEUFS PA X12" });
   await eggs.getByRole("combobox").selectOption({ label: "+ Ajouter « Œufs fermiers test » à mes prix" });
   await expect(eggs.getByRole("textbox")).toHaveValue("0,30");
   await eggs.getByRole("button", { name: "Valider" }).click();

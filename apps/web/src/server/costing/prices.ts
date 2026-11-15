@@ -6,6 +6,7 @@ import { formatPrice, parsePrice } from "@culinova/core";
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { referencePricesFor } from "./reference-prices";
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type Executor = Database | Tx;
@@ -27,6 +28,8 @@ export interface CurrentPrice {
   own: boolean;
   /** Prix estimé par l'IA, pas encore confirmé par la personne. */
   estimated: boolean;
+  /** Prix de référence des particuliers (médiane d'au moins 3 personnes, P8). */
+  community?: { owners: number };
   validFrom: Date;
 }
 
@@ -35,6 +38,11 @@ export async function currentPrices(
   db: Executor,
   userId: string,
   ingredientIds: readonly string[],
+  /**
+   * Prix de référence des particuliers à défaut d'un prix de la personne (avant l'estimation
+   * de l'IA). Désactivé pour l'historique d'un prix enregistré.
+   */
+  options: { community?: boolean } = {},
 ): Promise<Map<string, CurrentPrice>> {
   const result = new Map<string, CurrentPrice>();
   if (ingredientIds.length === 0) return result;
@@ -72,6 +80,38 @@ export async function currentPrices(
       validFrom: row.validFrom,
     });
   }
+  if (options.community === false) return result;
+
+  // Sans prix à elle (ou seulement une estimation de l'IA) : le prix relevé par les autres.
+  const missing = ingredientIds.filter((id) => {
+    const price = result.get(id);
+    return !price || price.estimated || !price.own;
+  });
+  if (missing.length === 0) return result;
+  const names = await db
+    .select({
+      id: s.ingredients.id,
+      name: s.ingredients.canonicalName,
+      referenceUnit: s.ingredients.referenceUnit,
+    })
+    .from(s.ingredients)
+    .where(inArray(s.ingredients.id, missing));
+  const references = await referencePricesFor(
+    db,
+    names.map((n) => ({ id: n.id, name: n.name, unit: priceUnitOf(n.referenceUnit) })),
+  );
+  for (const [id, reference] of references) {
+    result.set(id, {
+      ingredientId: id,
+      price: reference.price,
+      unit: reference.unit,
+      supplierName: null,
+      own: false,
+      estimated: false,
+      community: { owners: reference.owners },
+      validFrom: new Date(),
+    });
+  }
   return result;
 }
 
@@ -103,7 +143,9 @@ export async function savePrice(
     price: string;
     supplierName?: string | null;
     /** « ai_estimate » : estimation automatique, jamais enregistrée par-dessus un prix existant. */
-    source?: "manual" | "ai_estimate" | "invoice";
+    source?: "manual" | "ai_estimate" | "invoice" | "receipt";
+    /** Prix en promotion (ticket) : gardé, mais hors des prix de référence. */
+    isPromo?: boolean;
     /** Ligne de facture d'où vient le prix. */
     supplierInvoiceLineId?: string | null;
   },
@@ -124,7 +166,10 @@ export async function savePrice(
       );
     if (!ingredient) return { ok: false, reason: "not_found" } as const;
 
-    const previous = (await currentPrices(tx, input.userId, [input.ingredientId])).get(input.ingredientId);
+    const previous = // Une estimation de l'IA ne remplace pas non plus un prix de référence des particuliers.
+      (
+        await currentPrices(tx, input.userId, [input.ingredientId], { community: source === "ai_estimate" })
+      ).get(input.ingredientId);
     if (source === "ai_estimate" && previous) return { ok: false, reason: "exists" } as const;
     const supplierId = await supplierFor(tx, input.userId, input.supplierName ?? null);
 
@@ -146,6 +191,7 @@ export async function savePrice(
         supplierId,
         pricePerKg: price,
         source,
+        isPromo: input.isPromo ?? false,
         isCurrent: true,
       })
       .returning({ id: s.ingredientPrices.id });

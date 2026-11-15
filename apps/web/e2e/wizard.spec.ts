@@ -322,6 +322,29 @@ test("wizard : Plat · Asie · Japon · Interprétation créative, rafraîchisse
   await expect(page.getByTestId("invoice-line")).toHaveCount(4);
   await page.getByRole("button", { name: "Valider toutes les lignes rapprochées" }).click();
   await expect(page.getByTestId("invoice-line").filter({ hasText: "Validé" })).toHaveCount(3);
+
+  // Ticket de caisse (P8) : photo jamais gardée, promo signalée, article inconnu ajouté à « Mes prix ».
+  await page.goto("/app/ingredients/tickets");
+  await expect(page.getByText("jamais enregistrée")).toBeVisible();
+  await page.getByTestId("scan-file").setInputFiles({
+    name: "ticket.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+      "base64",
+    ),
+  });
+  await page.getByTestId("scan-submit").click();
+  await expect(page.getByTestId("invoice-supplier")).toHaveText("Supermarché test", { timeout: 30_000 });
+  await expect(page.getByTestId("invoice-line")).toHaveCount(3);
+  await expect(page.getByTestId("promo-badge")).toHaveCount(1);
+  const eggs = page.getByTestId("invoice-line").filter({ hasText: "Œufs fermiers test" });
+  await eggs.getByRole("combobox").selectOption({ label: "+ Ajouter « Œufs fermiers test » à mes prix" });
+  await expect(eggs.getByRole("textbox")).toHaveValue("0,30");
+  await eggs.getByRole("button", { name: "Valider" }).click();
+  await expect(eggs).toContainText("Validé");
+  await page.goto("/app/ingredients");
+  await expect(page.getByText("Œufs fermiers test").first()).toBeVisible();
   await page.goto(recipeUrl);
 
   // Modification par instruction : nouvelle version ciblée (2e et dernière régénération).

@@ -1,8 +1,10 @@
 /**
  * Tâche quotidienne (Vercel Cron, voir vercel.json) : efface ce qui a dépassé sa durée
- * de conservation. Protégée par CRON_SECRET, que Vercel envoie automatiquement.
+ * de conservation et recalcule les prix de référence des particuliers. Protégée par
+ * CRON_SECRET, que Vercel envoie automatiquement.
  */
 import { timingSafeEqual } from "node:crypto";
+import { refreshReferencePrices } from "@/server/costing/reference-prices";
 import { getDb } from "@/server/db";
 import { purgeExpiredData } from "@/server/purge";
 
@@ -20,5 +22,14 @@ export async function GET(request: Request) {
   if (!authorized(request.headers.get("authorization"))) {
     return new Response("Non autorisé", { status: 401 });
   }
-  return Response.json(await purgeExpiredData(getDb()));
+  const db = getDb();
+  const purged = await purgeExpiredData(db);
+  // Prix de référence des particuliers (P8), recalculés une fois par jour.
+  const referencePrices = await refreshReferencePrices(db).catch((error: unknown) => {
+    console.error(
+      `Prix de référence non recalculés : ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return null;
+  });
+  return Response.json({ ...purged, referencePrices });
 }

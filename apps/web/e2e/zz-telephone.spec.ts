@@ -96,6 +96,7 @@ test("téléphone : aucune page ne déborde en largeur (380 px)", async ({ page 
       if (list) await check(`${mode}-liste`, `/app/courses/${list.id}`);
       await check(`${mode}-garde-manger`, "/app/stocks");
       await check(`${mode}-prix`, "/app/ingredients");
+      await check(`${mode}-tickets`, "/app/ingredients/tickets");
       await check(`${mode}-bases`, "/app/bases");
       await check(`${mode}-compte`, "/app/compte");
       await check(`${mode}-importer`, "/app/importer");

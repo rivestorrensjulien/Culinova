@@ -148,6 +148,13 @@
       "when": 1794651027072,
       "tag": "0020_essai_sans_compte",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794771836379,
+      "tag": "0021_tickets_de_caisse",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 /**
  * Lecture d'une facture envoyée depuis « Ingrédients → Factures » (photo ou PDF,
- * 4 Mo au plus). Réponse : l'identifiant de la facture lue, à valider ligne par ligne.
+ * 4 Mo au plus) ou d'un ticket de caisse depuis « Mes prix » (`kind=receipt`, photo jamais
+ * gardée). Réponse : l'identifiant du document lu, à valider ligne par ligne.
  */
 import { createLlmAdapter } from "@culinova/ai";
 import { scanInvoice } from "@/server/costing/invoices";
@@ -24,10 +25,12 @@ export async function POST(request: Request) {
   const session = await getCurrentSession();
   if (!session) return Response.json({ ok: false, reason: "auth" }, { status: 401 });
   let file: File | null = null;
+  let kind: "invoice" | "receipt" = "invoice";
   try {
     const form = await request.formData();
     const value = form.get("file");
     file = value instanceof File ? value : null;
+    kind = form.get("kind") === "receipt" ? "receipt" : "invoice";
   } catch {
     file = null;
   }
@@ -39,6 +42,7 @@ export async function POST(request: Request) {
     session.user.id,
     { bytes: new Uint8Array(await file.arrayBuffer()), mediaType: file.type },
     session.user.locale === "en" ? "en" : "fr",
+    kind,
   );
   return Response.json(result, { status: result.ok ? 200 : 400 });
 }

@@ -878,7 +878,9 @@
     },
     "estimatedPrice": "Estimé par l'IA · enregistrez pour confirmer",
     "homeTitle": "Mes prix",
-    "homeIntro": "Le prix de vos ingrédients sert à calculer ce que coûte chaque recette. L'IA en estime un pour chaque nouvel ingrédient : corrigez-le avec le prix de votre magasin quand vous le connaissez."
+    "homeIntro": "Le prix de vos ingrédients sert à calculer ce que coûte chaque recette. L'IA en estime un pour chaque nouvel ingrédient : corrigez-le avec le prix de votre magasin quand vous le connaissez.",
+    "communityPrice": "{count, plural, other {Prix courant relevé par # personnes}} · enregistrez le vôtre",
+    "marketPrice": "Prix courant : {price} {unit} ({count, plural, other {# personnes}})"
   },
   "Pricing": {
     "title": "Prix de vente et marges",
@@ -1609,5 +1611,43 @@
     "keepButton": "Garder ma recette et demander une invitation",
     "keepNotice": "Culinova est ouvert sur invitation. Vous recevez la réponse par e-mail ; votre recette d'essai vous attend 30 jours.",
     "claimed": "Cette recette a rejoint un compte Culinova."
+  },
+  "Receipts": {
+    "title": "Mes tickets de caisse",
+    "link": "Scanner un ticket de caisse",
+    "intro": "Prenez votre ticket en photo après les courses : l’IA lit chaque article, le rapproche de vos ingrédients et calcule le prix au kilo, au litre ou à la pièce. Vous vérifiez, puis vos recettes sont chiffrées avec vos vrais prix.",
+    "file": "Photo du ticket",
+    "fileHint": "Bien à plat, en entier et lisible. JPEG, PNG ou WebP ; la photo est réduite avant l’envoi.",
+    "scan": "Lire le ticket",
+    "scanning": "Lecture du ticket… (jusqu’à une minute)",
+    "errors": {
+      "type": "Format non accepté : envoyez une photo (JPEG, PNG, WebP).",
+      "size": "Fichier trop lourd (4 Mo au plus).",
+      "budget": "Le budget d’IA du mois est atteint.",
+      "failed": "Le ticket n’a pas pu être lu. Reprenez la photo bien à plat, en entier, sans reflet.",
+      "auth": "Votre session a expiré : reconnectez-vous."
+    },
+    "empty": "Aucun ticket lu pour l’instant.",
+    "back": "Tous mes tickets",
+    "unknownSupplier": "Magasin non identifié",
+    "lines": "{count, plural, one {# article} other {# articles}}",
+    "pending": "{count, plural, =0 {tout est traité} one {# à valider} other {# à valider}}",
+    "label": "Libellé",
+    "quantity": "Quantité",
+    "ingredient": "Ingrédient",
+    "price": "Prix",
+    "noMatch": "— Aucun de mes ingrédients —",
+    "accept": "Valider",
+    "reject": "Ignorer",
+    "accepted": "Validé",
+    "rejected": "Ignoré",
+    "acceptAll": "Valider tous les articles reconnus",
+    "unitPrice": "{price} l’unité",
+    "invalidPrice": "Choisissez un ingrédient et un prix valide.",
+    "date": "Ticket du {date}",
+    "privacy": "La photo de votre ticket est lue puis oubliée : elle n’est jamais enregistrée. Seuls les articles alimentaires et leurs prix sont gardés.",
+    "promo": "Promo",
+    "promoHint": "Prix en promotion : validez-le seulement si vous le payez d’habitude. Il ne compte pas dans les prix de référence.",
+    "addNew": "+ Ajouter « {name} » à mes prix"
   }
 }

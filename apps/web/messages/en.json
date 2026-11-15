@@ -878,7 +878,9 @@
     },
     "estimatedPrice": "Estimated by AI · save to confirm",
     "homeTitle": "My prices",
-    "homeIntro": "Ingredient prices are used to work out what each recipe costs. The AI estimates one for each new ingredient: correct it with your shop's price whenever you know it."
+    "homeIntro": "Ingredient prices are used to work out what each recipe costs. The AI estimates one for each new ingredient: correct it with your shop's price whenever you know it.",
+    "communityPrice": "{count, plural, other {Usual price reported by # people}} · save your own",
+    "marketPrice": "Usual price: {price} {unit} ({count, plural, other {# people}})"
   },
   "Pricing": {
     "title": "Selling price and margins",
@@ -1609,5 +1611,43 @@
     "keepButton": "Keep my recipe and request an invitation",
     "keepNotice": "Culinova is invitation-only. You'll get the answer by email; your trial recipe waits for you for 30 days.",
     "claimed": "This recipe has joined a Culinova account."
+  },
+  "Receipts": {
+    "title": "My till receipts",
+    "link": "Scan a till receipt",
+    "intro": "Take a photo of your receipt after shopping: the AI reads each item, matches it to your ingredients and works out the price per kilo, litre or piece. You check, then your recipes are costed with your real prices.",
+    "file": "Photo of the receipt",
+    "fileHint": "Flat, whole and readable. JPEG, PNG or WebP; the photo is reduced before sending.",
+    "scan": "Read the receipt",
+    "scanning": "Reading the receipt… (up to a minute)",
+    "errors": {
+      "type": "Format not accepted: send a photo (JPEG, PNG, WebP).",
+      "size": "File too large (4 MB max).",
+      "budget": "The monthly AI budget has been reached.",
+      "failed": "The receipt couldn't be read. Take the photo again, flat, whole, without glare.",
+      "auth": "Your session has expired: sign in again."
+    },
+    "empty": "No receipt read yet.",
+    "back": "All my receipts",
+    "unknownSupplier": "Unknown shop",
+    "lines": "{count, plural, one {# item} other {# items}}",
+    "pending": "{count, plural, =0 {all done} one {# to confirm} other {# to confirm}}",
+    "label": "Label",
+    "quantity": "Quantity",
+    "ingredient": "Ingredient",
+    "price": "Price",
+    "noMatch": "— None of my ingredients —",
+    "accept": "Confirm",
+    "reject": "Ignore",
+    "accepted": "Confirmed",
+    "rejected": "Ignored",
+    "acceptAll": "Accept all recognised items",
+    "unitPrice": "{price} each",
+    "invalidPrice": "Choose an ingredient and a valid price.",
+    "date": "Receipt of {date}",
+    "privacy": "Your receipt photo is read and then forgotten: it is never stored. Only food items and their prices are kept.",
+    "promo": "Offer",
+    "promoHint": "Promotional price: accept it only if you usually pay it. It doesn't count in reference prices.",
+    "addNew": "+ Add “{name}” to my prices"
   }
 }

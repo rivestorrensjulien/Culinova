@@ -6,6 +6,7 @@ import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { currentPrices, type PriceUnit, priceUnitOf } from "./prices";
+import { referencePricesFor } from "./reference-prices";
 
 export interface IngredientRow {
   id: string;
@@ -20,6 +21,10 @@ export interface IngredientRow {
   priceEstimated: boolean;
   supplierName: string | null;
   priceUpdatedAt: string | null;
+  /** Le prix affiché est le prix de référence des particuliers (nombre de personnes). */
+  priceCommunityOwners: number | null;
+  /** Prix de référence des particuliers, pour comparer avec le sien (P8). */
+  market: { price: string; owners: number } | null;
   /** Recettes (version active) qui l'utilisent. */
   recipes: Array<{ id: string; name: string }>;
 }
@@ -103,6 +108,10 @@ export async function listMyIngredients(
       .where(and(inArray(s.ingredients.id, ids), isNull(s.ingredients.deletedAt))),
     currentPrices(db, userId, ids),
   ]);
+  const market = await referencePricesFor(
+    db,
+    details.map((d) => ({ id: d.id, name: d.canonicalName, unit: priceUnitOf(d.referenceUnit) })),
+  );
 
   return details
     .map((d) => {
@@ -117,7 +126,11 @@ export async function listMyIngredients(
         priceIsOwn: price?.own ?? false,
         priceEstimated: price?.estimated ?? false,
         supplierName: price?.supplierName ?? null,
-        priceUpdatedAt: price?.validFrom.toISOString() ?? null,
+        priceUpdatedAt: price?.community ? null : (price?.validFrom.toISOString() ?? null),
+        priceCommunityOwners: price?.community?.owners ?? null,
+        market: market.get(d.id)
+          ? { price: market.get(d.id)!.price, owners: market.get(d.id)!.owners }
+          : null,
         recipes: [...(recipesByIngredient.get(d.id) ?? new Map())].map(([id, name]) => ({ id, name })),
       };
     })

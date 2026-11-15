@@ -36,7 +36,15 @@ export default async function IngredientsPage({
             <Link href="/app/ingredients/factures" className={buttonClasses("secondary")}>
               {(await getTranslations("Invoices"))("link")}
             </Link>
-          ) : null}
+          ) : (
+            <Link
+              href="/app/ingredients/tickets"
+              className={buttonClasses("primary")}
+              data-testid="scan-receipt-link"
+            >
+              {(await getTranslations("Receipts"))("link")}
+            </Link>
+          )}
         </div>
         <p className="max-w-3xl text-muted">{session.user.proMode ? t("intro") : t("homeIntro")}</p>
         {recipeId ? (

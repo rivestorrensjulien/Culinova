@@ -78,7 +78,7 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
   },
   {
     type: "privacy" as const,
-    version: "1.3",
+    version: "1.4",
     title: "Politique de confidentialité",
     bodyMd: `## Responsable du traitement
 {{editeur.nom}}, {{editeur.adresse}} — {{editeur.email}}.
@@ -89,6 +89,7 @@ Les présentes CGU sont soumises au droit français. En cas de litige, une solut
 - **Compte** : adresse e-mail, nom (facultatif), langue, code d'invitation utilisé, rôle.
 - **Sécurité** : dates de connexion, sessions ouvertes, adresse IP et navigateur, journal des actions sensibles.
 - **Contenus** : paramètres de création, recettes et leurs versions, traductions, photos, ingrédients, prix, fournisseurs, réglages de prix de vente, correspondances nutritionnelles, favoris.
+- **Tickets de caisse et factures** : la photo est lue par l'intelligence artificielle pour en extraire les articles alimentaires (nom, quantité, prix, promotion), le magasin et la date. La photo d'un ticket n'est jamais enregistrée ; les numéros de carte et de fidélité ne sont pas relevés. Les libellés que vous validez sont mémorisés pour reconnaître vos prochains tickets.
 - **Utilisation** : consommation des quotas et coût des générations par intelligence artificielle.
 - **Consentements** : versions des documents acceptés, date, adresse IP et navigateur.
 
@@ -100,6 +101,7 @@ Aucune donnée de paiement n'est collectée pendant la phase sur invitation.
 - Vous faire essayer Culinova sans compte et, si vous demandez une invitation, rattacher la recette d'essai à votre futur compte — **mesures précontractuelles prises à votre demande** ; limiter le nombre d'essais — **intérêt légitime**.
 - Créer et gérer votre compte, vous connecter par lien magique — **exécution du contrat** (CGU).
 - Générer recettes, images, traductions et analyses — **exécution du contrat** (CGU).
+- Calculer des prix de référence : les prix que vous validez (hors promotions et estimations de l'IA) contribuent, de façon anonyme, à un prix médian par ingrédient, publié seulement quand au moins 3 personnes ont donné le leur ; aucun prix individuel ni magasin n'y est visible — **intérêt légitime**.
 - Appliquer les quotas et maîtriser le budget d'intelligence artificielle — **intérêt légitime**.
 - Sécuriser le service (journal d'audit, sessions, limitation des abus) — **intérêt légitime**.
 - Conserver la preuve de vos consentements — **obligation légale**.
@@ -117,6 +119,7 @@ Certains de ces prestataires sont établis aux États-Unis. Les transferts sont 
 ## Durées de conservation
 - **Demandes d'invitation** : 12 mois après la demande, puis effacement automatique (le compte créé avec l'invitation suit ensuite ses propres règles).
 - **Recettes d'essai** : 30 jours, puis effacement automatique (une recette gardée rejoint votre compte et suit ses règles).
+- **Photos de tickets de caisse** : aucune conservation (lues puis oubliées) ; les articles et prix validés suivent les règles du compte.
 - **Compte et contenus** : tant que le compte existe. À la suppression du compte, ils sont effacés immédiatement, photos comprises.
 - **Compte suspendu** : données conservées jusqu'à sa réactivation ou sa suppression.
 - **Liens de connexion** : 15 minutes ; **sessions** : 30 jours au plus, ou jusqu'à leur fermeture.
@@ -194,6 +197,13 @@ export const PROCESSING_REGISTER = [
     dataCategories: ["ingrédients", "prix", "fournisseurs", "réglages"],
     retention: "Durée de vie du compte",
     processors: ["Supabase", "Anthropic"],
+  },
+  {
+    purpose: "Tickets de caisse et prix de référence",
+    legalBasis: "Exécution du contrat (lecture des tickets) ; intérêt légitime (prix de référence anonymes)",
+    dataCategories: ["articles alimentaires et prix", "magasin et date", "libellés validés"],
+    retention: "Photo : aucune conservation ; prix : durée du compte ; prix de référence : médiane d'au moins 3 personnes",
+    processors: ["Supabase", "Vercel", "Anthropic"],
   },
   {
     purpose: "Recettes d'essai sans compte",

@@ -113,7 +113,7 @@ export const suppliers = pgTable("suppliers", {
 });
 
 /** Origine d'un prix : saisi, facture, référence globale, ou estimé par l'IA (à confirmer). */
-export type PriceSource = "manual" | "invoice" | "reference" | "ai_estimate";
+export type PriceSource = "manual" | "invoice" | "receipt" | "reference" | "ai_estimate";
 
 /** Prix d'un ingrédient. Un prix propre à la personne prime sur le prix de référence global. */
 export const ingredientPrices = pgTable(
@@ -132,6 +132,8 @@ export const ingredientPrices = pgTable(
     validFrom: tz("valid_from").notNull().defaultNow(),
     isCurrent: boolean("is_current").notNull().default(true),
     source: text("source").$type<PriceSource>().notNull(),
+    /** Prix promotionnel (ticket de caisse) : jamais compté dans les prix de référence. */
+    isPromo: boolean("is_promo").notNull().default(false),
     ...timestamps,
   },
   (t) => [index("ingredient_prices_lookup_idx").on(t.ingredientId, t.ownerId, t.isCurrent)],
@@ -144,6 +146,8 @@ export const supplierInvoices = pgTable("supplier_invoices", {
     .references(() => users.id, { onDelete: "cascade" }),
   supplierId: uuid("supplier_id").references(() => suppliers.id, { onDelete: "set null" }),
   fileKey: text("file_key").notNull(),
+  /** Facture de fournisseur (pro) ou ticket de caisse (particulier, P8 : photo jamais gardée). */
+  kind: text("kind").$type<"invoice" | "receipt">().notNull().default("invoice"),
   invoiceDate: tz("invoice_date"),
   status: text("status").$type<"uploaded" | "parsed" | "reviewed">().notNull().default("uploaded"),
   parsedAt: tz("parsed_at"),
@@ -156,6 +160,10 @@ export const supplierInvoiceLines = pgTable("supplier_invoice_lines", {
     .notNull()
     .references(() => supplierInvoices.id, { onDelete: "cascade" }),
   rawLabel: text("raw_label").notNull(),
+  /** Nom lisible proposé par l'IA (« Beurre doux » pour « BEUR DX PDT 250G »). */
+  cleanName: text("clean_name"),
+  /** Prix en promotion sur le ticket (remise, lot, prix barré). */
+  promo: boolean("promo").notNull().default(false),
   quantity: numeric("quantity", { precision: 12, scale: 3 }),
   unit: text("unit"),
   unitPriceCents: integer("unit_price_cents"),
@@ -204,3 +212,44 @@ export const priceAlerts = pgTable("price_alerts", {
   lastTriggeredAt: tz("last_triggered_at"),
   ...timestamps,
 });
+
+/**
+ * Mémoire des libellés de tickets (P8) : « BEUR DX PDT 250G » chez tel magasin = tel ingrédient.
+ * Écrite à chaque ligne validée, relue au ticket suivant pour rapprocher sans se tromper.
+ */
+export const priceAliases = pgTable(
+  "price_aliases",
+  {
+    id: id(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Magasin normalisé (vide si inconnu). */
+    storeKey: text("store_key").notNull().default(""),
+    /** Libellé du ticket normalisé. */
+    labelKey: text("label_key").notNull(),
+    ingredientId: uuid("ingredient_id")
+      .notNull()
+      .references(() => ingredients.id, { onDelete: "cascade" }),
+    ...timestamps,
+  },
+  (t) => [uniqueIndex("price_aliases_owner_label_idx").on(t.ownerId, t.storeKey, t.labelKey)],
+);
+
+/**
+ * Prix de référence des particuliers (P8) : médiane des prix validés (saisis, factures, tickets,
+ * hors promotions) par au moins 3 personnes pour un même ingrédient (nom normalisé + unité).
+ * Anonyme et agrégé, recalculé chaque jour ; sert quand la personne n'a pas son propre prix.
+ */
+export const referencePrices = pgTable(
+  "reference_prices",
+  {
+    nameKey: text("name_key").notNull(),
+    unit: text("unit").$type<"kg" | "l" | "piece">().notNull(),
+    pricePerUnit: numeric("price_per_unit", { precision: 12, scale: 4 }).notNull(),
+    /** Nombre de personnes dont les prix forment la médiane. */
+    owners: integer("owners").notNull(),
+    updatedAt: tz("updated_at").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.nameKey, t.unit] })],
+);

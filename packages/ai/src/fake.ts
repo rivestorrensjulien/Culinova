@@ -406,6 +406,40 @@ export function fakeInvoice(user: string) {
   };
 }
 
+/**
+ * Ticket de caisse d'exemple : les deux premiers ingrédients proposés (le second en promotion),
+ * des œufs jamais rapprochés et un sac (non alimentaire, ignoré).
+ */
+export function fakeReceipt(user: string) {
+  const candidates = [...user.matchAll(/^- (\S+) · (.+) · (€\/kg|€\/l|€\/pièce)$/gm)].slice(0, 2);
+  return {
+    store: "Supermarché test",
+    receiptDate: "2026-11-14",
+    lines: [
+      ...candidates.map((m, index) => ({
+        label: `${m[2]!.toUpperCase().slice(0, 12)} 500G`,
+        name: m[2]!,
+        quantity: m[3] === "€/pièce" ? 6 : 0.5,
+        unit: m[3] === "€/pièce" ? ("piece" as const) : m[3] === "€/l" ? ("l" as const) : ("kg" as const),
+        totalPrice: 3,
+        promo: index === 1,
+        ingredientRef: m[1]!,
+        pricePerUnit: m[3] === "€/pièce" ? 0.5 : 6,
+      })),
+      {
+        label: "OEUFS PA X12",
+        name: "Œufs fermiers test",
+        quantity: 12,
+        unit: "piece" as const,
+        totalPrice: 3.6,
+        promo: false,
+        ingredientRef: null,
+        pricePerUnit: null,
+      },
+    ],
+  };
+}
+
 /** Analyse des statistiques des réseaux (insights.analyze). */
 function fakeInsights() {
   return {
@@ -475,6 +509,7 @@ const defaultResponder: Responder = (request) => {
   }
   if (request.promptId.startsWith("video.")) return fakeVideoScenes(request.user);
   if (request.promptId.startsWith("invoice.")) return fakeInvoice(request.user);
+  if (request.promptId.startsWith("receipt.")) return fakeReceipt(request.user);
   if (request.promptId.startsWith("recipe.import")) {
     const recipe = fakeRecipe(request.user, 0);
     return { ...recipe, name: `${recipe.name} (importée)` };

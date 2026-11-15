@@ -13,9 +13,14 @@ function displayPrice(price: string | null): string {
   return price === null ? "" : Number(price).toFixed(2).replace(".", ",");
 }
 
-/** Vérification d'une facture lue par l'IA : chaque ligne est validée ou ignorée. */
+/**
+ * Vérification d'une facture ou d'un ticket lu par l'IA : chaque ligne est validée ou ignorée.
+ * Ticket (P8) : nom lisible, promotions signalées (jamais validées d'un coup), article inconnu
+ * ajouté à « Mes prix ».
+ */
 export function InvoiceReview({ invoice }: { invoice: InvoiceView }) {
-  const t = useTranslations("Invoices");
+  const receipt = invoice.kind === "receipt";
+  const t = useTranslations(receipt ? "Receipts" : "Invoices");
   const format = useFormatter();
   const [lines, setLines] = useState(invoice.lines);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +51,22 @@ export function InvoiceReview({ invoice }: { invoice: InvoiceView }) {
     return false;
   };
 
+  // « Tout valider » : jamais les prix en promotion (à valider un par un, en connaissance de cause).
   const ready = lines.filter(
-    (l) => l.decision === "pending" && drafts[l.id]?.ingredientId && drafts[l.id]?.price.trim(),
+    (l) =>
+      l.decision === "pending" &&
+      !l.promo &&
+      drafts[l.id]?.ingredientId &&
+      drafts[l.id]?.ingredientId !== "new" &&
+      drafts[l.id]?.price.trim(),
   );
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/app/ingredients/factures" className="text-sm text-primary hover:underline">
+      <Link
+        href={receipt ? "/app/ingredients/tickets" : "/app/ingredients/factures"}
+        className="text-sm text-primary hover:underline"
+      >
         ← {t("back")}
       </Link>
       <div>
@@ -85,13 +99,24 @@ export function InvoiceReview({ invoice }: { invoice: InvoiceView }) {
           <ul className="flex flex-col divide-y divide-border">
             {lines.map((line) => {
               const draft = drafts[line.id]!;
-              const unit = invoice.ingredients.find((i) => i.id === draft.ingredientId)?.unit;
+              const unit =
+                draft.ingredientId === "new"
+                  ? (line.newUnit ?? undefined)
+                  : invoice.ingredients.find((i) => i.id === draft.ingredientId)?.unit;
               const setDraft = (patch: Partial<typeof draft>) =>
                 setDrafts((all) => ({ ...all, [line.id]: { ...all[line.id]!, ...patch } }));
               return (
                 <li key={line.id} className="flex flex-col gap-2 py-3" data-testid="invoice-line">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
-                    <span className="font-medium">{line.rawLabel}</span>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium">{line.cleanName ?? line.rawLabel}</span>
+                      {line.cleanName ? <span className="text-xs text-muted">{line.rawLabel}</span> : null}
+                      {line.promo ? (
+                        <Badge tone="warning" data-testid="promo-badge">
+                          {t("promo")}
+                        </Badge>
+                      ) : null}
+                    </span>
                     <span className="text-sm text-muted">
                       {[
                         line.quantity !== null
@@ -110,15 +135,32 @@ export function InvoiceReview({ invoice }: { invoice: InvoiceView }) {
                         .join(" · ")}
                     </span>
                   </div>
+                  {line.decision === "pending" && line.promo ? (
+                    <p className="text-xs text-muted">{t("promoHint")}</p>
+                  ) : null}
                   {line.decision === "pending" ? (
                     <div className="flex flex-wrap items-center gap-2 text-sm">
                       <Select
                         value={draft.ingredientId}
-                        onChange={(e) => setDraft({ ingredientId: e.target.value })}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setDraft(
+                            value === "new"
+                              ? { ingredientId: value, price: displayPrice(line.newPrice) }
+                              : value === line.ingredientId
+                                ? { ingredientId: value, price: displayPrice(line.proposedPrice) }
+                                : { ingredientId: value },
+                          );
+                        }}
                         aria-label={`${t("ingredient")} · ${line.rawLabel}`}
                         className="w-56"
                       >
                         <option value="">{t("noMatch")}</option>
+                        {receipt && line.newUnit && line.decision === "pending" ? (
+                          <option value="new">
+                            {t("addNew", { name: line.cleanName ?? line.rawLabel })}
+                          </option>
+                        ) : null}
                         {invoice.ingredients.map((ingredient) => (
                           <option key={ingredient.id} value={ingredient.id}>
                             {ingredient.name}

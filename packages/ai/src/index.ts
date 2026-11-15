@@ -17,3 +17,4 @@ export * from "./prompts/social";
 export * from "./prompts/translate";
 export * from "./prompts/video";
 export * from "./schemas";
+export * from "./prompts/receipt";

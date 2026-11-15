@@ -108,14 +108,23 @@ export async function decideInvoiceLineAction(
   const db = getDb();
   let result: DecideResult;
   if (decision.accept) {
-    if (!decision.ingredientId || !uuid.safeParse(decision.ingredientId).success) {
+    if (
+      !decision.ingredientId ||
+      (decision.ingredientId !== "new" && !uuid.safeParse(decision.ingredientId).success)
+    ) {
       return { ok: false, reason: "invalid" };
     }
-    result = await decideInvoiceLine(db, session.user.id, lineId, {
-      accept: true,
-      ingredientId: decision.ingredientId,
-      price: String(decision.price ?? "").slice(0, 20),
-    });
+    result = await decideInvoiceLine(
+      db,
+      session.user.id,
+      lineId,
+      {
+        accept: true,
+        ingredientId: decision.ingredientId,
+        price: String(decision.price ?? "").slice(0, 20),
+      },
+      session.user.locale === "en" ? "en" : "fr",
+    );
   } else {
     result = await decideInvoiceLine(db, session.user.id, lineId, { accept: false });
   }

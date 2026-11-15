@@ -25,8 +25,8 @@ async function shrink(file: File): Promise<Blob> {
   }
 }
 
-export function InvoiceUploadForm() {
-  const t = useTranslations("Invoices");
+export function InvoiceUploadForm({ kind = "invoice" }: { kind?: "invoice" | "receipt" }) {
+  const t = useTranslations(kind === "receipt" ? "Receipts" : "Invoices");
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -44,6 +44,7 @@ export function InvoiceUploadForm() {
     }
     const form = new FormData();
     form.set("file", body, file.name);
+    form.set("kind", kind);
     const result = (await fetch("/api/factures", { method: "POST", body: form })
       .then((r) => r.json())
       .catch(() => null)) as { ok: true; invoiceId: string } | { ok: false; reason: string } | null;
@@ -69,7 +70,13 @@ export function InvoiceUploadForm() {
         {(a11y) => (
           <input
             type="file"
-            accept="image/jpeg,image/png,image/webp,application/pdf"
+            accept={
+              kind === "receipt"
+                ? "image/jpeg,image/png,image/webp"
+                : "image/jpeg,image/png,image/webp,application/pdf"
+            }
+            capture={kind === "receipt" ? "environment" : undefined}
+            data-testid="scan-file"
             disabled={scanning}
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="text-sm file:mr-3 file:cursor-pointer file:rounded-full file:border file:border-border-strong file:bg-surface file:px-3 file:py-1.5"
@@ -83,11 +90,12 @@ export function InvoiceUploadForm() {
         </p>
       ) : (
         <div>
-          <Button type="submit" disabled={!file}>
+          <Button type="submit" disabled={!file} data-testid="scan-submit">
             {t("scan")}
           </Button>
         </div>
       )}
+      {kind === "receipt" ? <p className="text-xs text-muted">{t("privacy")}</p> : null}
     </form>
   );
 }

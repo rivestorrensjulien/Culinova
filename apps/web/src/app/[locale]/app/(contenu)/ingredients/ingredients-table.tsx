@@ -51,6 +51,7 @@ export function IngredientsTable({ rows: initial }: { rows: IngredientRow[] }) {
       price,
       priceIsOwn: true,
       priceEstimated: false,
+      priceCommunityOwners: null,
       supplierName,
       priceUpdatedAt: new Date().toISOString(),
     });
@@ -233,8 +234,23 @@ function PriceRow({
         ) : null}
         {row.price ? (
           <span className="text-xs text-muted">
-            {row.priceEstimated ? t("estimatedPrice") : row.priceIsOwn ? t("ownPrice") : t("referencePrice")}
+            {row.priceEstimated
+              ? t("estimatedPrice")
+              : row.priceCommunityOwners
+                ? t("communityPrice", { count: row.priceCommunityOwners })
+                : row.priceIsOwn
+                  ? t("ownPrice")
+                  : t("referencePrice")}
             {row.priceUpdatedAt ? ` · ${formatDate(row.priceUpdatedAt)}` : ""}
+          </span>
+        ) : null}
+        {row.market && row.priceIsOwn && !row.priceEstimated ? (
+          <span className="text-xs text-muted" data-testid="market-price">
+            {t("marketPrice", {
+              price: Number(row.market.price).toFixed(2).replace(".", ","),
+              unit: t(`unit.${row.unit}`),
+              count: row.market.owners,
+            })}
           </span>
         ) : null}
       </div>

@@ -309,7 +309,10 @@ function readableIngredients(recipe: GeneratedRecipe) {
   }));
 }
 
-export function trialRecipeView(recipe: GeneratedRecipe): NonNullable<TrialView["recipe"]> {
+export function trialRecipeView(
+  recipe: GeneratedRecipe,
+  language: string = "fr",
+): NonNullable<TrialView["recipe"]> {
   const ingredients = readableIngredients(recipe);
   return {
     name: recipe.name,
@@ -319,9 +322,9 @@ export function trialRecipeView(recipe: GeneratedRecipe): NonNullable<TrialView[
     prepS: recipe.prepTimeSeconds,
     cookS: recipe.cookTimeSeconds,
     restS: recipe.restTimeSeconds,
-    ingredients: ingredients.map((i) => ({ label: i.label, amount: amountText(i) })),
+    ingredients: ingredients.map((i) => ({ label: i.label, amount: amountText(i, null, language) })),
     steps: recipe.steps.map((step) => ({
-      text: stepPlainText({ ingredients }, step.action),
+      text: stepPlainText({ ingredients, language }, step.action),
       expected: step.expectedResult,
     })),
     plating: recipe.plating.description ? platingText(recipe.plating) : null,
@@ -340,7 +343,7 @@ export async function loadTrial(db: Database, token: string): Promise<TrialView 
     status: trial.status,
     input: { mode: trial.input.mode, input: trial.input.input, servings: trial.input.servings },
     claimed: trial.claimedBy !== null,
-    recipe: parsed?.success ? trialRecipeView(parsed.data) : null,
+    recipe: parsed?.success ? trialRecipeView(parsed.data, trial.input.language) : null,
   };
 }
 

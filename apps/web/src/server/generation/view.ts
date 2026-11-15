@@ -67,6 +67,8 @@ export interface RecipeView {
   diets: string[];
   tips: string[];
   language: string;
+  /** Langue affichée, si une traduction est montrée (mesures de cuisine dans la bonne langue). */
+  displayLanguage?: string;
   createdAt: string;
   ingredients: Array<{
     id: string;

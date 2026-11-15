@@ -11,6 +11,7 @@ export function applyTranslation(recipe: RecipeView, payload: TranslationPayload
     fusionLabel: payload.fusionLabel,
     equipment: payload.equipment,
     tips: payload.tips,
+    displayLanguage: recipe.language === "en" ? "fr" : "en",
     ingredients: recipe.ingredients.map((ingredient) => {
       const translated = payload.ingredients[ingredient.id];
       return translated

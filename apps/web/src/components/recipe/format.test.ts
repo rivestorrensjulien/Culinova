@@ -41,7 +41,17 @@ describe("quantités affichées", () => {
 
   it("calcule une partie de l'ingrédient pour les étapes", () => {
     expect(ingredientAmount(grams(75), 50, 4, 6)).toMatchObject({ value: 75, unit: "g" });
-    expect(ingredientAmount(grams(165, 3, "œufs"), 55, 4, 4).kitchen).toEqual({ value: 1, unit: "œufs" });
+    expect(ingredientAmount(grams(165, 3, "œufs"), 55, 4, 4).kitchen).toEqual({ value: 1, unit: "œuf" });
+    // Sans mesure donnée par l'IA : déduite du nom et du poids (P3).
+    expect(ingredientAmount({ ...grams(100), label: "Œufs" }, null, 4, 6).kitchen).toEqual({
+      value: 3,
+      unit: "œufs",
+    });
+    expect(ingredientAmount({ ...grams(5), label: "Sel" }, null, 4, 4).kitchen).toEqual({
+      value: 1,
+      unit: "c. à café",
+    });
+    expect(ingredientAmount({ ...grams(500), label: "Saumon" }, null, 4, 4).kitchen).toBeNull();
   });
 
   it("garde l'unité des anciennes recettes en millilitres", () => {

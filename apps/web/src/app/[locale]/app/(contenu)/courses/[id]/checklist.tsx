@@ -2,7 +2,8 @@
 
 import { toDisplayQuantity } from "@culinova/core";
 import { Button, Card, CardBody, cx } from "@culinova/ui";
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
+import { shoppingKitchenMeasure } from "@/components/recipe/format";
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import {
@@ -68,10 +69,17 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
     void toggleShoppingItemAction(itemId, next).catch(() => undefined);
   };
 
-  const quantityText = (quantity: ShoppingListView["groups"][number]["items"][number]["quantity"]) => {
+  const locale = useLocale();
+  const quantityText = (
+    quantity: ShoppingListView["groups"][number]["items"][number]["quantity"],
+    name?: string,
+  ) => {
     const display = toDisplayQuantity(quantity);
     const unit = tr(`units.${display.unit}`);
-    return `${format.number(display.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
+    const main = `${format.number(display.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
+    // Mesure parlante pour faire ses courses : « 300 g (6 œufs) », « 500 g (50 cl) ».
+    const kitchen = name ? shoppingKitchenMeasure(name, quantity, locale) : null;
+    return kitchen ? `${main} (${format.number(kitchen.value)} ${kitchen.unit})` : main;
   };
 
   const renderItems = (items: ShoppingListItemView[]) => (
@@ -100,7 +108,7 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
             ) : null}
             {item.pantryQuantity ? (
               <span className="text-xs text-muted no-underline">
-                {t("partlyHome", { quantity: quantityText(item.pantryQuantity) })}
+                {t("partlyHome", { quantity: quantityText(item.pantryQuantity, item.name) })}
               </span>
             ) : null}
             <button
@@ -115,7 +123,7 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
             </button>
           </label>
           <span className="text-right">
-            <span className="block font-medium tabular-nums">{quantityText(item.quantity)}</span>
+            <span className="block font-medium tabular-nums">{quantityText(item.quantity, item.name)}</span>
             {item.costCents !== null ? (
               <span className="block text-xs text-muted tabular-nums">
                 {euros(item.costCents)}
@@ -177,7 +185,7 @@ export function ShoppingChecklist({ list, proMode = false }: { list: ShoppingLis
                 {home.map((item) => (
                   <li key={item.id} className="flex items-center gap-3 px-4 py-2.5 text-muted">
                     <span className="flex-1">{item.name}</span>
-                    <span className="tabular-nums">{quantityText(item.quantity)}</span>
+                    <span className="tabular-nums">{quantityText(item.quantity, item.name)}</span>
                     <button
                       type="button"
                       className="text-xs text-primary hover:underline print:hidden"

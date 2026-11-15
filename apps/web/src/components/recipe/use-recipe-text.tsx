@@ -18,16 +18,17 @@ type StepTiming = Pick<RecipeData["steps"][number], "durationS" | "timer" | "tem
 export function useRecipeText(recipe: RecipeData, scaleFrom: number, scaleTo: number) {
   const t = useTranslations("Recipe");
   const format = useFormatter();
+  const lang = (recipe.displayLanguage ?? recipe.language) === "en" ? "en" : "fr";
 
   const measure = useCallback(
     (ingredient: Ingredient, part: number | null) => {
-      const amount = ingredientAmount(ingredient, part, scaleFrom, scaleTo);
+      const amount = ingredientAmount(ingredient, part, scaleFrom, scaleTo, lang);
       const unit = t(`units.${amount.unit}`);
       const main = `${format.number(amount.value, { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ""}`;
       const kitchen = amount.kitchen ? `${format.number(amount.kitchen.value)} ${amount.kitchen.unit}` : null;
       return { main, kitchen };
     },
-    [scaleFrom, scaleTo, t, format],
+    [scaleFrom, scaleTo, t, format, lang],
   );
 
   /** Quantité d'un ingrédient (ou d'une partie) : grammes, puis mesure parlante entre parenthèses. */

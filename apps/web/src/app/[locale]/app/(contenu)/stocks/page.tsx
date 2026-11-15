@@ -1,4 +1,5 @@
 import { toDisplayQuantity } from "@culinova/core";
+import { shoppingKitchenMeasure } from "@/components/recipe/format";
 import { Badge, Button, Card, CardBody, Notice } from "@culinova/ui";
 import type { Metadata } from "next";
 import { getFormatter, getLocale, getTranslations, setRequestLocale } from "next-intl/server";
@@ -84,6 +85,10 @@ export default async function StockPage({ params }: { params: Promise<{ locale: 
                   <span className="font-medium tabular-nums" data-testid="stock-quantity">
                     {format.number(display.value, { maximumFractionDigits: 2 })}
                     {unit ? ` ${unit}` : ""}
+                    {(() => {
+                      const kitchen = shoppingKitchenMeasure(item.name, item.quantity, locale);
+                      return kitchen ? ` (${format.number(kitchen.value)} ${kitchen.unit})` : "";
+                    })()}
                     {item.bestBefore
                       ? ` · ${t("bestBeforeShort")} ${format.dateTime(new Date(item.bestBefore), { dateStyle: "short" })}`
                       : ""}

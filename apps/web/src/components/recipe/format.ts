@@ -1,4 +1,11 @@
-import { type BaseQuantity, scaleQuantity, toDisplayQuantity, type Unit } from "@culinova/core";
+import {
+  agreeKitchenUnit,
+  type BaseQuantity,
+  estimateKitchenMeasure,
+  scaleQuantity,
+  toDisplayQuantity,
+  type Unit,
+} from "@culinova/core";
 
 /** Durée lisible : « 45 min », « 1 h 30 ». */
 export function formatDuration(seconds: number): string {
@@ -65,7 +72,9 @@ export interface IngredientAmount {
 
 /**
  * Quantité d'un ingrédient (ou d'une partie, `part`), recalculée pour un autre
- * nombre de personnes : toujours en grammes d'abord, puis la mesure parlante.
+ * nombre de personnes : toujours en grammes d'abord, puis la mesure parlante (P3) —
+ * celle de l'IA, ou à défaut celle déduite du nom et du poids (`estimateKitchenMeasure` :
+ * œufs, gousses, cuillères, centilitres), l'unité accordée au nombre (« 1 œuf »).
  * Les anciennes recettes en millilitres ou en pièces gardent leur unité.
  */
 export function ingredientAmount(
@@ -74,22 +83,42 @@ export function ingredientAmount(
     quantity: number;
     displayQuantity: number | null;
     displayUnit: string | null;
+    /** Nom de l'ingrédient : sert à déduire la mesure quand l'IA n'en a pas donné. */
+    label?: string;
   },
   part: number | null,
   from: number,
   to: number,
+  lang: "fr" | "en" = "fr",
 ): IngredientAmount {
   const base = part ?? ingredient.quantity;
-  const kitchen =
-    ingredient.displayQuantity !== null && ingredient.displayUnit && ingredient.quantity > 0
-      ? {
-          value: scaledKitchenMeasure((ingredient.displayQuantity * base) / ingredient.quantity, from, to),
-          unit: ingredient.displayUnit,
-        }
-      : null;
+  let kitchen: IngredientAmount["kitchen"] = null;
+  if (ingredient.displayQuantity !== null && ingredient.displayUnit && ingredient.quantity > 0) {
+    const value = scaledKitchenMeasure((ingredient.displayQuantity * base) / ingredient.quantity, from, to);
+    kitchen = { value, unit: agreeKitchenUnit(value, ingredient.displayUnit) };
+  } else if (ingredient.dimension === "mass" && ingredient.label) {
+    kitchen = estimateKitchenMeasure(ingredient.label, (base * to) / from, { lang });
+  }
   if (ingredient.dimension === "mass") {
     return { value: roundGrams((base * to) / from), unit: "g", kitchen };
   }
   const display = scaledDisplay({ dimension: ingredient.dimension, value: base }, from, to);
   return { ...display, kitchen };
+}
+
+/**
+ * Mesure parlante d'un article de courses ou du garde-manger (P3) : nombre de pièces ou
+ * volume d'un liquide (« 6 œufs », « 50 cl »), jamais de cuillères. Null si rien ne parle mieux
+ * que le poids.
+ */
+export function shoppingKitchenMeasure(
+  name: string,
+  quantity: { dimension: "mass" | "volume" | "count"; value: number },
+  lang: string,
+): { value: number; unit: string } | null {
+  if (quantity.dimension !== "mass") return null;
+  return estimateKitchenMeasure(name, quantity.value, {
+    lang: lang === "en" ? "en" : "fr",
+    uses: "shopping",
+  });
 }

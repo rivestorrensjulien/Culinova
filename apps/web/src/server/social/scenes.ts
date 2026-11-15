@@ -42,7 +42,10 @@ function platingText(plating: RecipeView["plating"]): string | null {
 function recipeInput(view: RecipeView) {
   return {
     name: view.name,
-    ingredients: view.ingredients.map((i) => ({ label: i.label, amount: amountText(i) })),
+    ingredients: view.ingredients.map((i) => ({
+      label: i.label,
+      amount: amountText(i, null, view.language),
+    })),
     steps: view.steps.map((step) => stepPlainText(view, step.action)),
     plating: platingText(view.plating),
   };

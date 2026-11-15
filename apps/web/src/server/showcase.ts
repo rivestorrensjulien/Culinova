@@ -163,7 +163,10 @@ export async function getShowcaseStory(db: Database, item: ShowcaseItem): Promis
     idea: input || view.description,
     servings: view.servings,
     totalS: view.prepS + view.cookS + view.restS,
-    ingredients: view.ingredients.map((i) => ({ label: i.label, amount: amountText(i) })),
+    ingredients: view.ingredients.map((i) => ({
+      label: i.label,
+      amount: amountText(i, null, view.language),
+    })),
     steps: view.steps.slice(0, 3).map((step) => stepPlainText(view, step.action)),
     stepCount: view.steps.length,
     costPerPortionCents: sheet ? sheet.perPortion.totalCents : null,

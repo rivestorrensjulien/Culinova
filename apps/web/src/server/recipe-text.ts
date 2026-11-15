@@ -8,8 +8,12 @@ import { ingredientAmount } from "@/components/recipe/format";
 /** Ce qu'il faut savoir d'un ingrédient pour écrire sa quantité (recette enregistrée ou d'essai). */
 type AmountIngredient = Parameters<typeof ingredientAmount>[0];
 
-export function amountText(ingredient: AmountIngredient, part: number | null = null): string {
-  const amount = ingredientAmount(ingredient, part, 1, 1);
+export function amountText(
+  ingredient: AmountIngredient,
+  part: number | null = null,
+  language: string = "fr",
+): string {
+  const amount = ingredientAmount(ingredient, part, 1, 1, language === "en" ? "en" : "fr");
   const unit = amount.unit === "piece" ? "" : ` ${amount.unit}`;
   const main = `${amount.value.toLocaleString("fr-FR", { maximumFractionDigits: 2 })}${unit}`;
   return amount.kitchen
@@ -19,7 +23,7 @@ export function amountText(ingredient: AmountIngredient, part: number | null = n
 
 /** Consigne lisible : les jetons de quantité deviennent « (300 g) » après le nom de l'ingrédient. */
 export function stepPlainText(
-  view: { ingredients: Array<AmountIngredient & { id: string }> },
+  view: { ingredients: Array<AmountIngredient & { id: string }>; language?: string },
   action: string,
 ): string {
   const byId = new Map(view.ingredients.map((i) => [i.id, i]));
@@ -30,8 +34,8 @@ export function stepPlainText(
       if (!ingredient) return "";
       const next = all[index + 1];
       if (next?.kind === "text" && /^\s+(de|d['’])/i.test(next.text))
-        return amountText(ingredient, segment.part);
-      return `(${amountText(ingredient, segment.part).replace(" (", ", ").replace(/\)$/, "")})`;
+        return amountText(ingredient, segment.part, view.language);
+      return `(${amountText(ingredient, segment.part, view.language).replace(" (", ", ").replace(/\)$/, "")})`;
     })
     .join("")
     .replace(/\s+/g, " ")

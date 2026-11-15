@@ -62,7 +62,10 @@ async function jobFor(
     name: view.name,
     servings: view.servings,
     totalMinutes: Math.round((view.prepS + view.cookS + view.restS) / 60),
-    ingredients: view.ingredients.map((i) => ({ label: i.label, amount: amountText(i) })),
+    ingredients: view.ingredients.map((i) => ({
+      label: i.label,
+      amount: amountText(i, null, view.language),
+    })),
     steps: view.steps.map((step) => stepPlainText(view, step.action)),
     summary: parseVideoScript(tiktok?.caption)?.shots ?? [],
     imageId,

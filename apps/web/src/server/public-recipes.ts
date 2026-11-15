@@ -169,7 +169,7 @@ export async function loadPublicRecipe(db: Database, slug: string): Promise<Publ
     cuisineLabel: view.cuisineLabel,
     ingredients: view.ingredients.map((i) => ({
       label: i.label,
-      amount: amountText(i),
+      amount: amountText(i, null, view.language),
       homemade: Boolean(i.base),
     })),
     steps: view.steps.map((step) => ({

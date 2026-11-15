@@ -1,7 +1,7 @@
 /** Tickets de caisse (P8) : lecture sans garder la photo, promotions, mémoire des libellés, prix de référence. */
 import { FakeLlmAdapter } from "@culinova/ai";
 import * as s from "@culinova/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { mkdtemp, readdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -100,7 +100,13 @@ describe.skipIf(!hasTestDb)("tickets de caisse", () => {
     const [promo] = await db
       .select()
       .from(s.ingredientPrices)
-      .where(eq(s.ingredientPrices.ingredientId, second!.ingredientId!));
+      .where(
+        and(
+          eq(s.ingredientPrices.ingredientId, second!.ingredientId!),
+          eq(s.ingredientPrices.ownerId, user.id),
+          eq(s.ingredientPrices.isCurrent, true),
+        ),
+      );
     expect(promo!.isPromo).toBe(true);
     expect(promo!.source).toBe("receipt");
 

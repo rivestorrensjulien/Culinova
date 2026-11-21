@@ -69,7 +69,7 @@ describe("vue éclatée", () => {
 
   it("ne coupe jamais une verrine et ne met de vapeur que sur un plat chaud (retour de Julien du 09/11)", async () => {
     const { system } = buildVideoLayersPrompt(input);
-    expect(VIDEO_LAYERS_PROMPT_VERSION).toBe("video.layers@5");
+    expect(VIDEO_LAYERS_PROMPT_VERSION).toBe("video.layers@6");
     expect(system).toContain("on ne coupe pas au couteau dans un verre");
     expect(system).toContain("Jamais de vapeur ni de fumée sur un plat froid");
     expect(system).toMatch(/false pour .*cheesecakes/);

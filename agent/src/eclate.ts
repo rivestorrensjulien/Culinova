@@ -32,7 +32,8 @@ import {
   type VideoResult,
 } from "./outils.ts";
 import {
-  CUT_KNIFE_MOTION,
+  CUT_NEGATIVE,
+  cutKnifeMotion,
   cutEndPrompt,
   cutMidPrompt,
   cutMotion,
@@ -121,7 +122,14 @@ async function main() {
     if (keep) await writeFile(join(assets, file), bytes);
     return url;
   };
-  const animate = async (start: string, end: string | null, prompt: string, file: string, audio = false) => {
+  const animate = async (
+    start: string,
+    end: string | null,
+    prompt: string,
+    file: string,
+    audio = false,
+    extraNegative = "",
+  ) => {
     const clip = await retry(() =>
       fal.run<VideoResult>(VIDEO_MODEL, {
         prompt,
@@ -130,7 +138,9 @@ async function main() {
         duration: "5",
         generate_audio: audio,
         // Plat froid : jamais de vapeur ni de fumée (retour de Julien du 09/11, verrine hibiscus).
-        negative_prompt: layers.hot ? NEGATIVE_PROMPT : `${NEGATIVE_PROMPT}, steam, smoke, vapour, mist`,
+        negative_prompt: [NEGATIVE_PROMPT, layers.hot ? "" : "steam, smoke, vapour, mist", extraNegative]
+          .filter(Boolean)
+          .join(", "),
       }),
     );
     await writeFile(join(assets, file), await download(clip.video.url));
@@ -176,7 +186,7 @@ async function main() {
           ? (async () => {
               // Deux plans autour de la même part : chaque image part de la précédente.
               const whole = await edit(cutStartPrompt(layers), [dish], "coupe-01-plat-entier.jpg");
-              const sliced = await edit(cutMidPrompt(), [whole, dish], "coupe-02-part-decoupee.jpg");
+              const sliced = await edit(cutMidPrompt(layers), [whole, dish], "coupe-02-part-decoupee.jpg");
               const lifted = await edit(
                 cutEndPrompt(layers),
                 [sliced, dish],
@@ -185,10 +195,12 @@ async function main() {
               );
               holdImage = "realiste/coupe-03-part-soulevee.jpg";
               const [knife] = await Promise.all([
-                animate(whole, sliced, CUT_KNIFE_MOTION, "eclate.mp4"),
-                animate(sliced, lifted, cutMotion(layers), "coupe-part.mp4").then((clip) => {
-                  secondClip = clip;
-                }),
+                animate(whole, sliced, cutKnifeMotion(layers), "eclate.mp4", false, CUT_NEGATIVE),
+                animate(sliced, lifted, cutMotion(layers), "coupe-part.mp4", false, CUT_NEGATIVE).then(
+                  (clip) => {
+                    secondClip = clip;
+                  },
+                ),
               ]);
               return knife;
             })()

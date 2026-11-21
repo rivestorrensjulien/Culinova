@@ -19,6 +19,9 @@ import {
   useVideoConfig,
 } from "remotion";
 import {
+  CUT_FADE_FRAMES,
+  CUT_FRAMES,
+  CUT_KNIFE_FRAMES,
   EMPTY_FRAMES,
   explodedTimeline,
   type ExplodedProps,
@@ -101,11 +104,19 @@ function ExplodeScene({ props, frames }: { props: ExplodedProps; frames: number 
   const holds = props.format === "coupe" || props.format === "geste";
   const hold = holds ? HOLD_FRAMES : 0;
   const played = frames - hold;
-  const half = second ? Math.round(played / 2) : played;
+  // Coupe : le couteau un peu accéléré, la part soulevée à vitesse normale (retour du 21/11).
+  const half = second ? Math.round((played * CUT_KNIFE_FRAMES) / CUT_FRAMES) : played;
   const names = props.layerNames;
   const labelsFrom = second ? half : 0;
   const step = (frames - labelsFrom - 30) / Math.max(1, names.length);
   const videoStyle = { width: "100%", height: "100%", objectFit: "cover" } as const;
+  // Coupe : fondus doux (photo → plat entier, couteau → part soulevée) au lieu de coupes sèches.
+  const fade = props.format === "coupe" ? CUT_FADE_FRAMES : 0;
+  const secondFrom = Math.max(0, half - fade);
+  const secondIn = fade
+    ? interpolate(frame, [secondFrom, half], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+    : 1;
+  const photoOut = fade ? interpolate(frame, [0, fade], [1, 0], { extrapolateRight: "clamp" }) : 0;
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
       {clip ? (
@@ -121,19 +132,26 @@ function ExplodeScene({ props, frames }: { props: ExplodedProps; frames: number 
         <Cover path={props.photoUrl} />
       )}
       {second ? (
-        <Sequence from={half} durationInFrames={played - half} layout="none">
-          <OffthreadVideo
-            src={second}
-            muted={!props.clipSound}
-            playbackRate={(5 * fps) / (played - half)}
-            style={videoStyle}
-          />
+        <Sequence from={secondFrom} durationInFrames={played - secondFrom} layout="none">
+          <AbsoluteFill style={{ opacity: secondIn }}>
+            <OffthreadVideo
+              src={second}
+              muted={!props.clipSound}
+              playbackRate={(5 * fps) / (played - secondFrom)}
+              style={videoStyle}
+            />
+          </AbsoluteFill>
         </Sequence>
       ) : null}
       {hold > 0 ? (
         <Sequence from={played} durationInFrames={hold} layout="none">
           <Cover path={props.holdImage ?? props.photoUrl} />
         </Sequence>
+      ) : null}
+      {photoOut > 0 ? (
+        <AbsoluteFill style={{ opacity: photoOut }}>
+          <Cover path={props.photoUrl} zoom={1.02} />
+        </AbsoluteFill>
       ) : null}
       <AbsoluteFill style={{ background: "linear-gradient(0deg, #000b 0%, #0000 36%)" }} />
       <div style={{ position: "absolute", left: 80, right: 80, bottom: 170 }}>

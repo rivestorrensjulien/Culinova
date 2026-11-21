@@ -3,6 +3,12 @@ import { test } from "node:test";
 import {
   CLIP_FRAMES,
   CUT_FRAMES,
+  CUT_NEGATIVE,
+  CUT_PORTION,
+  HALF_PORTION,
+  cheesePull,
+  cutKnifeMotion,
+  cutPortion,
   CUT_KNIFE_MOTION,
   cutEndPrompt,
   cutMidPrompt,
@@ -110,6 +116,30 @@ test("consignes de la coupe et du geste", () => {
   assert.doesNotMatch(cutEndPrompt({ ...moussaka, hot: false }), /steam rises/);
   assert.match(cutEndPrompt({ ...moussaka, hot: false }), /no steam, no smoke/);
   assert.doesNotMatch(cutMotion({ ...moussaka, hot: false }), /steam rising/);
+  // Retour de Julien du 21/11 (pupusas) : même cadrage que la photo, moitié tirée, fromage qui file.
+  assert.match(cutStartPrompt(moussaka), /do not zoom out/);
+  assert.match(CUT_KNIFE_MOTION, /one smooth, continuous stroke/);
+  assert.doesNotMatch(cutEndPrompt(moussaka), /strands of melted cheese/);
+  const pupusas = {
+    ...moussaka,
+    container: "a round wooden board on a rustic table",
+    cut: {
+      vessel: "three golden pupusas on a round wooden board",
+      start: "the whole pupusas, untouched",
+      end: "half a pupusa lifted, melted cheese stretching",
+      motion: "Lifts half a pupusa, the stringy cheese stretches.",
+      strata: ["Pâte de maïs", "Haricots rouges jerk", "Fromage filant"],
+    },
+  };
+  assert.equal(cutPortion(moussaka), CUT_PORTION);
+  assert.equal(cutPortion(pupusas), HALF_PORTION);
+  assert.ok(cheesePull(pupusas) && !cheesePull(moussaka));
+  assert.match(cutMidPrompt(pupusas), /one clean straight knife cut/);
+  assert.match(cutKnifeMotion(pupusas), /front half of the piece/);
+  assert.match(cutEndPrompt(pupusas), /strands of melted cheese/);
+  assert.match(cutEndPrompt(pupusas), /no cheese melted or sprinkled on top/);
+  assert.match(cutMotion(pupusas), /no cheese ever appears on top/);
+  assert.match(CUT_NEGATIVE, /cutting board appearing/);
   assert.match(gestureStartPrompt(moussaka), /never a face/);
   assert.match(gestureEndPrompt(moussaka), /sauce glossy/);
   // Ce qui est versé reste visible (25/10) ; un seul liquide, rien qui tombe en morceaux (26/10).

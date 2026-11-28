@@ -15,3 +15,5 @@ export * from "./units";
 export * from "./step-timing";
 export * from "./kitchen-measures";
 export * from "./receipts";
+export * from "./photo-decor";
+export * from "./social-labels";

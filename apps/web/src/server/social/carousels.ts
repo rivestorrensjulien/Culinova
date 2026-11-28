@@ -3,10 +3,14 @@
  * étapes, puis carte de fin (images JPEG 1080 × 1350). Comme pour la vidéo, le carrousel
  * retient sa photo : nouvelle photo ou nouvelle version → carrousel à refaire.
  */
+import type { LlmAdapter } from "@culinova/ai";
+import { readableRecipeTime, shortDishName } from "@culinova/core";
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
 import { and, desc, eq, inArray, isNotNull, notInArray } from "drizzle-orm";
-import { loadRecipeView } from "../generation/view";
+import { applyTranslation } from "@/components/recipe/translation";
+import { loadRecipeView, type RecipeView } from "../generation/view";
+import { translateRecipe } from "../translation";
 import { adminRecipe, signedImagePath } from "../publishing";
 import { amountText, stepPlainText } from "../recipe-text";
 import { createVideoStorage, type UploadInstructions, type VideoStorage } from "./video-storage";
@@ -22,8 +26,12 @@ export interface CarouselJob {
   recipeId: string;
   versionId: string;
   name: string;
+  /** Nom de la couverture, 5 mots au plus (plaquette du 28/11). */
+  shortName: string;
   servings: number;
   totalMinutes: number;
+  /** Temps lisible : « 1 h 30 », « 20 min + 2 h au frais » (plaquette du 28/11). */
+  timeLabel: string;
   ingredients: Array<{ label: string; amount: string }>;
   steps: string[];
   /** Étapes résumées en lignes courtes (script TikTok, sans quantités) pour la page « La recette en bref ». */
@@ -38,6 +46,7 @@ async function jobFor(
   recipeId: string,
   baseUrl: string,
   now: Date,
+  ai?: LlmAdapter,
 ): Promise<CarouselJob | null> {
   const recipe = await adminRecipe(db, recipeId);
   if (!recipe?.versionId) return null;
@@ -48,8 +57,17 @@ async function jobFor(
     .select({ ownerId: s.recipes.ownerId })
     .from(s.recipes)
     .where(eq(s.recipes.id, recipeId));
-  const view = owner ? await loadRecipeView(db, recipeId, owner.ownerId) : null;
+  let view: RecipeView | null = owner ? await loadRecipeView(db, recipeId, owner.ownerId) : null;
   if (!view || view.steps.length === 0) return null;
+  // Visuels toujours en français (plaquette du 28/11) : traduction existante, sinon faite ici.
+  if (view.language !== "fr" && view.translation.target === "fr") {
+    if (!view.translation.current && ai && owner) {
+      const translated = await translateRecipe(db, ai, owner.ownerId, recipeId).catch(() => null);
+      if (translated?.ok) view = (await loadRecipeView(db, recipeId, owner.ownerId)) ?? view;
+    }
+    if (view.translation.current) view = applyTranslation(view, view.translation.current.payload);
+  }
+  const steps = view.steps.map((step) => stepPlainText(view!, step.action));
   const [tiktok] = await db
     .select({ caption: s.socialContents.caption })
     .from(s.socialContents)
@@ -60,13 +78,20 @@ async function jobFor(
     recipeId,
     versionId: recipe.versionId,
     name: view.name,
+    shortName: shortDishName(view.name),
     servings: view.servings,
     totalMinutes: Math.round((view.prepS + view.cookS + view.restS) / 60),
+    timeLabel: readableRecipeTime({
+      prepMinutes: view.prepS / 60,
+      cookMinutes: view.cookS / 60,
+      restMinutes: view.restS / 60,
+      steps,
+    }),
     ingredients: view.ingredients.map((i) => ({
       label: i.label,
-      amount: amountText(i, null, view.language),
+      amount: amountText(i, null, view!.displayLanguage ?? view!.language),
     })),
-    steps: view.steps.map((step) => stepPlainText(view, step.action)),
+    steps,
     summary: parseVideoScript(tiktok?.caption)?.shots ?? [],
     imageId,
     photoUrl: `${baseUrl}${path}`,
@@ -77,11 +102,11 @@ async function jobFor(
 export async function carouselJobs(
   db: Database,
   baseUrl: string,
-  options: { recipeId?: string; now?: Date } = {},
+  options: { recipeId?: string; now?: Date; ai?: LlmAdapter } = {},
 ): Promise<CarouselJob[]> {
   const now = options.now ?? new Date();
   if (options.recipeId) {
-    const job = await jobFor(db, options.recipeId, baseUrl, now);
+    const job = await jobFor(db, options.recipeId, baseUrl, now, options.ai);
     return job ? [job] : [];
   }
   const queued = await db
@@ -90,7 +115,7 @@ export async function carouselJobs(
     .where(eq(s.recipePublications.status, "queued"));
   const jobs: CarouselJob[] = [];
   for (const { recipeId } of queued) {
-    const job = await jobFor(db, recipeId, baseUrl, now);
+    const job = await jobFor(db, recipeId, baseUrl, now, options.ai);
     if (!job) continue;
     const rows = await db
       .select({ status: s.recipeCarousels.status, createdAt: s.recipeCarousels.createdAt })

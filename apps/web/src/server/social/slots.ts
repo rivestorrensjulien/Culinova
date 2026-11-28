@@ -148,11 +148,17 @@ export function slotOnDay(platform: SlotPlatform, day: Date): Date | null {
 }
 
 /**
- * Carrousel de la même recette, quelques jours après son Reel, un jour sans Reel (décisions de
- * Julien du 25/10) : mardi → vendredi, jeudi → samedi, dimanche → mercredi ; Instagram à midi,
- * TikTok (publication photo) le soir.
+ * Carrousel de la même recette, un jour sans Reel (décisions de Julien du 25/10) : mardi →
+ * vendredi, jeudi → samedi, dimanche → mercredi ; Instagram à midi, TikTok (publication photo)
+ * le soir. Depuis la plaquette du 28/11 (« le même plat deux fois de suite » dans la grille),
+ * deux semaines plus tard : d'autres recettes passent entre le Reel et son carrousel.
  */
-export const CAROUSEL_AFTER_DAYS: Record<number, number> = { 2: 3, 4: 2, 0: 3 };
+export const CAROUSEL_GAP_WEEKS = 2;
+export const CAROUSEL_AFTER_DAYS: Record<number, number> = {
+  2: 3 + 7 * CAROUSEL_GAP_WEEKS,
+  4: 2 + 7 * CAROUSEL_GAP_WEEKS,
+  0: 3 + 7 * CAROUSEL_GAP_WEEKS,
+};
 export const CAROUSEL_TIME: Record<"instagram" | "tiktok", string> = { instagram: "12:00", tiktok: "19:30" };
 
 export function carouselSlotAfter(

@@ -21,8 +21,12 @@ const SUMMARY_LENGTH = 90;
 
 export interface CarouselProps {
   name: string;
+  /** Nom de la couverture, 5 mots au plus (calculé par Culinova ; sinon tiré du nom). */
+  shortName?: string;
   servings: number;
   totalMinutes: number;
+  /** Temps lisible calculé par Culinova (« 1 h 30 », « 20 min + 2 h au frais »). */
+  timeLabel?: string;
   ingredients: Array<{ label: string; amount: string }>;
   steps: string[];
   /** Étapes résumées (lignes courtes du script TikTok) ; sinon, tirées des étapes. */
@@ -35,6 +39,24 @@ export interface CarouselProps {
   /** Image à dessiner (0 = couverture). */
   page: number;
   [key: string]: unknown;
+}
+
+/** Nom de la couverture : celui de Culinova, sinon la partie avant la première virgule ou parenthèse. */
+export function coverName(props: Pick<CarouselProps, "name" | "shortName">): string {
+  if (props.shortName?.trim()) return props.shortName.trim();
+  const head = props.name.split(/\s*(?:,|\(|:|\s[–—-]\s)\s*/)[0]?.trim() || props.name;
+  return head.split(/\s+/).slice(0, 5).join(" ");
+}
+
+/** Temps affiché : celui de Culinova, sinon « 1 h 30 » d'après le total. */
+export function timeText(props: Pick<CarouselProps, "totalMinutes" | "timeLabel">): string {
+  if (props.timeLabel?.trim()) return props.timeLabel.trim();
+  const total = Math.max(0, Math.round(props.totalMinutes));
+  if (total < 60) return `${total} min`;
+  const rest = total % 60;
+  return rest
+    ? `${Math.floor(total / 60)} h ${String(rest).padStart(2, "0")}`
+    : `${Math.floor(total / 60)} h`;
 }
 
 export type CarouselPage =
@@ -80,8 +102,10 @@ export function carouselPages(
 
 export const EXAMPLE_CAROUSEL: CarouselProps = {
   name: "Baghrir, beurre fondu au miel",
+  shortName: "Baghrir",
   servings: 4,
   totalMinutes: 45,
+  timeLabel: "15 min + 30 min de repos",
   ingredients: [
     { label: "Semoule fine", amount: "250 g" },
     { label: "Farine de blé", amount: "60 g" },

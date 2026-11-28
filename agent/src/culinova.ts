@@ -22,8 +22,12 @@ export interface CarouselJob {
   recipeId: string;
   versionId: string;
   name: string;
+  /** Nom court de la couverture (absent d'un ancien Culinova). */
+  shortName?: string;
   servings: number;
   totalMinutes: number;
+  /** Temps lisible (« 1 h 30 », « 20 min + 2 h au frais »). */
+  timeLabel?: string;
   ingredients: Array<{ label: string; amount: string }>;
   steps: string[];
   /** Étapes résumées (script TikTok), pour « la recette en bref ». */

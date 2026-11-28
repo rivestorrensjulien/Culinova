@@ -7,7 +7,7 @@ import { loadFont as loadSans } from "@remotion/google-fonts/DMSans";
 import { loadFont as loadSerif } from "@remotion/google-fonts/Fraunces";
 import type { CSSProperties, ReactNode } from "react";
 import { AbsoluteFill, Img, staticFile } from "remotion";
-import { carouselPages, type CarouselProps, MASCOT_3D } from "./carousel.ts";
+import { carouselPages, type CarouselProps, coverName, MASCOT_3D, timeText } from "./carousel.ts";
 
 const serif = loadSerif("normal", { weights: ["600"], subsets: ["latin", "latin-ext"] }).fontFamily;
 const sans = loadSans("normal", {
@@ -120,12 +120,28 @@ function Footer({
         justifyContent: "space-between",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <Avatar size={56} />
-        <span style={{ fontFamily: sans, fontSize: 28, fontWeight: 500, color: light ? "#fff" : INK }}>
-          {props.handle}
-        </span>
-      </div>
+      {page === 1 ? (
+        <div
+          style={{
+            fontFamily: sans,
+            fontSize: 30,
+            fontWeight: 500,
+            color: "#fff",
+            background: COPPER,
+            padding: "14px 30px",
+            borderRadius: 999,
+          }}
+        >
+          Glisse pour la recette →
+        </div>
+      ) : (
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <Avatar size={56} />
+          <span style={{ fontFamily: sans, fontSize: 28, fontWeight: 500, color: light ? "#fff" : INK }}>
+            {props.handle}
+          </span>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 10 }}>
         {Array.from({ length: count }, (_, i) => (
           <div
@@ -199,66 +215,55 @@ function Overline({ children }: { children: ReactNode }) {
   );
 }
 
-function Cover({ props, count }: { props: CarouselProps; count: number }) {
+/**
+ * Couverture (plaquette validée par Julien le 28/11) : la photo pleine page, seulement le nom
+ * court dans un bandeau crème en bas, loin des bords (la grille Instagram recadre en 3:4, donc
+ * rogne un peu les côtés). Ni avatar, ni pastilles, ni bouton : ils passent à l'image 2.
+ */
+function Cover({ props }: { props: CarouselProps }) {
+  const name = coverName(props);
   return (
     <AbsoluteFill style={{ backgroundColor: INK }}>
       <Photo props={props} style={{ position: "absolute", inset: 0 }} />
-      <AbsoluteFill
-        style={{
-          background: "linear-gradient(180deg, #0006 0%, #0000 22%, #0000 45%, #000c 82%, #000e 100%)",
-        }}
-      />
-      <div
-        style={{ position: "absolute", top: 64, left: 80, display: "flex", alignItems: "center", gap: 16 }}
-      >
-        <Avatar size={64} />
-        <span style={{ fontFamily: serif, fontSize: 42, color: "#fff" }}>Culinova</span>
-      </div>
-      <div style={{ position: "absolute", left: 80, right: 80, bottom: 170 }}>
-        <div
-          style={{
-            fontFamily: serif,
-            fontSize: props.name.length > 60 ? 74 : 88,
-            lineHeight: 1.04,
-            color: "#fff",
-          }}
-        >
-          {props.name}
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 14, marginTop: 34 }}>
-          <Pill dark>{props.servings} personnes</Pill>
-          <Pill dark>{props.totalMinutes} min</Pill>
-          <Pill dark>Pesée au gramme</Pill>
-        </div>
-      </div>
+      <AbsoluteFill style={{ background: "linear-gradient(180deg, #0000 70%, #0000002e 100%)" }} />
       <div
         style={{
           position: "absolute",
-          right: 80,
-          bottom: 62,
-          fontFamily: sans,
-          fontSize: 30,
-          fontWeight: 500,
-          color: INK,
-          padding: "14px 30px",
-          borderRadius: 999,
-          background: "#fff",
+          left: 90,
+          right: 90,
+          bottom: 120,
+          padding: "30px 34px 30px 44px",
+          borderRadius: 30,
+          background: IVORY,
+          boxShadow: SHADOW,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 24,
         }}
       >
-        Glisse pour la recette →
-      </div>
-      <div style={{ position: "absolute", left: 80, bottom: 84, display: "flex", gap: 10 }}>
-        {Array.from({ length: count }, (_, i) => (
-          <div
-            key={i}
-            style={{
-              width: i === 0 ? 34 : 12,
-              height: 12,
-              borderRadius: 6,
-              background: i === 0 ? "#fff" : "#ffffff66",
-            }}
-          />
-        ))}
+        <div
+          style={{ fontFamily: serif, fontSize: name.length > 24 ? 52 : 62, lineHeight: 1.08, color: INK }}
+        >
+          {name}
+        </div>
+        <div
+          style={{
+            flexShrink: 0,
+            width: 72,
+            height: 72,
+            borderRadius: 36,
+            background: COPPER,
+            color: "#fff",
+            fontFamily: sans,
+            fontSize: 38,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          →
+        </div>
       </div>
     </AbsoluteFill>
   );
@@ -271,7 +276,7 @@ export function CarouselSlide(props: CarouselProps) {
   const count = pages.length;
   const footer = <Footer props={props} page={index} count={count} />;
 
-  if (page.kind === "cover") return <Cover props={props} count={count} />;
+  if (page.kind === "cover") return <Cover props={props} />;
 
   if (page.kind === "ingredients") {
     const two = page.items.length > 6;
@@ -281,28 +286,29 @@ export function CarouselSlide(props: CarouselProps) {
       <AbsoluteFill>
         <Backdrop props={props} />
         <Column>
-          <div style={{ position: "relative", flex: 1, minHeight: 240, marginBottom: 70 }}>
-            <Photo
-              props={props}
-              zoom={1.25}
-              style={{ position: "absolute", inset: 0, borderRadius: 40, boxShadow: SHADOW }}
-            />
+          <Photo
+            props={props}
+            zoom={1.25}
+            style={{ flex: 1, minHeight: dense ? 150 : 220, borderRadius: 40, boxShadow: SHADOW }}
+          />
+          {/* Image 2 (plaquette du 28/11) : le nom complet et les infos, sur fond clair. */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 18, padding: "0 20px" }}>
             <div
               style={{
-                position: "absolute",
-                left: 40,
-                bottom: -60,
-                padding: "22px 40px",
-                borderRadius: 28,
-                background: IVORY,
-                boxShadow: SHADOW,
+                fontFamily: serif,
+                fontSize: props.name.length > 70 ? 44 : props.name.length > 40 ? 50 : 58,
+                lineHeight: 1.1,
+                color: INK,
               }}
             >
-              <Overline>Pour {props.servings} personnes</Overline>
-              <div style={{ fontFamily: serif, fontSize: 72, lineHeight: 1.05, color: INK, marginTop: 6 }}>
-                Ingrédients
-              </div>
+              {props.name}
             </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+              <Pill>{props.servings} personnes</Pill>
+              <Pill>{timeText(props)}</Pill>
+              <Pill>Pesée au gramme</Pill>
+            </div>
+            <Overline>Ingrédients</Overline>
           </div>
           <div
             style={{

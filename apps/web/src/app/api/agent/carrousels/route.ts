@@ -5,6 +5,7 @@
  *        → { carouselId, uploads: [{ url, method, headers }] } (une image JPEG par lien).
  * En-tête obligatoire : Authorization: Bearer <AGENT_API_KEY>.
  */
+import { createLlmAdapter } from "@culinova/ai";
 import { z } from "zod";
 import { appUrl } from "@/server/auth";
 import { getDb } from "@/server/db";
@@ -20,7 +21,9 @@ export async function GET(request: Request) {
   if (recipeId && !z.uuid().safeParse(recipeId).success) {
     return Response.json({ error: "invalid_recipe" }, { status: 400 });
   }
-  const carousels = await carouselJobs(getDb(), appUrl(), recipeId ? { recipeId } : {});
+  // Recette en anglais sans traduction : traduite au passage, pour des visuels en français (28/11).
+  const ai = createLlmAdapter(process.env, { effort: "low" });
+  const carousels = await carouselJobs(getDb(), appUrl(), recipeId ? { recipeId, ai } : { ai });
   return Response.json({ carousels }, { headers: { "Cache-Control": "no-store" } });
 }
 

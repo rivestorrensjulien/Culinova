@@ -1,5 +1,6 @@
 /** Photo d'une recette : prompt, image HD, 4 recadrages, stockage et crédit d'image. */
 import { AiGenerationError, FakeLlmAdapter, type ImageAdapter } from "@culinova/ai";
+import { decorPrompt } from "@culinova/core";
 import * as s from "@culinova/db/schema";
 import { eq } from "drizzle-orm";
 import { mkdtemp } from "node:fs/promises";
@@ -72,8 +73,17 @@ describe.skipIf(!hasTestDb)("photo de recette", () => {
       .returning();
     expect(await runImageGeneration(db, ai, generation!, { storage })).toBe("succeeded");
     // Le prompt photo est rédigé d'après le dressage.
-    expect(ai.calls.at(-1)!.promptId).toBe("image.prompt@9");
+    expect(ai.calls.at(-1)!.promptId).toBe("image.prompt@10");
     expect(ai.calls.at(-1)!.user).toContain("Assiette creuse noire mate");
+    // Décor tiré au sort (28/11) : envoyé au rédacteur du prompt et retenu pour la photo suivante.
+    expect(ai.calls.at(-1)!.user).toContain('"scene"');
+    const [done] = await db
+      .select({ output: s.aiGenerations.output })
+      .from(s.aiGenerations)
+      .where(eq(s.aiGenerations.id, started.generationId));
+    const decor = (done!.output as { decor: { background: string } }).decor;
+    expect(decor.background).toBeTruthy();
+    expect(ai.calls.at(-1)!.user).toContain(decorPrompt(decor as never).surface);
 
     view = (await loadRecipeView(db, recipeId, user.id))!;
     expect(view.images.pendingGenerationId).toBeNull();

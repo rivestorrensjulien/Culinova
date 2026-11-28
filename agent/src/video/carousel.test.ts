@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   carouselPages,
+  coverName,
   EXAMPLE_CAROUSEL,
   MAX_INGREDIENTS,
   MAX_SLIDES,
   MAX_SUMMARY,
   summaryLines,
+  timeText,
 } from "./carousel.ts";
 
 test("4 images : couverture, ingrédients, la recette en bref, fin", () => {
@@ -55,4 +57,21 @@ test("sans script : première phrase des étapes, sans les quantités", () => {
   assert.equal(lines[0], "Mixer la semoule fine avec l'eau tiède pendant 2 minutes");
   assert.ok(lines[1]!.endsWith("…"));
   assert.ok(lines[1]!.length <= 91);
+});
+
+test("couverture : nom court et temps lisible (plaquette du 28/11)", () => {
+  assert.equal(
+    coverName({ name: "Mujaddara libanaise, oignons dorés et yaourt au concombre" }),
+    "Mujaddara libanaise",
+  );
+  assert.equal(
+    coverName({ name: "Mujaddara libanaise, oignons dorés", shortName: "Mujaddara" }),
+    "Mujaddara",
+  );
+  assert.equal(timeText({ totalMinutes: 88 }), "1 h 28");
+  assert.equal(timeText({ totalMinutes: 45 }), "45 min");
+  assert.equal(
+    timeText({ totalMinutes: 616, timeLabel: "45 min + trempage la veille" }),
+    "45 min + trempage la veille",
+  );
 });

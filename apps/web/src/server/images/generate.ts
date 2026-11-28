@@ -19,10 +19,17 @@ import {
   imagePromptSchema,
   type LlmAdapter,
 } from "@culinova/ai";
-import { centeredCrop, isWithinBudget } from "@culinova/core";
+import {
+  centeredCrop,
+  decorPrompt,
+  isWithinBudget,
+  parseDecor,
+  type PhotoDecor,
+  pickPhotoDecor,
+} from "@culinova/core";
 import type { Database } from "@culinova/db";
 import * as s from "@culinova/db/schema";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, isNotNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 import { consumeQuota, getAiBudgetCap, getAiSpend, recordAiSpend, releaseQuota } from "../quotas";
@@ -158,10 +165,36 @@ async function download(url: string, size: number, fetchImpl: typeof fetch): Pro
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
+/**
+ * Décors des dernières photos réussies (la plus récente d'abord), pour que la suivante n'y
+ * ressemble pas (décision de Julien du 28/11). Toutes les photos comptent : le fil Instagram
+ * ne montre que celles de l'administrateur, mais la variété profite à tout le monde.
+ */
+async function recentDecors(db: Database, userId: string): Promise<PhotoDecor[]> {
+  const rows = await db
+    .select({ output: s.aiGenerations.output })
+    .from(s.aiGenerations)
+    .where(
+      and(
+        eq(s.aiGenerations.userId, userId),
+        eq(s.aiGenerations.kind, "image"),
+        eq(s.aiGenerations.status, "succeeded"),
+        isNotNull(s.aiGenerations.finishedAt),
+      ),
+    )
+    .orderBy(desc(s.aiGenerations.finishedAt))
+    .limit(3);
+  return rows
+    .map((row) => parseDecor((row.output as { decor?: unknown } | null)?.decor))
+    .filter((decor): decor is PhotoDecor => decor !== null);
+}
+
 export interface ImageDeps {
   images?: ImageAdapter;
   storage?: ImageStorage;
   fetchImpl?: typeof fetch;
+  /** Hasard du tirage du décor (tests). */
+  random?: () => number;
 }
 
 export async function runImageGeneration(
@@ -174,8 +207,11 @@ export async function runImageGeneration(
   let promptCost = 0;
   try {
     if (!versionId || !generation.userId) throw new Error("Version introuvable");
-    const input = await promptInput(db, versionId);
-    if (!input) throw new Error("Version introuvable");
+    const found = await promptInput(db, versionId);
+    if (!found) throw new Error("Version introuvable");
+    // Décor tiré au sort, différent des photos précédentes.
+    const decor = pickPhotoDecor(await recentDecors(db, generation.userId), deps.random);
+    const input: ImagePromptInput = { ...found, scene: decorPrompt(decor) };
     const images = deps.images ?? createImageAdapter();
     const storage = deps.storage ?? createImageStorage();
 
@@ -254,7 +290,7 @@ export async function runImageGeneration(
         .set({
           status: "succeeded",
           finishedAt: new Date(),
-          output: { sourceImageId: sourceId, prompt, seed: generated.seed },
+          output: { sourceImageId: sourceId, prompt, seed: generated.seed, decor },
           provider: generated.usage.provider,
           model: generated.usage.model,
           costUsdMicros: totalCost,

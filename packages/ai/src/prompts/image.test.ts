@@ -22,9 +22,11 @@ const input = {
 describe("prompt photo", () => {
   it("transmet le dressage et impose un cadrage recadrable", () => {
     const { system, user } = buildImagePrompt(input);
-    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@9");
+    expect(IMAGE_PROMPT_VERSION).toBe("image.prompt@10");
     expect(system).toContain("Authenticity first");
-    expect(system).toContain("never straight overhead");
+    // Décor tiré au sort (28/11) : surface, contenant, lumière et angle viennent de « scene ».
+    expect(system).toContain("drawn at random so that consecutive photos never look alike");
+    expect(system).toContain("never a dark wooden background in a light scene");
     expect(system).toContain("cropped to square, 4:5, 9:16 and 16:9");
     expect(system).toContain("No text");
     expect(system).toContain("never a bite mark");
@@ -43,6 +45,17 @@ describe("prompt photo", () => {
     const fallback = fallbackImagePrompt(input);
     expect(fallback).toContain("Bao au poulet façon saté");
     expect(fallback).toContain("barquette en bambou");
+    const scene = {
+      surface: "a white Carrara marble worktop",
+      container: "a deep blue glazed stoneware plate",
+      light: "bright, airy morning daylight",
+      camera: "shot straight overhead (flat lay)",
+    };
+    const withScene = fallbackImagePrompt({ ...input, scene });
+    expect(withScene).toContain("white Carrara marble");
+    expect(withScene).toContain("straight overhead");
+    expect(withScene).not.toContain("late-afternoon");
+    expect(buildImagePrompt({ ...input, scene }).user).toContain("Carrara marble");
   });
 });
 

@@ -127,8 +127,10 @@ async function carousels(
         serveUrl,
         {
           name: job.name,
+          ...(job.shortName ? { shortName: job.shortName } : {}),
           servings: job.servings,
           totalMinutes: job.totalMinutes,
+          ...(job.timeLabel ? { timeLabel: job.timeLabel } : {}),
           ingredients: job.ingredients,
           steps: job.steps,
           summary: job.summary ?? [],

@@ -118,9 +118,10 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
       ["instagram", "video", "2030-02-03T10:00", "proposed"],
       ["tiktok", "video", "2030-02-03T18:00", "proposed"],
       ["pinterest", "photo", "2030-02-03T21:00", "proposed"],
-      // Le carrousel de la même recette, trois jours après le Reel du dimanche : mercredi midi.
-      ["instagram", "carousel", "2030-02-06T12:00", "proposed"],
-      ["tiktok", "carousel", "2030-02-06T19:30", "proposed"],
+      // Le carrousel de la même recette, deux semaines et demie après le Reel du dimanche
+      // (plaquette du 28/11) : mercredi midi.
+      ["instagram", "carousel", "2030-02-20T12:00", "proposed"],
+      ["tiktok", "carousel", "2030-02-20T19:30", "proposed"],
     ]);
     // La vidéo et le carrousel sont demandés à l'agent.
     const queued = await db
@@ -210,8 +211,8 @@ describe.skipIf(!hasTestDb)("planification automatique", () => {
     await planUpcoming(db, { now: NOW, onlyOwner: other.id, startPhoto: async () => false });
     const carousel = (await recipeSchedule(db, dish, NOW)).filter((p) => p.format === "carousel");
     expect(carousel.map((p) => [p.platform, toParisInput(new Date(p.scheduledAt))])).toEqual([
-      ["instagram", "2030-02-08T12:00"],
-      ["tiktok", "2030-02-08T19:30"],
+      ["instagram", "2030-02-22T12:00"],
+      ["tiktok", "2030-02-22T19:30"],
     ]);
     // Une seule fois.
     await planUpcoming(db, { now: NOW, onlyOwner: other.id, startPhoto: async () => false });

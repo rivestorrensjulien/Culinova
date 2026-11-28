@@ -2,8 +2,9 @@
  * API TikTok (application « Culinova Agent » : Login Kit et Content Posting API, Direct Post).
  * Portées : user.info.basic, user.info.stats, video.list, video.publish (video.upload sera demandée
  * avec les brouillons TikTok : une portée non utilisée fait refuser l'audit).
- * Variables : TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET. Tant que l'application n'a pas passé
- * l'audit de TikTok, les vidéos ne peuvent être publiées qu'en privé (SELF_ONLY).
+ * Variables : TIKTOK_CLIENT_KEY, TIKTOK_CLIENT_SECRET (clés de production depuis l'audit accepté
+ * le 28/11). Les confidentialités proposées viennent de TikTok (`creator_info`) : avant l'audit,
+ * seulement SELF_ONLY.
  */
 import { type PostMetrics, SocialApiError } from "./instagram";
 
